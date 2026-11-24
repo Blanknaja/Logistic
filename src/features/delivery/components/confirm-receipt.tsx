@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useRef } from "react";
-import { withTimeout } from "@/features/account/components/action-form";
+import { withTimeout } from "@/shared/ui/timeout";
 import styles from "./tracking.module.css";
 
 export const SAVE_FAILED = "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง";

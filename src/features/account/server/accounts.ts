@@ -2,6 +2,8 @@ import { hashPassword, verifyPassword } from "@/features/account/server/password
 import { createSession } from "@/features/account/server/sessions";
 import { transaction, type Db } from "@/shared/db";
 import { formatDateTime } from "@/shared/format";
+import type { Checked } from "@/shared/result";
+import { isPhone } from "@/shared/rules";
 import { ACCOUNT_STATUS } from "@/shared/statuses";
 
 export const EMAIL_TAKEN = "อีเมลนี้มีบัญชีแล้ว เข้าสู่ระบบหรือกดลืมรหัสผ่าน";
@@ -35,7 +37,7 @@ function displayNameError(displayName: string): string | undefined {
 }
 
 function phoneError(phone: string): string | undefined {
-  if (phone !== "" && !/^0\d{9}$/.test(phone)) return "เบอร์โทรต้องเป็นตัวเลข 10 หลัก ขึ้นต้นด้วย 0";
+  if (phone !== "" && !isPhone(phone)) return "เบอร์โทรต้องเป็นตัวเลข 10 หลัก ขึ้นต้นด้วย 0";
 }
 
 /** ตัดช่องที่ไม่มีข้อผิดพลาดออก คืน null ถ้าไม่มีช่องไหนผิด */
@@ -53,7 +55,7 @@ export async function signUp(
   db: Db,
   input: { email: string; password: string; displayName: string },
   now: Date = new Date(),
-): Promise<{ ok: true; accountId: number; token: string } | { ok: false; errors: SignUpErrors }> {
+): Promise<Checked<{ accountId: number; token: string }, SignUpErrors>> {
   const email = input.email.trim().toLowerCase();
   const displayName = input.displayName.trim();
   const errors = onlyErrors({
@@ -139,7 +141,7 @@ export function updateProfile(
   accountId: number,
   input: { displayName: string; phone: string },
   now: Date = new Date(),
-): { ok: true } | { ok: false; errors: ProfileErrors } {
+): Checked<object, ProfileErrors> {
   const displayName = input.displayName.trim();
   const phone = input.phone.trim();
   const errors = onlyErrors({ displayName: displayNameError(displayName), phone: phoneError(phone) });

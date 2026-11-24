@@ -1,10 +1,9 @@
 import { CANCEL_REASON, cancelAwaitingPaymentGroup, expireOverdueOrderGroups } from "@/features/checkout/server/order-groups";
 import { transaction, type Db } from "@/shared/db";
+import { PAGE_SIZE } from "@/shared/paging";
 import { ORDER_STATUS, PAYMENT_STATUS, type OrderStatus } from "@/shared/statuses";
 
 // คำสั่งซื้อของผู้ซื้อ: หน้ารายการ (CHK-009) หน้ารายละเอียด (CHK-010) และการยกเลิกตอนรอจ่ายเงิน (CHK-011)
-
-export const ORDERS_PAGE_SIZE = 20;
 
 export const BUYER_CANCEL_REASON = CANCEL_REASON.buyer;
 
@@ -83,10 +82,10 @@ export function listBuyerOrders(
       after?.orderedAt ?? null,
       after?.orderedAt ?? null,
       after?.id ?? null,
-      ORDERS_PAGE_SIZE + 1,
+      PAGE_SIZE + 1,
     ) as SummaryRow[];
 
-  const orders = rows.slice(0, ORDERS_PAGE_SIZE).map((row) => ({
+  const orders = rows.slice(0, PAGE_SIZE).map((row) => ({
     id: row.id,
     orderNo: row.order_no,
     groupId: row.group_id,
@@ -100,7 +99,7 @@ export function listBuyerOrders(
     payable: isPayable(row.status, row.payment_deadline, now),
   }));
   const last = orders.at(-1);
-  return { orders, next: rows.length > ORDERS_PAGE_SIZE && last ? { orderedAt: last.orderedAt, id: last.id } : null };
+  return { orders, next: rows.length > PAGE_SIZE && last ? { orderedAt: last.orderedAt, id: last.id } : null };
 }
 
 export type BuyerOrderDetail = {

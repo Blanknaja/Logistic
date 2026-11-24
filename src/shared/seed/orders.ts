@@ -6,7 +6,7 @@ import { payByCard } from "@/features/payment/server/payments";
 import { createSimulator } from "@/features/payment/server/simulator";
 import type { Db } from "@/shared/db";
 import { addAddress, addCartItem } from "@/shared/db/builders";
-import { PARCEL_STATUS, type ParcelStatus } from "@/shared/statuses";
+import { PARCEL_STATUS, PRODUCT_STATUS, type ParcelStatus } from "@/shared/statuses";
 
 const MINUTE = 60 * 1000;
 const DAY = 24 * 60 * MINUTE;
@@ -44,9 +44,9 @@ export async function addSampleOrders(db: Db, now: number): Promise<void> {
     db
       .prepare(
         `SELECT v.id FROM variants v JOIN products p ON p.id = v.product_id
-         WHERE p.shop_id = ? AND p.status = 'ขายอยู่' AND v.price IS NOT NULL AND v.stock >= 5 ORDER BY v.id LIMIT 4`,
+         WHERE p.shop_id = ? AND p.status = ? AND v.price IS NOT NULL AND v.stock >= 5 ORDER BY v.id LIMIT 4`,
       )
-      .all(seller.shop_id) as { id: number }[]
+      .all(seller.shop_id, PRODUCT_STATUS.onSale) as { id: number }[]
   ).map((row) => row.id);
   const sellerActor = { id: seller.id, isAdmin: false, shopId: seller.shop_id };
   const provider = createSimulator();

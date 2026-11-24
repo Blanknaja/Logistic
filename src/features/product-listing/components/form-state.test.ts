@@ -5,12 +5,11 @@ import {
   isDirty,
   moveItem,
   normalizeValues,
-  raceSave,
-  SAVE_TIMEOUT_MS,
   screenFiles,
   UPLOAD_TIMEOUT_MS,
   type ImageItem,
 } from "./form-state";
+import { ACTION_TIMEOUT_MS, settle } from "@/shared/ui/timeout";
 
 const MB = 1024 * 1024;
 const jpg = (name: string, size: number) => ({ name, type: "image/jpeg", size });
@@ -91,17 +90,17 @@ describe("PRD-014 รู้ว่ามีการแก้ที่ยัง�
 
 describe("PRD-Q02 บันทึกที่ไม่ได้ผลใน 10 วินาที", () => {
   test("PRD-Q02 ได้ผลทันเวลา ส่งผลต่อตามเดิม", async () => {
-    expect(await raceSave(Promise.resolve({ errors: {} }))).toEqual({ errors: {} });
+    expect(await settle(Promise.resolve({ errors: {} }))).toEqual({ errors: {} });
   });
 
   test("PRD-Q02 ไม่ได้ผลใน 10 วินาที ได้ผลว่าไม่สำเร็จ", async () => {
     vi.useFakeTimers();
-    const pending = raceSave(new Promise(() => {}));
-    await vi.advanceTimersByTimeAsync(SAVE_TIMEOUT_MS);
+    const pending = settle(new Promise(() => {}));
+    await vi.advanceTimersByTimeAsync(ACTION_TIMEOUT_MS);
     expect(await pending).toEqual({ failed: true });
   });
 
   test("PRD-Q02 เน็ตหลุดระหว่างบันทึก ได้ผลว่าไม่สำเร็จแทนหน้าผิดพลาด", async () => {
-    expect(await raceSave(Promise.reject(new TypeError("Failed to fetch")))).toEqual({ failed: true });
+    expect(await settle(Promise.reject(new TypeError("Failed to fetch")))).toEqual({ failed: true });
   });
 });

@@ -6,31 +6,19 @@ import browse from "@/features/browse/components/browse.module.css";
 import { ProductImage } from "@/features/browse/components/product-image";
 import type { StorefrontCursor, StorefrontPage } from "@/features/shop/server/storefront";
 import { formatBaht } from "@/shared/format";
+import { ACTION_TIMEOUT_MS, settle } from "@/shared/ui/timeout";
 import styles from "./shop.module.css";
-
-export const LOAD_MORE_TIMEOUT_MS = 10_000;
 
 export type ShownProducts = StorefrontPage & { failed: boolean };
 
 type Load = (after: StorefrontCursor) => Promise<StorefrontPage>;
 
 /** ต่อสินค้าชุดถัดไปท้ายรายการ ถ้าโหลดไม่สำเร็จหรือเกิน 10 วินาที คงรายการเดิมไว้ (SHP-011 SHP-013) */
-export async function showMore(shown: ShownProducts, load: Load, ms = LOAD_MORE_TIMEOUT_MS): Promise<ShownProducts> {
+export async function showMore(shown: ShownProducts, load: Load, ms = ACTION_TIMEOUT_MS): Promise<ShownProducts> {
   if (!shown.next) return shown;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    const page = await Promise.race([
-      load(shown.next),
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error("หมดเวลา")), ms);
-      }),
-    ]);
-    return { items: [...shown.items, ...page.items], next: page.next, failed: false };
-  } catch {
-    return { ...shown, failed: true };
-  } finally {
-    clearTimeout(timer);
-  }
+  const page = await settle(load(shown.next), ms);
+  if ("failed" in page) return { ...shown, failed: true };
+  return { items: [...shown.items, ...page.items], next: page.next, failed: false };
 }
 
 /** รายการสินค้าในหน้าร้าน แบบเดียวกับรายการสินค้าของ BRW-001 พร้อมปุ่ม "ดูเพิ่ม" */

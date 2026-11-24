@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { SubmitButton } from "./action-form";
+import { SubmitButton } from "@/shared/ui/action-form";
 
 export function LogoutButton() {
   const { pending } = useFormStatus();

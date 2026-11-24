@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { ACTION_FAILED, ACTION_TIMEOUT_MS } from "@/features/account/components/action-form";
+import { ACTION_FAILED } from "@/shared/ui/action-form";
+import { settle } from "@/shared/ui/timeout";
 import {
   changeQuantityAction,
   checkoutAction,
@@ -12,8 +13,7 @@ import {
 } from "@/features/cart/actions";
 import type { Cart, CartItem } from "@/features/cart/server/cart";
 import { formatBaht, formatNumber } from "@/shared/format";
-import { ErrorState } from "@/shared/ui/states";
-import { settle } from "./settle";
+import { LoadingTimeout } from "@/shared/ui/loading-timeout";
 import styles from "./cart.module.css";
 
 type Message = { itemId: number | null; text: string };
@@ -36,7 +36,7 @@ export function CartView({ cart }: { cart: Cart }) {
     setRetry(null);
     startTransition(async () => {
       const result = await settle(operation());
-      if (!result) setRetry(() => () => run(operation, itemId));
+      if ("failed" in result) setRetry(() => () => run(operation, itemId));
       else if (result.message) setMessage({ itemId, text: result.message });
       setVersion((v) => v + 1);
     });
@@ -278,12 +278,11 @@ export function ConfirmRemove({ onConfirm, onCancel }: { onConfirm: () => void; 
 
 /** ข้อมูลตะกร้าไม่มาใน 10 วินาที เปลี่ยนโครงสีเทาเป็นข้อความผิดพลาด (CRT-008 CRT-009) */
 export function CartLoading() {
-  const [timedOut, setTimedOut] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => setTimedOut(true), ACTION_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, []);
-  return timedOut ? <ErrorState title={ACTION_FAILED} /> : <CartSkeleton />;
+  return (
+    <LoadingTimeout title={ACTION_FAILED}>
+      <CartSkeleton />
+    </LoadingTimeout>
+  );
 }
 
 /** โครงสีเทาระหว่างโหลดตะกร้า ไม่มีข้อความตะกร้าว่าง ยอดรวม หรือปุ่มสั่งซื้อ (CRT-008) */

@@ -1,37 +1,10 @@
 "use client";
 
-import { unstable_rethrow } from "next/navigation";
 import { startTransition, useActionState, useEffect, useRef, type InputHTMLAttributes, type ReactNode } from "react";
-import styles from "./account.module.css";
+import { withTimeout, type Failed } from "./timeout";
+import styles from "./action-form.module.css";
 
-export const ACTION_TIMEOUT_MS = 10_000;
 export const ACTION_FAILED = "ทำรายการไม่สำเร็จ กรุณาลองใหม่";
-
-export type Failed = { failed: true };
-
-/** ห่อ server action ให้ได้ผล "ไม่สำเร็จ" เมื่อเน็ตหลุดหรือไม่ได้ผลใน 10 วินาที แทนการโยน error ทั้งหน้า (ACC-014) */
-export function withTimeout<S>(action: (formData: FormData) => Promise<S>, ms = ACTION_TIMEOUT_MS) {
-  return async (_previous: S | Failed, formData: FormData): Promise<S | Failed> => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const running = action(formData);
-    // ถ้าหมดเวลาไปก่อน ผลที่มาทีหลังไม่มีใครรอแล้ว
-    running.catch(() => {});
-    try {
-      return await Promise.race([
-        running,
-        new Promise<Failed>((resolve) => {
-          timer = setTimeout(() => resolve({ failed: true }), ms);
-        }),
-      ]);
-    } catch (error) {
-      // redirect() ของ server action มาในรูป error ต้องปล่อยให้ Next.js พาไปหน้าใหม่
-      unstable_rethrow(error);
-      return { failed: true };
-    } finally {
-      clearTimeout(timer);
-    }
-  };
-}
 
 export function SubmitButton({
   pending,

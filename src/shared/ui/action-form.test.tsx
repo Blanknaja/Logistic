@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { ACTION_FAILED, ACTION_TIMEOUT_MS, Field, SubmitButton, withTimeout } from "./action-form";
+import { ACTION_FAILED, Field, SubmitButton } from "@/shared/ui/action-form";
+import { ACTION_TIMEOUT_MS, withTimeout } from "@/shared/ui/timeout";
 
 afterEach(() => {
   vi.useRealTimers();

@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { LoadingTimeout } from "@/shared/ui/loading-timeout";
 import { RetryButton } from "@/shared/ui/retry-button";
 import { ErrorState, LoadingState } from "@/shared/ui/states";
-import { LIST_TIMEOUT_MS } from "./list-loading";
 
 export const FORM_LOAD_FAILED = "โหลดข้อมูลสินค้าไม่ได้ ลองใหม่อีกครั้ง";
 
@@ -27,10 +26,9 @@ export function FormLoadFailed({ onRetry }: { onRetry?: () => void }) {
 
 /** สัญลักษณ์กำลังโหลดแทนฟอร์ม เกิน 10 วินาทีถือว่าโหลดไม่ได้ (PRD-006) */
 export function FormLoading() {
-  const [timedOut, setTimedOut] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => setTimedOut(true), LIST_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, []);
-  return timedOut ? <FormLoadFailed /> : <LoadingState title="กำลังโหลดข้อมูลสินค้า" />;
+  return (
+    <LoadingTimeout failed={<FormLoadFailed />}>
+      <LoadingState title="กำลังโหลดข้อมูลสินค้า" />
+    </LoadingTimeout>
+  );
 }

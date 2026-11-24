@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useEffect, useRef, type ReactNode } from "react";
-import { withTimeout } from "@/features/account/components/action-form";
+import { withTimeout } from "@/shared/ui/timeout";
 import type { PayFormState } from "@/features/payment/actions";
 import styles from "./payment.module.css";
 

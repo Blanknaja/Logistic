@@ -6,13 +6,14 @@ import CheckoutError from "@/app/checkout/error";
 import Loading from "@/app/checkout/loading";
 import CheckoutPage from "@/app/checkout/page";
 import { createSession } from "@/features/account/server/sessions";
-import { PLACE_ORDER_FAILED, withTimeout } from "@/features/checkout/components/checkout-form";
+import { PLACE_ORDER_FAILED } from "@/features/checkout/components/checkout-form";
 import { placeOrderAction } from "@/features/checkout/place-order-actions";
 import { getCheckout } from "@/features/checkout/server/checkout";
 import type { Db } from "@/shared/db";
 import { addAccount, addAddress, addCartItem, addProduct, addShop, SAMPLE_ADDRESS } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
 import { SESSION_COOKIE } from "@/shared/session";
+import { withTimeout } from "@/shared/ui/timeout";
 
 const request = vi.hoisted(() => ({
   db: undefined as Db | undefined,

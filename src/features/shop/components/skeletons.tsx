@@ -1,5 +1,5 @@
 import browse from "@/features/browse/components/browse.module.css";
-import { LoadingTimeout } from "@/features/browse/components/loading-timeout";
+import { LoadingTimeout } from "@/shared/ui/loading-timeout";
 import styles from "./shop.module.css";
 
 // โครงหน้าระหว่างรอข้อมูล ครบ 10 วินาทีเปลี่ยนเป็น "โหลดข้อมูลไม่สำเร็จ" พร้อมปุ่ม "ลองใหม่" (SHP-013)

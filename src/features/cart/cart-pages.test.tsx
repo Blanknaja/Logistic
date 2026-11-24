@@ -16,13 +16,13 @@ import {
   selectItemsAction,
 } from "@/features/cart/actions";
 import { CartLine, CartSummary, ConfirmRemove } from "@/features/cart/components/cart-view";
-import { settle } from "@/features/cart/components/settle";
 import { getCart, type Cart } from "@/features/cart/server/cart";
 import type { Db } from "@/shared/db";
 import { addAccount, addCartItem, addProduct, addShop } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
 import { SiteHeader } from "@/shared/layout/site-header";
 import { SESSION_COOKIE } from "@/shared/session";
+import { settle } from "@/shared/ui/timeout";
 
 const request = vi.hoisted(() => ({
   db: undefined as Db | undefined,
@@ -230,7 +230,7 @@ describe("CRT-009 โหลดหรือบันทึกตะกร้า�
     expect(html).toContain("ทำรายการไม่สำเร็จ กรุณาลองใหม่");
     expect(html).toContain(">ลองใหม่</button>");
 
-    expect(await settle(Promise.reject(new Error("เน็ตหลุด")))).toBeNull();
+    expect(await settle(Promise.reject(new Error("เน็ตหลุด")))).toEqual({ failed: true });
     await settle(changeQuantityAction(items(cart)[0].id, "3"));
     expect(getCart(db, buyer).total).toBe(750);
   });
@@ -243,7 +243,7 @@ describe("CRT-009 โหลดหรือบันทึกตะกร้า�
     const waiting = settle(new Promise(() => {}));
     await vi.advanceTimersByTimeAsync(10_000);
 
-    expect(await waiting).toBeNull();
+    expect(await waiting).toEqual({ failed: true });
     expect((await page()).html).toContain('value="2"');
   });
 });

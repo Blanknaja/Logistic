@@ -1,4 +1,5 @@
 import { transaction, type Db } from "@/shared/db";
+import type { Checked } from "@/shared/result";
 import { PRODUCT_STATUS, SHOP_STATUS, type ShopStatus } from "@/shared/statuses";
 import { checkShopInput, logoType, SHOP_ERRORS, type ShopErrors, type ShopInput } from "./rules";
 
@@ -13,7 +14,7 @@ export type OpenShopResult =
   | { ok: false; errors: ShopErrors }
   | { ok: false; reason: "has-shop" | "admin" };
 
-export type UpdateShopResult = { ok: true } | { ok: false; errors: ShopErrors } | { ok: false; reason: "not-found" | "suspended" };
+export type UpdateShopResult = Checked<object, ShopErrors> | { ok: false; reason: "not-found" | "suspended" };
 
 /** ข้อมูลร้านทั้งหมดที่เจ้าของร้านเห็นในหน้าตั้งค่าร้าน */
 export type ShopSettings = ShopInput & { id: number; status: ShopStatus; logoUrl: string | null; updatedAt: string };

@@ -1,4 +1,4 @@
-import { LoadingTimeout } from "@/features/browse/components/loading-timeout";
+import { LoadingTimeout } from "@/shared/ui/loading-timeout";
 import { LOAD_FAILED, TrackingSkeleton } from "@/features/delivery/components/tracking-skeleton";
 
 export default function Loading() {

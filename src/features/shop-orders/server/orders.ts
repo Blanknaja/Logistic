@@ -1,9 +1,8 @@
 import type { Db } from "@/shared/db";
+import { PAGE_SIZE, pageCount } from "@/shared/paging";
 import { ORDER_STATUS, PAYMENT_STATUS, type OrderStatus, type ParcelStatus, type PaymentMethod } from "@/shared/statuses";
 
 // ORD อ่านอย่างเดียว ไฟล์นี้ไม่มีฟังก์ชันที่เขียนฐานข้อมูล (ORD-015)
-
-export const PAGE_SIZE = 20;
 
 export type StatusCounts = { all: number } & Record<OrderStatus, number>;
 
@@ -81,7 +80,7 @@ export function listShopOrders(db: Db, shopId: number, query: ListQuery): OrderL
       .n;
 
   const total = count(false);
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = pageCount(total);
   const page = Math.min(Math.max(1, query.page), totalPages);
   const items = db
     .prepare(

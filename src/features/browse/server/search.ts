@@ -1,6 +1,7 @@
-import { PAGE_SIZE, priceError, type BrowseParams, type Sort } from "@/features/browse/search-params";
+import { priceError, type BrowseParams, type Sort } from "@/features/browse/search-params";
 import type { Category } from "@/features/product-listing/server/categories";
 import type { Db } from "@/shared/db";
+import { PAGE_SIZE } from "@/shared/paging";
 import { PRODUCT_STATUS, SHOP_STATUS } from "@/shared/statuses";
 
 export type ProductCard = {

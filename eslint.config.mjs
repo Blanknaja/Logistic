@@ -18,7 +18,6 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
-    // รูปทั้งหมดเป็นไฟล์ในเครื่องหรือ SVG ของข้อมูลตัวอย่าง ซึ่ง next/image ไม่รับ SVG ถ้าไม่ตั้งค่าเพิ่ม
     rules: { "@next/next/no-img-element": "off" },
   },
   {

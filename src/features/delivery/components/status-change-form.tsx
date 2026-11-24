@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { startTransition, useActionState, useEffect, useRef } from "react";
-import { Field, SubmitButton, withTimeout, type Failed } from "@/features/account/components/action-form";
+import { Field, SubmitButton } from "@/shared/ui/action-form";
+import { withTimeout, type Failed } from "@/shared/ui/timeout";
 import type { StatusChangeProblem } from "@/features/delivery/server/parcel-status";
 import { changeParcelStatusAction } from "@/features/delivery/status-actions";
 import { PARCEL_STATUS, type ParcelStatus } from "@/shared/statuses";

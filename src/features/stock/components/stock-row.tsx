@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { startTransition, useActionState, useEffect, useRef, useState } from "react";
-import { withTimeout } from "@/features/account/components/action-form";
+import { withTimeout } from "@/shared/ui/timeout";
 import { saveStockAction } from "@/features/stock/actions";
 import { INVALID_STOCK_MESSAGE, stockLabel, STOCK_LABEL } from "@/features/stock/server/labels";
 import type { SaveStockResult, StockRow } from "@/features/stock/server/stock";

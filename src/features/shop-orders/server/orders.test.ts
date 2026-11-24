@@ -1,10 +1,10 @@
+import { PAGE_SIZE } from "@/shared/paging";
 import { beforeEach, describe, expect, test } from "vitest";
 import {
   countShopOrders,
   findOrderParcel,
   getShopOrder,
   listShopOrders,
-  PAGE_SIZE,
   shippingTarget,
   shopOrdersVersion,
   type ListQuery,

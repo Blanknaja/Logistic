@@ -1,3 +1,4 @@
+import { PAGE_SIZE } from "@/shared/paging";
 import { beforeEach, describe, expect, test } from "vitest";
 import type { Db } from "@/shared/db";
 import { addProduct, addShop } from "@/shared/db/builders";
@@ -5,7 +6,7 @@ import { createTestDb } from "@/shared/db/testing";
 import { PRODUCT_STATUS } from "@/shared/statuses";
 import { saveImageFile } from "./image-files";
 import { EMPTY_PRODUCT, MESSAGES, variantCombos, type ProductValues } from "./product-rules";
-import { countShopProducts, createProduct, listShopProducts, PAGE_SIZE } from "./products";
+import { countShopProducts, createProduct, listShopProducts } from "./products";
 
 let db: Db;
 let shopId: number;

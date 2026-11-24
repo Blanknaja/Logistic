@@ -1,10 +1,7 @@
-import { unstable_rethrow } from "next/navigation";
 import { IMAGE_TYPES, LIMITS, MESSAGES, variantCombos, type ProductValues } from "@/features/product-listing/server/product-rules";
 
 /** รูปที่ส่งไม่เสร็จใน 30 วินาทีถือว่าไม่สำเร็จ (PRD-003) */
 export const UPLOAD_TIMEOUT_MS = 30_000;
-/** บันทึกที่ไม่ได้ผลใน 10 วินาทีถือว่าไม่สำเร็จ (PRD-Q02) */
-export const SAVE_TIMEOUT_MS = 10_000;
 
 /** รูปหนึ่งรูปในหน้าฟอร์ม url มีค่าเมื่อส่งขึ้นเซิร์ฟเวอร์เสร็จแล้ว */
 export type ImageItem = {
@@ -54,25 +51,3 @@ export function isDirty(saved: ProductValues, current: ProductValues, images: Im
   return !canSaveImages(images) || JSON.stringify(saved) !== JSON.stringify(current);
 }
 
-export type SaveFailed = { failed: true };
-
-/** รอผลการบันทึกไม่เกิน 10 วินาที เน็ตหลุดหรือไม่ได้ผลทันเวลาได้ { failed: true } */
-export async function raceSave<T>(running: Promise<T>, ms = SAVE_TIMEOUT_MS): Promise<T | SaveFailed> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  // ถ้าหมดเวลาไปก่อน ผลที่มาทีหลังไม่มีใครรอแล้ว
-  running.catch(() => {});
-  try {
-    return await Promise.race([
-      running,
-      new Promise<SaveFailed>((resolve) => {
-        timer = setTimeout(() => resolve({ failed: true }), ms);
-      }),
-    ]);
-  } catch (error) {
-    // redirect() ของ server action มาในรูป error ต้องปล่อยให้ Next.js พาไปหน้าใหม่
-    unstable_rethrow(error);
-    return { failed: true };
-  } finally {
-    clearTimeout(timer);
-  }
-}

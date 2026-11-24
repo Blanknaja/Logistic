@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vitest";
-import { LOADING_TIMEOUT_MS, LoadingTimeout } from "@/features/browse/components/loading-timeout";
+import { LOADING_TIMEOUT_MS, LoadingTimeout } from "@/shared/ui/loading-timeout";
 import { ResultsSkeleton } from "@/features/browse/components/skeletons";
 
 describe("BRW-013 หน้าผิดพลาด", () => {

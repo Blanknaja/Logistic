@@ -14,7 +14,8 @@ import {
   type SaveIntent,
 } from "@/features/product-listing/server/product-rules";
 import { PRODUCT_STATUS } from "@/shared/statuses";
-import { canSaveImages, isDirty, normalizeValues, raceSave, type SaveFailed } from "./form-state";
+import { settle, type Failed } from "@/shared/ui/timeout";
+import { canSaveImages, isDirty, normalizeValues } from "./form-state";
 import { ImagePicker, savedImage } from "./image-picker";
 import { LeaveDialog } from "./leave-dialog";
 import { OptionEditor, type EditableOption } from "./option-editor";
@@ -113,8 +114,8 @@ export function ProductForm({
   const imagesReady = canSaveImages(images);
   useLeaveGuard(isDirty(saved, values, images), setLeaveTo);
 
-  const [state, dispatch, pending] = useActionState<SaveResult | SaveFailed, Payload>(
-    (_previous, payload) => raceSave(save(payload.intent, payload.values)),
+  const [state, dispatch, pending] = useActionState<SaveResult | Failed, Payload>(
+    (_previous, payload) => settle(save(payload.intent, payload.values)),
     { errors: {} },
   );
   // pending เป็น true หลัง React วาดใหม่ ส่วนนี้กันการกดซ้ำที่มาก่อนนั้น

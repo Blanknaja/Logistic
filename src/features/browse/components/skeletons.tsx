@@ -1,4 +1,4 @@
-import { PAGE_SIZE } from "@/features/browse/search-params";
+import { PAGE_SIZE } from "@/shared/paging";
 import styles from "./browse.module.css";
 
 // โครงสีเทาในตำแหน่งที่ข้อมูลจะมาแสดง (BRW-012)

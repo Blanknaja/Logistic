@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useState, useTransition, type FormEvent } from "react";
-import { ACTION_FAILED } from "@/features/account/components/action-form";
+import { ACTION_FAILED } from "@/shared/ui/action-form";
+import { settle } from "@/shared/ui/timeout";
 import type { AddToCart, AddToCartResult } from "@/features/browse/add-to-cart";
 import type { ProductDetail } from "@/features/browse/server/product-detail";
-import { settle } from "@/features/cart/components/settle";
 import { formatBaht } from "@/shared/format";
 import {
   blockedReason,
@@ -50,9 +50,10 @@ export function AddToCartForm({ product, signedIn, isOwnShop, loginHref, addToCa
       return;
     }
     if (!variant) return;
-    startTransition(async () =>
-      setResult((await settle(addToCart({ variantId: variant.id, quantity }))) ?? { ok: false, message: ACTION_FAILED }),
-    );
+    startTransition(async () => {
+      const result = await settle(addToCart({ variantId: variant.id, quantity }));
+      setResult("failed" in result ? { ok: false, message: ACTION_FAILED } : result);
+    });
   }
 
   return (

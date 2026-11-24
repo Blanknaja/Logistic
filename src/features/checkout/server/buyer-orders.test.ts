@@ -1,3 +1,4 @@
+import { PAGE_SIZE } from "@/shared/paging";
 import { beforeEach, describe, expect, test } from "vitest";
 import type { Db } from "@/shared/db";
 import { addAccount, addOrder, addParcel, addPayment, addProduct, addShop } from "@/shared/db/builders";
@@ -9,7 +10,6 @@ import {
   cancelOrderGroup,
   getBuyerOrder,
   listBuyerOrders,
-  ORDERS_PAGE_SIZE,
   parseOrderStatus,
 } from "./buyer-orders";
 
@@ -67,7 +67,7 @@ describe("CHK-009 รายการคำสั่งซื้อของผ�
     addOrder(db, { buyerAccountId: other.id, items: [{ variantId: product.variantIds[0] }] });
 
     const first = listBuyerOrders(db, somchai.id);
-    expect(first.orders).toHaveLength(ORDERS_PAGE_SIZE);
+    expect(first.orders).toHaveLength(PAGE_SIZE);
     expect(first.orders[0].orderedAt).toBe(new Date(Date.UTC(2026, 10, 1, 0, 24)).toISOString());
     expect(first.next).not.toBeNull();
 

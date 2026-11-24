@@ -1,7 +1,7 @@
 import { abandonPendingPayments } from "@/features/payment/server/payments";
 import { releaseCancelledOrderStock } from "@/features/stock/server/reservation";
 import { transaction, type Db } from "@/shared/db";
-import { ORDER_STATUS, type OrderStatus } from "@/shared/statuses";
+import { ORDER_STATUS, PARCEL_STATUS, type OrderStatus } from "@/shared/statuses";
 
 /** เวลาจ่ายเงินนับจากกดสั่งซื้อ (CHK-005 CHK-008) */
 export const PAYMENT_WINDOW_MS = 30 * 60 * 1000;
@@ -13,7 +13,7 @@ export const DEADLINE_CHECK_INTERVAL_MS = 15 * 1000;
 export const CANCEL_REASON = {
   buyer: "ผู้ซื้อยกเลิก",
   paymentTimeout: "หมดเวลาจ่ายเงิน",
-  deliveryFailed: "ส่งไม่สำเร็จ",
+  deliveryFailed: PARCEL_STATUS.failed,
 } as const;
 
 export const PAYMENT_EXPIRED_MESSAGE = "คำสั่งซื้อนี้หมดเวลาจ่ายเงินแล้ว";

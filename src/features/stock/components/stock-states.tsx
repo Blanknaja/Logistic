@@ -1,12 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { LoadingTimeout } from "@/shared/ui/loading-timeout";
 import { RetryButton } from "@/shared/ui/retry-button";
 import { ErrorState, LoadingState } from "@/shared/ui/states";
-
-/** ข้อมูลไม่มาภายใน 10 วินาทีถือว่าโหลดไม่สำเร็จ เหมือนหน้าเลือกดูสินค้า */
-export const LOADING_TIMEOUT_MS = 10_000;
 
 export function StockErrorState({
   title,
@@ -44,10 +41,9 @@ export function StockLoadingState({
   failedTitle: string;
   backToStock?: boolean;
 }) {
-  const [timedOut, setTimedOut] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => setTimedOut(true), LOADING_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, []);
-  return timedOut ? <StockErrorState title={failedTitle} backToStock={backToStock} /> : <LoadingState title={title} />;
+  return (
+    <LoadingTimeout failed={<StockErrorState title={failedTitle} backToStock={backToStock} />}>
+      <LoadingState title={title} />
+    </LoadingTimeout>
+  );
 }

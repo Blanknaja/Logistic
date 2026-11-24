@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { saveProfileAction } from "@/features/account/actions";
-import { ActionForm, Field } from "./action-form";
+import { ActionForm, Field } from "@/shared/ui/action-form";
 
 export function ProfileForm({ displayName, phone }: { displayName: string; phone: string }) {
   return (

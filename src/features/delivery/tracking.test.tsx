@@ -11,7 +11,7 @@ import ParcelNotFound from "@/app/track/[trackingNo]/not-found";
 import TrackingError from "@/app/track/error";
 import TrackSearchPage from "@/app/track/page";
 import { createSession } from "@/features/account/server/sessions";
-import { LOADING_TIMEOUT_MS } from "@/features/browse/components/loading-timeout";
+import { LOADING_TIMEOUT_MS } from "@/shared/ui/loading-timeout";
 import { SAVE_FAILED } from "@/features/delivery/components/confirm-receipt";
 import { nav } from "@/features/delivery/nav";
 import { confirmReceiptAction } from "@/features/delivery/receipt-actions";

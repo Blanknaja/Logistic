@@ -12,7 +12,7 @@ import NewProductPage from "@/app/seller/products/new/page";
 import { createSession } from "@/features/account/server/sessions";
 import { createProductAction } from "@/features/product-listing/actions";
 import { LeaveDialog } from "@/features/product-listing/components/leave-dialog";
-import { LIST_TIMEOUT_MS } from "@/features/product-listing/components/list-loading";
+import { LOADING_TIMEOUT_MS } from "@/shared/ui/loading-timeout";
 import { ProductForm } from "@/features/product-listing/components/product-form";
 import { listCategories } from "@/features/product-listing/server/categories";
 import { saveImageFile } from "@/features/product-listing/server/image-files";
@@ -122,7 +122,7 @@ describe("PRD-001 หน้ารายการสินค้าของร�
     const html = renderToStaticMarkup(<SellerProductsLoading />);
     expect(html).toContain('role="status"');
     expect(html).toContain("กำลังโหลดรายการสินค้า");
-    expect(LIST_TIMEOUT_MS).toBe(10_000);
+    expect(LOADING_TIMEOUT_MS).toBe(10_000);
   });
 
   test("PRD-001 เห็น 20 ชิ้นแรก ตัวกรองบอกจำนวนแต่ละสถานะ ช่วงราคา และปุ่มไปหน้าถัดไป", async () => {
@@ -466,6 +466,6 @@ describe("PRD-Q01 ความเร็วของหน้าฟอร์ม�
   test("PRD-Q01 หน้ารายการที่ช้าเกิน 10 วินาทีขึ้นหน้าผิดพลาดตาม PRD-001 ไม่ใช่หน้าว่าง", () => {
     const html = renderToStaticMarkup(<SellerProductsLoading />);
     expect(html).not.toContain("ร้านของคุณยังไม่มีสินค้า");
-    expect(LIST_TIMEOUT_MS).toBe(10_000);
+    expect(LOADING_TIMEOUT_MS).toBe(10_000);
   });
 });

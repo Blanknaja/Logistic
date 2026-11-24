@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ActionForm, Field } from "@/features/account/components/action-form";
+import { ActionForm, Field } from "@/shared/ui/action-form";
 import { saveAddressAction } from "@/features/checkout/address-actions";
 import type { ShippingAddress } from "@/features/checkout/server/addresses";
 import { PROVINCES } from "@/shared/provinces";

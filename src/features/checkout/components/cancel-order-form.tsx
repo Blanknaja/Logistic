@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ActionForm } from "@/features/account/components/action-form";
+import { ActionForm } from "@/shared/ui/action-form";
 import { cancelOrderAction } from "@/features/checkout/buyer-order-actions";
 
 /** ขั้นยืนยันการยกเลิก บอกว่าจะยกเลิกกี่คำสั่งซื้อจากร้านไหนบ้าง (CHK-011) */

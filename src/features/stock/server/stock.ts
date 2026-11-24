@@ -1,8 +1,8 @@
 import { transaction, type Db } from "@/shared/db";
+import { PAGE_SIZE, pageCount } from "@/shared/paging";
 import { ORDER_STATUS, PRODUCT_STATUS, STOCK_CHANGE_REASON, type StockChangeReason } from "@/shared/statuses";
 import { LOW_STOCK_MAX, stockLabel, type StockLabel } from "./labels";
 
-export const PAGE_SIZE = 20;
 export const MAX_STOCK = 999_999;
 
 export type StockFilter = "all" | "low" | "out";
@@ -81,9 +81,9 @@ function toRow(row: RowRecord): StockRow {
 }
 
 function pageOf(requested: number, total: number) {
-  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const page = Number.isSafeInteger(requested) ? Math.min(Math.max(requested, 1), pageCount) : 1;
-  return { page, pageCount, offset: (page - 1) * PAGE_SIZE };
+  const pages = pageCount(total);
+  const page = Number.isSafeInteger(requested) ? Math.min(Math.max(requested, 1), pages) : 1;
+  return { page, pageCount: pages, offset: (page - 1) * PAGE_SIZE };
 }
 
 /** ค่าตัวกรองจากที่อยู่หน้าเว็บ ค่าที่ไม่รู้จักถือเป็น "ทั้งหมด" */

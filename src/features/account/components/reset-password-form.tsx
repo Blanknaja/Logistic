@@ -1,7 +1,7 @@
 "use client";
 
 import { resetPasswordAction } from "@/features/account/actions";
-import { ActionForm, Field } from "./action-form";
+import { ActionForm, Field } from "@/shared/ui/action-form";
 
 export function ResetPasswordForm({ token }: { token: string }) {
   return (

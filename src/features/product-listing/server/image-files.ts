@@ -1,20 +1,10 @@
 import { randomUUID } from "node:crypto";
 import type { Db } from "@/shared/db";
+import { detectImageType, type ImageType } from "@/shared/rules";
 import { LIMITS, MESSAGES } from "./product-rules";
 
 /** ที่อยู่รูปที่ส่งขึ้นมา เปิดดูได้ที่ src/app/product-images/[key] */
 export const IMAGE_URL_PREFIX = "/product-images/";
-
-type ImageType = "image/jpeg" | "image/png";
-
-const startsWith = (bytes: Uint8Array, signature: number[]) => signature.every((byte, i) => bytes[i] === byte);
-
-/** ดูชนิดรูปจากไบต์ต้นไฟล์ ไม่เชื่อชื่อไฟล์หรือชนิดที่เบราว์เซอร์บอก */
-function detectImageType(bytes: Uint8Array): ImageType | null {
-  if (startsWith(bytes, [0xff, 0xd8, 0xff])) return "image/jpeg";
-  if (startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return "image/png";
-  return null;
-}
 
 /** รูปที่ส่งขึ้นมาแต่ไม่มีที่ใดใช้ เก็บไว้เท่านี้ เผื่อหน้าฟอร์มที่ยังเปิดอยู่กดบันทึกทีหลัง (PRD-014) */
 export const UNUSED_IMAGE_KEEP_MS = 24 * 60 * 60 * 1000;

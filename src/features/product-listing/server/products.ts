@@ -1,4 +1,6 @@
 import { transaction, type Db } from "@/shared/db";
+import { PAGE_SIZE, pageCount } from "@/shared/paging";
+import type { Checked } from "@/shared/result";
 import { PRODUCT_STATUS, type ProductStatus } from "@/shared/statuses";
 import { isShopUpload } from "./image-files";
 import {
@@ -10,9 +12,6 @@ import {
   type ProductValues,
   type SaveIntent,
 } from "./product-rules";
-
-/** หน้ารายการสินค้าของร้านแสดงหน้าละ 20 ชิ้น (PRD-001) */
-export const PAGE_SIZE = 20;
 
 /** สถานะที่ผู้ขายเห็นในหน้ารายการสินค้าของร้าน สินค้าที่ลบแล้วไม่แสดง */
 export type ListedStatus = Exclude<ProductStatus, typeof PRODUCT_STATUS.deleted>;
@@ -77,7 +76,7 @@ export function createProduct(
   intent: SaveIntent,
   now: Date = new Date(),
   createToken: string | null = null,
-): { ok: true; productId: number } | { ok: false; errors: ProductErrors } {
+): Checked<{ productId: number }, ProductErrors> {
   return transaction(db, () => {
     const existing = db.prepare("SELECT id FROM products WHERE shop_id = ? AND create_token = ?").get(shopId, createToken);
     if (existing) return { ok: true as const, productId: Number(existing.id) };
@@ -292,9 +291,9 @@ export function listShopProducts(
   const conditions = where.join(" AND ");
 
   const total = Number(db.prepare(`SELECT count(*) AS n FROM products p WHERE ${conditions}`).get(...params)?.n);
-  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const pages = pageCount(total);
   const requested = Number.isSafeInteger(filter.page) ? (filter.page as number) : 1;
-  const page = Math.min(Math.max(1, requested), pageCount);
+  const page = Math.min(Math.max(1, requested), pages);
 
   const rows = db
     .prepare(
@@ -332,6 +331,6 @@ export function listShopProducts(
     })),
     total,
     page,
-    pageCount,
+    pageCount: pages,
   };
 }

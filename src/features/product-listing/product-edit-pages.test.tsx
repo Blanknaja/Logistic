@@ -9,7 +9,6 @@ import EditProductPage from "@/app/seller/products/[productId]/page";
 import SellerProductsPage from "@/app/seller/products/(list)/page";
 import { createSession } from "@/features/account/server/sessions";
 import { createProductAction, deleteProductAction, setHiddenAction, updateProductAction } from "@/features/product-listing/actions";
-import { raceSave, SAVE_TIMEOUT_MS } from "@/features/product-listing/components/form-state";
 import { ConflictAlert } from "@/features/product-listing/components/product-form";
 import { saveImageFile } from "@/features/product-listing/server/image-files";
 import type { ProductValues } from "@/features/product-listing/server/product-rules";
@@ -19,6 +18,7 @@ import { addAccount, addProduct, addShop } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
 import { PRODUCT_STATUS, type ProductStatus } from "@/shared/statuses";
 import { SESSION_COOKIE } from "@/shared/session";
+import { ACTION_TIMEOUT_MS, settle } from "@/shared/ui/timeout";
 
 const request = vi.hoisted(() => ({
   db: undefined as Db | undefined,
@@ -239,8 +239,8 @@ describe("PRD-007 บันทึกการแก้ไขสินค้า",
   test("PRD-007 ยืนยันการบันทึกไม่ได้ใน 10 วินาที ได้ผลว่าไม่สำเร็จ ฟอร์มจึงขึ้นข้อความและให้บันทึกใหม่ได้", async () => {
     vi.useFakeTimers();
     try {
-      const pending = raceSave(new Promise(() => {}));
-      await vi.advanceTimersByTimeAsync(SAVE_TIMEOUT_MS);
+      const pending = settle(new Promise(() => {}));
+      await vi.advanceTimersByTimeAsync(ACTION_TIMEOUT_MS);
       expect(await pending).toEqual({ failed: true });
     } finally {
       vi.useRealTimers();

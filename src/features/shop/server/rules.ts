@@ -1,4 +1,5 @@
 import { PROVINCES } from "@/shared/provinces";
+import { detectImageType, isPhone } from "@/shared/rules";
 
 // กติกาของข้อมูลร้าน (SHP-003 SHP-008) ไม่แตะฐานข้อมูล หน้าเว็บจึงใช้ค่าคงที่ในไฟล์นี้ได้ด้วย
 
@@ -61,7 +62,7 @@ export function checkShopInput(input: ShopInput): { value: ShopInput; errors: Sh
   if (!between(value.name, 3, 30)) errors.name = SHOP_ERRORS.name;
   if (length(value.description) > 500) errors.description = SHOP_ERRORS.description;
   if (!between(value.senderName, 2, 50)) errors.senderName = SHOP_ERRORS.senderName;
-  if (!/^0\d{9}$/.test(value.phone)) errors.phone = SHOP_ERRORS.phone;
+  if (!isPhone(value.phone)) errors.phone = SHOP_ERRORS.phone;
   if (!between(value.address, 5, 200)) errors.address = SHOP_ERRORS.address;
   if (!between(value.subdistrict, 1, 50)) errors.subdistrict = SHOP_ERRORS.subdistrict;
   if (!between(value.district, 1, 50)) errors.district = SHOP_ERRORS.district;
@@ -73,10 +74,7 @@ export function checkShopInput(input: ShopInput): { value: ShopInput; errors: Sh
 /** ชนิดของรูปจากไบต์แรกของไฟล์ ไม่เชื่อชนิดที่เบราว์เซอร์บอก null ถ้าไม่ใช่ JPG หรือ PNG หรือใหญ่เกิน 2 MB */
 export function logoType(bytes: Uint8Array): LogoType | null {
   if (bytes.length === 0 || bytes.length > LOGO_MAX_BYTES) return null;
-  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
-  const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
-  if (png.every((byte, i) => bytes[i] === byte)) return "image/png";
-  return null;
+  return detectImageType(bytes);
 }
 
 /** ตัวอักษรตัวแรกของชื่อร้าน ใช้แทนโลโก้ของร้านที่ยังไม่มีโลโก้ (SHP-008) */

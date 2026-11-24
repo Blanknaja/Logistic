@@ -1,3 +1,4 @@
+import type { Checked } from "@/shared/result";
 import type { CardInput } from "./provider";
 
 export type CardFields = { number: string; name: string; expiry: string; securityCode: string };
@@ -14,7 +15,7 @@ function passesLuhn(digits: string): boolean {
 }
 
 /** ตรวจแบบกรอกบัตรก่อนส่งให้ผู้ให้บริการ (PAY-003) */
-export function validateCard(fields: CardFields, now: Date): { ok: true; card: CardInput } | { ok: false; errors: CardErrors } {
+export function validateCard(fields: CardFields, now: Date): Checked<{ card: CardInput }, CardErrors> {
   const errors: CardErrors = {};
   const number = fields.number.replace(/[\s-]/g, "");
   if (!number) errors.number = "กรุณากรอกเลขบัตร";

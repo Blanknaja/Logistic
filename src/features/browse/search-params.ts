@@ -2,7 +2,6 @@ import { formatNumber } from "@/shared/format";
 
 // ค่าค้นหาทั้งหมดอยู่ในที่อยู่หน้าเว็บ (BRW-006) ไฟล์นี้ใช้ทั้งฝั่งเซิร์ฟเวอร์และในเบราว์เซอร์
 
-export const PAGE_SIZE = 20;
 export const MAX_QUERY_LENGTH = 100;
 export const MAX_PRICE = 1_000_000;
 

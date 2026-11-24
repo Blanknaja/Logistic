@@ -1,9 +1,8 @@
 import type { ProductCard } from "@/features/browse/server/search";
 import type { Db } from "@/shared/db";
+import { PAGE_SIZE } from "@/shared/paging";
 import { PRODUCT_STATUS, SHOP_STATUS, type ShopStatus } from "@/shared/statuses";
 import { countShopProducts } from "./shops";
-
-export const STOREFRONT_PAGE_SIZE = 20;
 
 /**
  * ข้อมูลร้านที่ทุกคนเห็นในหน้าร้าน (SHP-011)
@@ -69,16 +68,16 @@ export function listStorefrontProducts(db: Db, shopId: number, after: Storefront
       after?.publishedAt ?? null,
       after?.publishedAt ?? null,
       after?.id ?? null,
-      STOREFRONT_PAGE_SIZE + 1,
+      PAGE_SIZE + 1,
     ) as { id: number; name: string; published_at: string; price: number; stock: number; cover_url: string | null }[];
 
-  const items = rows.slice(0, STOREFRONT_PAGE_SIZE).map((row) => ({
+  const items = rows.slice(0, PAGE_SIZE).map((row) => ({
     id: row.id,
     name: row.name,
     price: row.price,
     coverUrl: row.cover_url,
     soldOut: row.stock <= 0,
   }));
-  const last = rows[STOREFRONT_PAGE_SIZE - 1];
-  return { items, next: rows.length > STOREFRONT_PAGE_SIZE ? { publishedAt: last.published_at, id: last.id } : null };
+  const last = rows[PAGE_SIZE - 1];
+  return { items, next: rows.length > PAGE_SIZE ? { publishedAt: last.published_at, id: last.id } : null };
 }

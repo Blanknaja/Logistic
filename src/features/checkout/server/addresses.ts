@@ -1,5 +1,7 @@
 import { transaction, type Db } from "@/shared/db";
 import { PROVINCES } from "@/shared/provinces";
+import type { Checked } from "@/shared/result";
+import { isPhone } from "@/shared/rules";
 
 export const MAX_ADDRESSES = 10;
 export const ADDRESS_LIMIT = "มีที่อยู่ได้ไม่เกิน 10 แห่ง กรุณาลบที่อยู่ที่ไม่ใช้ก่อน";
@@ -20,7 +22,7 @@ export type AddressErrors = Partial<Record<keyof AddressInput | "form", string>>
 
 export type ShippingAddress = AddressInput & { id: number; isDefault: boolean };
 
-export type SaveResult = { ok: true; id: number } | { ok: false; errors: AddressErrors };
+export type SaveResult = Checked<{ id: number }, AddressErrors>;
 
 type Row = {
   id: number;
@@ -96,7 +98,7 @@ function clean(input: AddressInput): AddressInput {
 function validate(a: AddressInput): AddressErrors | null {
   const errors: AddressErrors = {
     recipientName: textError(a.recipientName, "ชื่อผู้รับ", 100),
-    phone: /^0\d{9}$/.test(a.phone) ? undefined : "เบอร์โทรต้องเป็นตัวเลข 10 หลัก ขึ้นต้นด้วย 0",
+    phone: isPhone(a.phone) ? undefined : "เบอร์โทรต้องเป็นตัวเลข 10 หลัก ขึ้นต้นด้วย 0",
     address: textError(a.address, "ที่อยู่", 200),
     subdistrict: textError(a.subdistrict, "ตำบลหรือแขวง", 100),
     district: textError(a.district, "อำเภอหรือเขต", 100),

@@ -13,7 +13,7 @@ import SellerOrdersPage from "@/app/seller/orders/page";
 import { createSession } from "@/features/account/server/sessions";
 import * as actions from "@/features/shop-orders/actions";
 import { OrderDetailView } from "@/features/shop-orders/components/order-detail";
-import { LOADING_TIMEOUT_MS } from "@/features/shop-orders/components/orders-loading";
+import { LOADING_TIMEOUT_MS } from "@/shared/ui/loading-timeout";
 import { checkForUpdates, POLL_INTERVAL_MS, StaleNotice } from "@/features/shop-orders/components/live-updates";
 import { getShopOrder, shopOrdersVersion } from "@/features/shop-orders/server/orders";
 import type { Db } from "@/shared/db";

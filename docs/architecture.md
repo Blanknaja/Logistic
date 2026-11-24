@@ -32,14 +32,20 @@ src/
     nav.ts                ลิงก์ของ feature นี้ในแถบนำทางและเมนูหลังบ้าน
     server/               กฎของธุรกิจ ไม่รู้จักหน้าเว็บ (lint ห้าม import next และ react)
     components/           component ที่ใช้เฉพาะ feature นี้
-    actions.ts            server action ของ feature นี้ ("use server")
+    actions.ts            server action ของ feature นี้ ("use server") แยกเป็น <เรื่อง>-actions.ts ได้ เช่น checkout/address-actions.ts
   shared/
     db/                   เปิดฐานข้อมูล transaction migration และตัวช่วยของ test
     statuses.ts           คำสถานะทุกคำของชุด 1 ใช้จากไฟล์นี้ ห้ามพิมพ์เอง
     provinces.ts          77 จังหวัด ใช้ทั้งที่อยู่ของร้านและที่อยู่จัดส่ง
-    format.ts             formatBaht formatDate formatDateTime formatNumber
+    format.ts             formatBaht formatDate formatDateTime formatTimeOrDateTime formatNumber
     session.ts            getCurrentAccount() requireAccount()
+    rules.ts              กฎตรวจที่หลาย feature ใช้ร่วมกัน isPhone detectImageType
+    paging.ts             PAGE_SIZE (20) และ pageCount() ของทุกรายการที่แบ่งหน้า
+    result.ts             Checked<ค่า, ข้อผิดพลาด> ผล { ok: true } หรือ { ok: false, errors } ของงานที่ตรวจข้อมูลที่กรอก
     ui/states.tsx         EmptyState LoadingState ErrorState NotFoundState
+    ui/action-form.tsx    ActionForm Field SubmitButton ACTION_FAILED ฟอร์มที่ส่งไป server action
+    ui/timeout.ts         settle() withTimeout() ACTION_TIMEOUT_MS รอผล server action ไม่เกิน 10 วินาที
+    ui/loading-timeout.tsx LoadingTimeout หน้ากำลังโหลดที่เกิน 10 วินาทีกลายเป็นหน้าผิดพลาด
     layout/               แถบนำทางด้านบน และ SellerMenu ของหลังบ้าน
     nav/                  ตัวรวมลิงก์จาก nav.ts ของทุก feature
     seed/                 ข้อมูลตัวอย่าง
@@ -74,7 +80,7 @@ feature ทั้ง 10: `account` `shop` `product-listing` `stock` `browse` `ca
 
 `src/app/seller/layout.tsx` ให้ ticket ของ shop สร้างที่เดียว และใช้ `<SellerMenu shopId={...} />` ในนั้น
 
-หน้าใน `/seller/...` เริ่มด้วย `const viewer = await requireShop("/seller/stock")` จาก `@/features/shop/require-shop` แทน `requireAccount` จะได้ `viewer.shopId` ที่ไม่เป็น null ยังไม่เข้าสู่ระบบถูกพาไปหน้าเข้าสู่ระบบแล้วกลับมาหน้าเดิม ยังไม่มีร้านถูกพาไปหน้าเปิดร้าน (SHP-001) layout พาไปหน้าเปิดร้านให้ด้วย แต่ไม่รู้ที่อยู่ของหน้า จึงไม่พาไปหน้าเข้าสู่ระบบแทนหน้า ข้อมูลที่ไม่มีหรือเป็นของร้านอื่นให้เรียก `notFound()` จะได้หน้า "ไม่พบหน้านี้" ของหลังบ้าน
+หน้าใน `/seller/...` เริ่มด้วย `const viewer = await requireShop("/seller/stock")` จาก `@/features/shop/require-shop` แทน `requireAccount` จะได้ `viewer.shopId` ที่ไม่เป็น null server action ของหลังบ้านใช้ `requireShopInAction(back)` จากไฟล์เดียวกัน ซึ่งพาแท็บที่ออกจากระบบไปแล้วไปหน้าเข้าสู่ระบบพร้อมข้อความ "กรุณาเข้าสู่ระบบอีกครั้ง" ยังไม่เข้าสู่ระบบถูกพาไปหน้าเข้าสู่ระบบแล้วกลับมาหน้าเดิม ยังไม่มีร้านถูกพาไปหน้าเปิดร้าน (SHP-001) layout พาไปหน้าเปิดร้านให้ด้วย แต่ไม่รู้ที่อยู่ของหน้า จึงไม่พาไปหน้าเข้าสู่ระบบแทนหน้า ข้อมูลที่ไม่มีหรือเป็นของร้านอื่นให้เรียก `notFound()` จะได้หน้า "ไม่พบหน้านี้" ของหลังบ้าน
 
 ## เพิ่มลิงก์ในแถบนำทางหรือเมนูหลังบ้าน
 
@@ -114,9 +120,9 @@ export default async function CartPage() {
 ```
 
 - ทุกหน้าเรนเดอร์ใหม่ทุกครั้งที่มีคนเปิด (ตั้งไว้ที่ `src/app/layout.tsx`) ไม่ต้องตั้ง cache เอง
-- ฟอร์มส่งไปที่ server action ใน `src/features/<feature>/actions.ts` แล้ว action เรียกฟังก์ชันใน `server/`
+- ฟอร์มส่งไปที่ server action ใน `src/features/<feature>/actions.ts` หรือ `<เรื่อง>-actions.ts` ของ feature นั้น แล้ว action เรียกฟังก์ชันใน `server/` ฟอร์มที่ต้องรอผลใช้ `ActionForm` หรือ `withTimeout` จาก `src/shared/ui/` เพื่อให้ได้ "ไม่สำเร็จ" เมื่อเกิน 10 วินาที
 - ข้อมูลไม่มีหรือเป็นของคนอื่น ให้เรียก `notFound()` จาก `next/navigation` ทั้งสองกรณี จะได้หน้า "ไม่พบ" แบบเดียวกัน
-- หน้ากำลังโหลด ใช้ `loading.tsx` ที่คืน `<LoadingState />` หรือ `<Suspense fallback={<LoadingState />}>`
+- หน้ากำลังโหลด ใช้ `loading.tsx` ที่คืน `<LoadingState />` หรือ `<Suspense fallback={<LoadingState />}>` ถ้า requirement บอกว่าเกิน 10 วินาทีถือว่าโหลดไม่สำเร็จ ห่อด้วย `<LoadingTimeout>`
 - หน้าผิดพลาด ใช้ `<ErrorState />` ปุ่ม "ลองใหม่" โหลดข้อมูลหน้าเดิมใหม่โดยคงที่อยู่หน้าเว็บไว้
 - หน้าและ layout ฝั่งเซิร์ฟเวอร์ import ได้เฉพาะ component จากไฟล์ที่ขึ้นต้นด้วย `"use client"` ค่าอื่นเช่นข้อความหรือค่าคงที่ที่ import มาจะไม่มีค่าจริงฝั่งเซิร์ฟเวอร์ ให้ย้ายค่าไปไว้ในไฟล์ที่ไม่ใช่ client เช่น `server/`
 - สไตล์กลาง (`button` `button-secondary` `card` `field` `input` `field-error` `chips` `chip`) อยู่ใน `src/app/globals.css` สไตล์เฉพาะ feature ให้เขียน `*.module.css` ในโฟลเดอร์ feature ไม่แก้ globals.css

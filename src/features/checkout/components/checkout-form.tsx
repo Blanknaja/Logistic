@@ -1,41 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { unstable_rethrow } from "next/navigation";
 import { startTransition, useActionState, useEffect, useRef } from "react";
 import type { Checkout, CheckoutAddress, PlaceOrderFailure } from "@/features/checkout/server/checkout";
 import { formatBaht } from "@/shared/format";
+import { withTimeout, type Failed } from "@/shared/ui/timeout";
 import styles from "./place-order.module.css";
 
-export const PLACE_ORDER_TIMEOUT_MS = 10_000;
 export const PLACE_ORDER_FAILED = "สั่งซื้อไม่สำเร็จ กรุณาลองใหม่";
 
-type Failed = { failed: true };
+/** ผลเป็น failed เมื่อเน็ตหลุด ระบบพัง หรือไม่ได้ผลใน 10 วินาที (CHK-005 CHK-Q01) */
 type State = PlaceOrderFailure | Failed | null;
-
-/** ผลเป็น failed เมื่อเน็ตหลุด ระบบพัง หรือไม่ได้ผลใน 10 วินาที แทนการโยน error ทั้งหน้า (CHK-005 CHK-Q01) */
-export function withTimeout(action: (formData: FormData) => Promise<PlaceOrderFailure>, ms = PLACE_ORDER_TIMEOUT_MS) {
-  return async (_previous: State, formData: FormData): Promise<State> => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const running = action(formData);
-    // ถ้าหมดเวลาไปก่อน ผลที่มาทีหลังไม่มีใครรอแล้ว
-    running.catch(() => {});
-    try {
-      return await Promise.race([
-        running,
-        new Promise<Failed>((resolve) => {
-          timer = setTimeout(() => resolve({ failed: true }), ms);
-        }),
-      ]);
-    } catch (error) {
-      // redirect() ไปหน้าจ่ายเงินมาในรูป error ต้องปล่อยให้ Next.js พาไป
-      unstable_rethrow(error);
-      return { failed: true };
-    } finally {
-      clearTimeout(timer);
-    }
-  };
-}
 
 function fullAddress(address: CheckoutAddress): string {
   return `${address.address} ${address.subdistrict} ${address.district} ${address.province} ${address.postcode}`;
@@ -52,7 +27,7 @@ export function CheckoutForm({
   selectedAddressId: number | undefined;
   action: (formData: FormData) => Promise<PlaceOrderFailure>;
 }) {
-  const [state, dispatch, pending] = useActionState(withTimeout(action), null);
+  const [state, dispatch, pending] = useActionState<State, FormData>(withTimeout(action), null);
   // pending จะเป็น true หลัง React วาดใหม่ ส่วนนี้กันการกดซ้ำที่มาก่อนนั้น
   const busy = useRef(false);
   useEffect(() => {

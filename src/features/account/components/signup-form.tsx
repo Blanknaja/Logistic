@@ -1,7 +1,7 @@
 "use client";
 
 import { signUpAction } from "@/features/account/actions";
-import { ActionForm, Field } from "./action-form";
+import { ActionForm, Field } from "@/shared/ui/action-form";
 
 export function SignupForm() {
   return (

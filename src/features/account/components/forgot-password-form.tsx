@@ -1,7 +1,7 @@
 "use client";
 
 import { requestPasswordResetAction } from "@/features/account/actions";
-import { ActionForm, Field } from "./action-form";
+import { ActionForm, Field } from "@/shared/ui/action-form";
 import styles from "./account.module.css";
 
 export function ForgotPasswordForm() {

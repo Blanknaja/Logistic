@@ -9,6 +9,7 @@ import { createSession } from "@/features/account/server/sessions";
 import { addToCart } from "@/features/cart/server/cart";
 import { databasePath, openDb } from "@/shared/db";
 import { SESSION_COOKIE } from "@/shared/session";
+import { ORDER_STATUS, PRODUCT_STATUS } from "@/shared/statuses";
 
 const base = process.argv[2] ?? "http://localhost:3100";
 const loads = Number(process.env.SPEED_LOADS ?? 100);
@@ -17,8 +18,8 @@ const USERS = 20;
 const LIMIT_MS = 2000;
 
 const db = openDb(databasePath());
-const idOf = (sql: string) => {
-  const row = db.prepare(sql).get();
+const idOf = (sql: string, ...params: string[]) => {
+  const row = db.prepare(sql).get(...params);
   if (!row) throw new Error(`ไม่พบข้อมูลตัวอย่างสำหรับ ${sql} รัน pnpm seed ก่อน`);
   return String(Object.values(row)[0]);
 };
@@ -30,11 +31,11 @@ if (!db.prepare("SELECT 1 FROM cart_items WHERE account_id = ?").get(buyerId)) {
   }
 }
 const sessions = { buyer: createSession(db, buyerId), seller: createSession(db, sellerId) };
-const orderNo = idOf(`SELECT order_no FROM orders WHERE buyer_account_id = ${buyerId} AND status = 'กำลังจัดส่ง' LIMIT 1`);
+const orderNo = idOf(`SELECT order_no FROM orders WHERE buyer_account_id = ${buyerId} AND status = ? LIMIT 1`, ORDER_STATUS.shipping);
 const groupId = idOf(`SELECT group_id FROM orders WHERE order_no = '${orderNo}'`);
 const trackingNo = idOf(`SELECT p.tracking_no FROM parcels p JOIN orders o ON o.id = p.order_id WHERE o.order_no = '${orderNo}'`);
-const productId = idOf("SELECT id FROM products WHERE status = 'ขายอยู่' ORDER BY id DESC LIMIT 1");
-const shopId = idOf("SELECT shop_id FROM products WHERE status = 'ขายอยู่' ORDER BY id DESC LIMIT 1");
+const productId = idOf("SELECT id FROM products WHERE status = ? ORDER BY id DESC LIMIT 1", PRODUCT_STATUS.onSale);
+const shopId = idOf("SELECT shop_id FROM products WHERE status = ? ORDER BY id DESC LIMIT 1", PRODUCT_STATUS.onSale);
 db.close();
 
 const pages: { who: "guest" | keyof typeof sessions; path: string }[] = [

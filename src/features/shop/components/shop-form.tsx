@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { startTransition, useActionState, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Field, withTimeout, type Failed } from "@/features/account/components/action-form";
+import { Field } from "@/shared/ui/action-form";
+import { withTimeout, type Failed } from "@/shared/ui/timeout";
 import type { ShopFormState } from "@/features/shop/actions";
 import { PROVINCES } from "@/shared/provinces";
 import { LOGO_MAX_BYTES, LOGO_TYPES, SHOP_ERRORS, SHOP_FORM_MESSAGES, type ShopErrors, type ShopInput } from "@/features/shop/server/rules";

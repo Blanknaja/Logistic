@@ -1,6 +1,6 @@
 "use client";
 
-import { Field } from "@/features/account/components/action-form";
+import { Field } from "@/shared/ui/action-form";
 import { payByCardAction } from "@/features/payment/actions";
 import { PayForm } from "./pay-form";
 import styles from "./payment.module.css";

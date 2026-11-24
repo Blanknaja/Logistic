@@ -10,6 +10,7 @@ import {
   PARCEL_STATUS,
   PAYMENT_METHOD,
   PAYMENT_STATUS,
+  PRODUCT_STATUS,
   type OrderStatus,
   type ParcelStatus,
 } from "@/shared/statuses";
@@ -34,10 +35,10 @@ function variantsOf(shopId: number): number[] {
   const rows = db
     .prepare(
       `SELECT v.id FROM variants v JOIN products p ON p.id = v.product_id
-       WHERE p.shop_id = ? AND p.status = 'ขายอยู่' AND v.removed_at IS NULL AND v.price IS NOT NULL
+       WHERE p.shop_id = ? AND p.status = ? AND v.removed_at IS NULL AND v.price IS NOT NULL
        ORDER BY v.id LIMIT 5`,
     )
-    .all(shopId) as { id: number }[];
+    .all(shopId, PRODUCT_STATUS.onSale) as { id: number }[];
   return rows.map((row) => row.id);
 }
 

@@ -113,7 +113,7 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
     await shot(page, "product-form");
     await page.getByRole("button", { name: "บันทึกและเปิดขาย" }).click();
     await expect(page.getByText("เปิดขายสินค้าแล้ว")).toBeVisible();
-    await expect(page.getByText(productName)).toBeVisible();
+    await expect(page.getByText(productName, { exact: true })).toBeVisible();
     await shot(page, "product-list");
   });
 

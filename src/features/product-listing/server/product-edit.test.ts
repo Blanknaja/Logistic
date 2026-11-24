@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { getProductDetail } from "@/features/browse/server/product-detail";
 import { confirmCheckout, getCart, type Cart } from "@/features/cart/server/cart";
+import { placeOrder } from "@/features/checkout/server/checkout";
 import { getShopOrder } from "@/features/shop-orders/server/orders";
 import type { Db } from "@/shared/db";
-import { addAccount, addCartItem, addOrder, addProduct, addShop } from "@/shared/db/builders";
+import { addAccount, addAddress, addCartItem, addOrder, addProduct, addShop } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
 import { ORDER_STATUS, PRODUCT_STATUS } from "@/shared/statuses";
 import { saveImageFile } from "./image-files";
@@ -280,6 +281,19 @@ describe("PRD-010 สินค้าที่อยู่ในตะกร้�
     deleteProduct(db, shopId, socks.id, at("12:00"));
 
     expect(confirmCheckout(db, buyer, shown, at("12:00")).ok).toBe(false);
+    const placed = placeOrder(
+      db,
+      {
+        buyerAccountId: buyer,
+        addressId: addAddress(db, { accountId: buyer, isDefault: true }).id,
+        orderKey: "page-1",
+        lines: shown.map(({ itemId, price, quantity }) => ({ cartItemId: itemId, unitPrice: price, quantity })),
+      },
+      at("12:00"),
+    );
+    expect(placed.ok).toBe(false);
+    if (!placed.ok) expect(Object.keys(placed.problems)).toEqual([String(socksItem.id)]);
+    expect(db.prepare("SELECT count(*) AS n FROM orders").get()?.n).toBe(0);
     const cart = getCart(db, buyer, at("12:00"));
     expect(cart.itemCount).toBe(2);
     expect(cartItem(cart, socks.variantIds[0]).unavailable).not.toBeNull();

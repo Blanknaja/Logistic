@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { addToCart } from "@/features/browse/actions";
 import { AddToCartForm } from "@/features/browse/components/add-to-cart-form";
 import { ProductGallery } from "@/features/browse/components/product-gallery";
 import { browseHref } from "@/features/browse/search-params";
 import { getProductDetail } from "@/features/browse/server/product-detail";
+import { addToCartAction } from "@/features/cart/actions";
 import { getDb } from "@/shared/db";
 import { getCurrentAccount } from "@/shared/session";
 import styles from "@/features/browse/components/browse.module.css";
@@ -25,7 +25,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[prod
           signedIn={viewer !== null}
           isOwnShop={viewer?.shopId === product.shop.id}
           loginHref={`/login?next=${encodeURIComponent(`/products/${product.id}`)}`}
-          addToCart={addToCart}
+          addToCart={addToCartAction}
         />
         <p>
           ร้าน <Link href={`/shops/${product.shop.id}`}>{product.shop.name}</Link>

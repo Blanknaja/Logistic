@@ -47,6 +47,11 @@ export function sellerMenuLinks(
 ): { label: string; href: string }[] {
   return navs
     .flatMap((nav) => nav.sellerMenu)
+    .map(({ label, href, order }) => ({
+      label: typeof label === "function" ? label(shopId) : label,
+      href: typeof href === "function" ? href(shopId) : href,
+      order,
+    }))
     .sort(byOrder)
-    .map(({ label, href }) => ({ label, href: typeof href === "function" ? href(shopId) : href }));
+    .map(({ label, href }) => ({ label, href }));
 }

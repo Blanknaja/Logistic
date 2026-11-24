@@ -9,9 +9,12 @@ import { EmptyState } from "@/shared/ui/states";
 
 export const metadata: Metadata = { title: "สั่งซื้อ" };
 
-export default async function CheckoutPage() {
+export default async function CheckoutPage({ searchParams }: PageProps<"/checkout">) {
   const viewer = await requireAccount("/checkout");
   const checkout = getCheckout(getDb(), viewer.id);
+  // หน้าเพิ่มที่อยู่พากลับมาพร้อม ?addressId= ของที่อยู่ที่เพิ่งบันทึก
+  const { addressId } = await searchParams;
+  const chosen = checkout.addresses.find((address) => String(address.id) === addressId);
 
   if (checkout.shops.length === 0) {
     return (
@@ -26,7 +29,7 @@ export default async function CheckoutPage() {
   return (
     <>
       <h1>สั่งซื้อ</h1>
-      <CheckoutForm checkout={checkout} action={placeOrderAction} />
+      <CheckoutForm checkout={checkout} selectedAddressId={chosen?.id ?? checkout.addresses[0]?.id} action={placeOrderAction} />
     </>
   );
 }

@@ -44,9 +44,12 @@ function fullAddress(address: CheckoutAddress): string {
 /** หน้าสั่งซื้อ: เลือกที่อยู่ ดูสินค้าแยกตามร้าน แล้วกด "สั่งซื้อ" (CHK-004 ถึง CHK-007) */
 export function CheckoutForm({
   checkout,
+  selectedAddressId,
   action,
 }: {
   checkout: Checkout;
+  /** ที่อยู่ที่เลือกไว้ให้ก่อน ปกติคือที่อยู่หลัก */
+  selectedAddressId: number | undefined;
   action: (formData: FormData) => Promise<PlaceOrderFailure>;
 }) {
   const [state, dispatch, pending] = useActionState(withTimeout(action), null);
@@ -58,7 +61,6 @@ export function CheckoutForm({
 
   const failure = state && "ok" in state ? state : null;
   const lines = checkout.shops.flatMap((shop) => shop.lines);
-  const defaultAddressId = checkout.addresses[0]?.id;
   const hasLineProblem = lines.some((line) => line.problem !== null);
 
   return (
@@ -90,7 +92,7 @@ export function CheckoutForm({
             <legend className={styles.hidden}>เลือกที่อยู่จัดส่ง</legend>
             {checkout.addresses.map((address) => (
               <label key={address.id} className={styles.address}>
-                <input type="radio" name="addressId" value={address.id} defaultChecked={address.id === defaultAddressId} />
+                <input type="radio" name="addressId" value={address.id} defaultChecked={address.id === selectedAddressId} />
                 <span>
                   <strong>{address.recipientName}</strong> {address.phone}
                   {address.isDefault && <span className={styles.badge}>ที่อยู่หลัก</span>}
@@ -106,7 +108,7 @@ export function CheckoutForm({
             {failure.addressProblem}
           </p>
         )}
-        <Link href="/addresses" className="button button-secondary">
+        <Link href="/addresses/new?next=%2Fcheckout" className="button button-secondary">
           เพิ่มที่อยู่
         </Link>
       </section>

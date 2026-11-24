@@ -148,10 +148,10 @@ export function cancelExpiredOrders(db: Db, now: Date = new Date()): number {
 
 กด "สั่งซื้อ" ที่ `/checkout` สร้างหนึ่งคำสั่งซื้อต่อร้านในกลุ่มคำสั่งซื้อเดียว จองสต็อก เอารายการออกจากตะกร้า แล้วพาไป `/pay/[groupId]`
 
-- หน้าสั่งซื้ออ่านแถว `cart_items` ที่ `selected = 1` ของผู้ซื้อ และที่อยู่จาก `shipping_addresses` ที่อยู่หลักคือแถวที่ `is_default = 1`
+- หน้าสั่งซื้ออ่านแถว `cart_items` ที่ `selected = 1` ของผู้ซื้อ และที่อยู่จาก `shipping_addresses` เลือกที่อยู่หลักไว้ให้ก่อน ยกเว้นมาจากหน้าเพิ่มที่อยู่ด้วย `/checkout?addressId=` ซึ่งเลือกที่อยู่นั้นแทน
 - `variants.stock` คือจำนวนที่ยังขายได้ หักจำนวนที่จองอยู่ออกแล้ว คำสั่งซื้อเปลี่ยนเป็น `จ่ายแล้ว` ไม่ต้องทำอะไรกับสต็อก
 - test ที่ต้องมีคำสั่งซื้อที่จองสต็อกจริงให้เรียก `placeOrder` เพราะ `addOrder` ใน builders ไม่ตัดสต็อก test ที่ต้องกดพร้อมกันจริงดูแบบอย่างที่ `src/features/checkout/server/checkout.race.test.ts`
-- ลองหน้าสั่งซื้อโดยยังไม่มีหน้าตะกร้า: `pnpm tsx scripts/fill-cart.ts buyer1@example.com` ใส่ของ 3 ชิ้นจาก 2 ร้านและเพิ่มที่อยู่หลักให้
+- ลองหน้าสั่งซื้อด้วย curl: `pnpm tsx scripts/fill-cart.ts buyer1@example.com` ใส่ของ 3 ชิ้นจาก 2 ร้านลงตะกร้าและเพิ่มที่อยู่หลักให้
 
 ฟังก์ชันที่ feature อื่นเรียกได้
 

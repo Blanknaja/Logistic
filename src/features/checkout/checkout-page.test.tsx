@@ -10,7 +10,7 @@ import { PLACE_ORDER_FAILED, withTimeout } from "@/features/checkout/components/
 import { placeOrderAction } from "@/features/checkout/place-order-actions";
 import { getCheckout } from "@/features/checkout/server/checkout";
 import type { Db } from "@/shared/db";
-import { addAccount, addAddress, addCartItem, addProduct, addShop } from "@/shared/db/builders";
+import { addAccount, addAddress, addCartItem, addProduct, addShop, SAMPLE_ADDRESS } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
 import { SESSION_COOKIE } from "@/shared/session";
 
@@ -77,6 +77,11 @@ async function open(page: Promise<React.ReactNode>): Promise<{ redirect?: string
   }
 }
 
+const props = (searchParams: Record<string, string> = {}) => ({
+  params: Promise.resolve({}),
+  searchParams: Promise.resolve(searchParams),
+});
+
 function signInAs(accountId: number) {
   request.cookies.set(SESSION_COOKIE, createSession(db, accountId));
 }
@@ -111,7 +116,7 @@ function orderForm(buyerId: number) {
 describe("CHK-004 หน้าสั่งซื้อผ่านหน้าเว็บ", () => {
   test("CHK-004 เห็นที่อยู่หลักถูกเลือก ยอดของแต่ละร้าน ค่าส่ง และยอดรวม 630 บาท", async () => {
     somchai();
-    const { html } = await open(CheckoutPage());
+    const { html } = await open(CheckoutPage(props()));
 
     expect(html).toContain("สมชาย ใจดี");
     expect(html).toMatch(/type="radio" name="addressId" checked="" value="\d+"/);
@@ -122,16 +127,25 @@ describe("CHK-004 หน้าสั่งซื้อผ่านหน้า�
 
   test("CHK-004 ยังไม่มีที่อยู่ เห็น ยังไม่มีที่อยู่จัดส่ง ปุ่มเพิ่มที่อยู่ และกดสั่งซื้อไม่ได้", async () => {
     somchai({ withAddress: false });
-    const { html } = await open(CheckoutPage());
+    const { html } = await open(CheckoutPage(props()));
 
     expect(html).toContain("ยังไม่มีที่อยู่จัดส่ง");
-    expect(html).toContain('<a class="button button-secondary" href="/addresses">เพิ่มที่อยู่</a>');
+    expect(html).toContain('<a class="button button-secondary" href="/addresses/new?next=%2Fcheckout">เพิ่มที่อยู่</a>');
     expect(html).toContain(disabledOrderButton);
+  });
+
+  test("CHK-004 เพิ่มที่อยู่ใหม่จากหน้าสั่งซื้อแล้วกลับมา ที่อยู่ใหม่ถูกเลือกไว้แทนที่อยู่หลัก", async () => {
+    const s = somchai();
+    const office = addAddress(db, { accountId: s.buyer.id, address: { ...SAMPLE_ADDRESS, name: "ที่ทำงาน" } });
+    const checked = (html = "") => html.match(/name="addressId" checked="" value="(\d+)"/)?.[1];
+
+    expect(checked((await open(CheckoutPage(props({ addressId: String(office.id) })))).html)).toBe(String(office.id));
+    expect(checked((await open(CheckoutPage(props({ addressId: "999" })))).html)).not.toBe(String(office.id));
   });
 
   test("CHK-004 ไม่ได้เลือกสินค้า เห็น ยังไม่ได้เลือกสินค้า และปุ่มกลับไปตะกร้า", async () => {
     signInAs(addAccount(db).id);
-    const { html } = await open(CheckoutPage());
+    const { html } = await open(CheckoutPage(props()));
 
     expect(html).toContain("ยังไม่ได้เลือกสินค้า");
     expect(html).toContain('<a class="button" href="/cart">กลับไปตะกร้า</a>');
@@ -140,7 +154,7 @@ describe("CHK-004 หน้าสั่งซื้อผ่านหน้า�
   test("CHK-004 สินค้าหมดก่อนเปิดหน้า เห็น สินค้าหมด กดสั่งซื้อไม่ได้ และมีทางกลับไปตะกร้า", async () => {
     const s = somchai();
     db.prepare("UPDATE variants SET stock = 0 WHERE id = ?").run(s.glass);
-    const { html } = await open(CheckoutPage());
+    const { html } = await open(CheckoutPage(props()));
 
     expect(html).toContain("สินค้าหมด");
     expect(html).toContain(disabledOrderButton);
@@ -156,7 +170,7 @@ describe("CHK-004 หน้าสั่งซื้อผ่านหน้า�
   });
 
   test("CHK-004 ยังไม่เข้าสู่ระบบ ถูกพาไปหน้าเข้าสู่ระบบแล้วกลับมาหน้าสั่งซื้อ", async () => {
-    expect(await open(CheckoutPage())).toEqual({ redirect: "/login?next=%2Fcheckout" });
+    expect(await open(CheckoutPage(props()))).toEqual({ redirect: "/login?next=%2Fcheckout" });
   });
 });
 
@@ -179,7 +193,7 @@ describe("CHK-005 กดสั่งซื้อผ่านหน้าเว�
     const result = await placeOrderAction(form);
     expect(Object.values(result.problems)).toEqual(["ราคาเปลี่ยนจาก ฿150 เป็น ฿180"]);
     expect(request.refreshed).toBe(1);
-    expect((await open(CheckoutPage())).html).toContain("฿660");
+    expect((await open(CheckoutPage(props()))).html).toContain("฿660");
   });
 
   test("CHK-005 ระบบพังหรือข้อมูลผิดรูปแบบ ผู้ซื้อเห็น สั่งซื้อไม่สำเร็จ กรุณาลองใหม่", async () => {

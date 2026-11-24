@@ -249,18 +249,24 @@ export function abandonPendingPayments(db: Db, groupId: number): number {
   );
 }
 
-async function ask<T>(call: () => Promise<T>, timeoutMs: number): Promise<T> {
+/**
+ * ถามผู้ให้บริการ คืนคำตอบพร้อมเวลาที่ได้คำตอบ คือ now บวกเวลาที่รอไป
+ * PAY-010 ตัดสินว่าเลยเขตจ่ายหรือยังด้วยเวลาที่ได้คำตอบ ไม่ใช่เวลาที่เริ่มถาม
+ */
+async function ask<T>(call: () => Promise<T>, timeoutMs: number, now: Date): Promise<{ answer: T; answeredAt: Date }> {
   let timer: ReturnType<typeof setTimeout> | undefined;
+  const askedAt = Date.now();
   const running = Promise.resolve().then(call);
   // ถ้าหมดเวลาไปก่อน ผลที่มาทีหลังไม่มีใครรอแล้ว
   running.catch(() => {});
   try {
-    return await Promise.race([
+    const answer = await Promise.race([
       running,
       new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new ProviderUnavailable("ผู้ให้บริการไม่ตอบภายในเวลา")), timeoutMs);
       }),
     ]);
+    return { answer, answeredAt: new Date(now.getTime() + Date.now() - askedAt) };
   } finally {
     clearTimeout(timer);
   }
@@ -302,8 +308,9 @@ function beginPayment(db: Db, buyerId: number, groupId: number, method: PaymentM
 
 async function runCharge(db: Db, started: Started, request: () => Promise<Charge>, now: Date, timeoutMs: number): Promise<PayResult> {
   let charge: Charge;
+  let answeredAt: Date;
   try {
-    charge = await ask(request, timeoutMs);
+    ({ answer: charge, answeredAt } = await ask(request, timeoutMs, now));
   } catch (error) {
     if (error instanceof ProviderRejected) {
       markFailed(db, started.paymentId, failureReason(error.code, error.message), now);
@@ -323,7 +330,7 @@ async function runCharge(db: Db, started: Started, request: () => Promise<Charge
     charge.qrImageUrl,
     started.paymentId,
   );
-  return { kind: "done", status: applyCharge(db, started.paymentId, charge, now) };
+  return { kind: "done", status: applyCharge(db, started.paymentId, charge, answeredAt) };
 }
 
 const describe = (groupId: number) => `Blanksong กลุ่มคำสั่งซื้อ ${groupId}`;
@@ -382,14 +389,14 @@ export async function checkPaymentStatus(
   const pending = data.payments.find((p) => p.status === PAYMENT_STATUS.pending && p.omise_charge_id);
   if (!pending?.omise_charge_id) return { kind: "no-pending" };
   const chargeId = pending.omise_charge_id;
-  let charge: Charge;
+  let checked: { answer: Charge; answeredAt: Date };
   try {
-    charge = await ask(() => provider.retrieveCharge(chargeId), timeoutMs);
+    checked = await ask(() => provider.retrieveCharge(chargeId), timeoutMs, now);
   } catch {
     return { kind: "error" };
   }
-  return applyCharge(db, pending.id, charge, now) === PAYMENT_STATUS.pending
-    ? { kind: "still-pending", checkedAt: now.toISOString() }
+  return applyCharge(db, pending.id, checked.answer, checked.answeredAt) === PAYMENT_STATUS.pending
+    ? { kind: "still-pending", checkedAt: checked.answeredAt.toISOString() }
     : { kind: "resolved" };
 }
 
@@ -418,7 +425,8 @@ export async function syncGroupPayments(
     const chargeId = payment.omise_charge_id;
     if (!chargeId || (payment.status !== PAYMENT_STATUS.pending && payment.status !== PAYMENT_STATUS.abandoned)) continue;
     try {
-      applyCharge(db, payment.id, await ask(() => provider.retrieveCharge(chargeId), timeoutMs), now);
+      const { answer, answeredAt } = await ask(() => provider.retrieveCharge(chargeId), timeoutMs, now);
+      applyCharge(db, payment.id, answer, answeredAt);
     } catch {
       continue;
     }
@@ -444,12 +452,12 @@ export async function handleChargeNotification(
   if (!payment) return "unknown";
   if (FINAL.includes(payment.status)) return "already-used";
   if (input.amount !== undefined && input.amount !== payment.amount) return "amount-mismatch";
-  let charge: Charge;
+  let checked: { answer: Charge; answeredAt: Date };
   try {
-    charge = await ask(() => provider.retrieveCharge(input.chargeId), timeoutMs);
+    checked = await ask(() => provider.retrieveCharge(input.chargeId), timeoutMs, now);
   } catch {
     return "error";
   }
-  applyCharge(db, payment.id, charge, now);
+  applyCharge(db, payment.id, checked.answer, checked.answeredAt);
   return "applied";
 }

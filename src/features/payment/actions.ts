@@ -76,27 +76,32 @@ export async function pollPaymentAction(groupId: number): Promise<void> {
   await syncGroupPayments(getDb(), getPaymentProvider(), { buyerId: viewer.id, groupId: Number(groupId) });
 }
 
-// ปุ่มของตัวจำลอง ใช้ได้เฉพาะตอนที่ยังไม่ได้ใส่กุญแจของ Omise ---------------------
+// ปุ่มของตัวจำลอง มีผลเฉพาะตอนที่ยังไม่ได้ใส่กุญแจของ Omise -------------------------
 
-function simulator(): Simulator {
+function simulator(): Simulator | null {
   const provider = getPaymentProvider();
-  if (provider.kind !== "simulator") throw new Error("ตัวจำลองใช้ได้เฉพาะตอนที่ยังไม่ได้ใส่กุญแจของ Omise");
-  return provider;
+  return provider.kind === "simulator" ? provider : null;
 }
 
+const isMode = (mode: string): mode is SimulatorMode => mode === "normal" || mode === "no-answer" || mode === "unavailable";
+
+/** โหมดมีผลกับทุกคนที่ใช้เซิร์ฟเวอร์นี้ จึงเปลี่ยนได้เฉพาะผู้ดูแลแพลตฟอร์ม */
 export async function setSimulatorModeAction(formData: FormData): Promise<void> {
-  const { groupId } = await buyerAndGroup(formData);
+  const groupId = Number(text(formData, "groupId"));
+  const viewer = await requireAccount(`/pay/${groupId}`);
   const mode = text(formData, "mode");
-  if (mode === "normal" || mode === "no-answer" || mode === "unavailable") simulator().mode = mode satisfies SimulatorMode;
+  const sim = simulator();
+  if (viewer.isAdmin && sim && isMode(mode)) sim.mode = mode;
   redirect(`/pay/${groupId}`);
 }
 
-/** แทนการกดทำเครื่องหมายผลในหน้าจัดการของ Omise ระบบรู้ผลตอนหน้าถามผลรอบถัดไป หรือตอนกดเช็คสถานะ */
+/** แทนการกดทำเครื่องหมายผลในหน้าจัดการของ Omise ผู้ซื้อทำได้เฉพาะการจ่ายเงินที่รอผลของกลุ่มตัวเอง */
 export async function markSimulatorChargeAction(formData: FormData): Promise<void> {
   const { buyerId, groupId } = await buyerAndGroup(formData);
   const result = text(formData, "result");
   const chargeId = text(formData, "chargeId");
+  const sim = simulator();
   const own = getPayPage(getDb(), buyerId, groupId)?.unresolved.some((payment) => payment.chargeId === chargeId);
-  if (own && (result === "successful" || result === "failed")) simulator().mark(chargeId, result);
+  if (sim && own && (result === "successful" || result === "failed")) sim.mark(chargeId, result);
   redirect(`/pay/${groupId}`);
 }

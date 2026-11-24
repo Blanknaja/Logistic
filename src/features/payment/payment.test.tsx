@@ -15,9 +15,11 @@ import { createSession } from "@/features/account/server/sessions";
 import {
   changeMethodAction,
   checkStatusAction,
+  markSimulatorChargeAction,
   payByCardAction,
   payByPromptPayAction,
   pollPaymentAction,
+  setSimulatorModeAction,
 } from "@/features/payment/actions";
 import { CLIENT_TIMEOUT_MS } from "@/features/payment/components/pay-form";
 import { POLL_INTERVAL_MS } from "@/features/payment/components/payment-poller";
@@ -618,6 +620,103 @@ describe("PAY-010 ผลจ่ายสำเร็จที่ใช้ไม�
   });
 });
 
+describe("PAY-010 ตัดสินด้วยเวลาที่ได้คำตอบจาก Omise", () => {
+  /** ตัวจำลองที่ตอบตอนเวลา answeredAt แทนที่จะตอบทันที */
+  const answersAt = (answeredAt: string) => ({
+    ...sim,
+    kind: "simulator" as const,
+    chargeCard: async (input: Parameters<Simulator["chargeCard"]>[0]) => {
+      const charge = await sim.chargeCard(input);
+      setNow(answeredAt);
+      return charge;
+    },
+  });
+
+  test("PAY-010 กดจ่ายด้วยบัตร 14:29:55 แต่ Omise ตอบว่าสำเร็จ 14:30:03 หลังหมดเขต เงินนั้นไม่ถูกใช้", async () => {
+    const group = addGroup("14:00");
+    setNow("14:29:55");
+    const result = await payByCard(db, answersAt("14:30:03"), { buyerId: group.buyerId, groupId: group.groupId, card: GOOD }, at("14:29:55"));
+
+    expect(result).toEqual({ kind: "done", status: "สำเร็จแต่ไม่ถูกใช้" });
+    expect(orderStatuses(group.groupId)).toEqual(["รอจ่ายเงิน", "รอจ่ายเงิน"]);
+    expect(db.prepare("SELECT COUNT(*) AS n FROM parcels").get()).toEqual({ n: 0 });
+  });
+
+  test("PAY-010 กดจ่าย 14:29:50 Omise ตอบ 14:29:58 ก่อนหมดเขต คำสั่งซื้อจ่ายแล้วตามเวลาที่ได้คำตอบ", async () => {
+    const group = addGroup("14:00");
+    setNow("14:29:50");
+    await payByCard(db, answersAt("14:29:58"), { buyerId: group.buyerId, groupId: group.groupId, card: GOOD }, at("14:29:50"));
+
+    expect(db.prepare("SELECT DISTINCT status, paid_at FROM orders WHERE group_id = ?").all(group.groupId)).toEqual([
+      { status: "จ่ายแล้ว", paid_at: at("14:29:58").toISOString() },
+    ]);
+  });
+});
+
+describe("ปุ่มของตัวจำลองการจ่ายเงิน", () => {
+  test("เฉพาะผู้ดูแลแพลตฟอร์มเปลี่ยนโหมดของตัวจำลองได้ ผู้ซื้อส่งคำขอเองแล้วโหมดไม่เปลี่ยน", async () => {
+    const group = addGroup("14:00");
+    signInAs(group.buyerId);
+    expect((await submit(setSimulatorModeAction(form({ groupId: group.groupId, mode: "unavailable" })))).redirect).toBe(
+      `/pay/${group.groupId}`,
+    );
+    expect(sim.mode).toBe("normal");
+
+    signInAs(addAccount(db, { isAdmin: true }).id);
+    await submit(setSimulatorModeAction(form({ groupId: group.groupId, mode: "unavailable" })));
+    expect(sim.mode).toBe("unavailable");
+    await submit(setSimulatorModeAction(form({ groupId: group.groupId, mode: "พัง" })));
+    expect(sim.mode).toBe("unavailable");
+  });
+
+  test("หน้าจ่ายเงินแสดงปุ่มเปลี่ยนโหมดให้ผู้ดูแลแพลตฟอร์มเท่านั้น ผู้ซื้อเห็นแค่โหมดที่ใช้อยู่", async () => {
+    const buyer = addGroup("14:00");
+    signInAs(buyer.buyerId);
+    const buyerHtml = await payPage(buyer.groupId);
+    expect(buyerHtml).toContain("ตัวจำลองการจ่ายเงิน");
+    expect(buyerHtml).toContain("โหมดที่ใช้อยู่: Omise ตอบปกติ");
+    expect(buyerHtml).not.toMatch(/<button[^>]*name="mode"/);
+
+    const admin = addAccount(db, { isAdmin: true });
+    const adminGroup = addOrder(db, { buyerAccountId: admin.id, items: [{ variantId: addProduct(db, { price: 100 }).variantIds[0] }], orderedAt: at("14:00").toISOString() });
+    signInAs(admin.id);
+    expect(await payPage(adminGroup.groupId)).toMatch(/<button[^>]*value="unavailable"[^>]*name="mode"/);
+  });
+
+  test("ผู้ซื้อทำเครื่องหมายผล PromptPay ที่รอผลของกลุ่มตัวเองได้ แต่ของกลุ่มคนอื่นไม่ได้", async () => {
+    const mine = addGroup("14:00");
+    const other = addGroup("14:00");
+    signInAs(other.buyerId);
+    await payQr(other.groupId, "14:05");
+    signInAs(mine.buyerId);
+    await payQr(mine.groupId, "14:05");
+
+    await submit(markSimulatorChargeAction(form({ groupId: mine.groupId, chargeId: pendingChargeId(other.groupId), result: "successful" })));
+    expect(sim.find(pendingChargeId(other.groupId))?.status).toBe("pending");
+
+    await submit(markSimulatorChargeAction(form({ groupId: mine.groupId, chargeId: pendingChargeId(mine.groupId), result: "successful" })));
+    expect(sim.find(payments(mine.groupId)[0].omise_charge_id ?? "")?.status).toBe("successful");
+  });
+
+  test("ใส่กุญแจ Omise แล้ว ปุ่มของตัวจำลองไม่ขึ้น และส่งคำขอเองก็ทำเครื่องหมายผลหรือเปลี่ยนโหมดไม่ได้", async () => {
+    const group = addGroup("14:00");
+    signInAs(group.buyerId);
+    await payQr(group.groupId, "14:05");
+    const chargeId = pendingChargeId(group.groupId);
+    request.provider = { kind: "omise", chargeCard: sim.chargeCard, chargePromptPay: sim.chargePromptPay, retrieveCharge: sim.retrieveCharge };
+    signInAs(addAccount(db, { isAdmin: true }).id);
+    await submit(setSimulatorModeAction(form({ groupId: group.groupId, mode: "unavailable" })));
+    signInAs(group.buyerId);
+
+    expect((await submit(markSimulatorChargeAction(form({ groupId: group.groupId, chargeId, result: "successful" })))).redirect).toBe(
+      `/pay/${group.groupId}`,
+    );
+    expect(sim.find(chargeId)?.status).toBe("pending");
+    expect(sim.mode).toBe("normal");
+    expect(await payPage(group.groupId)).not.toContain("ตัวจำลองการจ่ายเงิน");
+  });
+});
+
 describe("PAY-011 ปิดหน้ากลางทางแล้วกลับมา", () => {
   test("PAY-011 เปิด QR เวลา 14:05 แล้วกลับมากดจ่ายเงินเวลา 14:15 เห็น QR เดิม เวลาที่เหลือ 15 นาที และการจ่ายเงินรอผลรายการเดียว", async () => {
     const group = addGroup("14:00");
@@ -897,7 +996,10 @@ describe("PAY-Q06 ข้อมูลบัตร", () => {
       }
     }
     expect(payments(1).length + payments(20).length).toBe(2);
-    const stored = JSON.stringify(db.prepare("SELECT * FROM payments").all());
+    // เลขอ้างอิงของ Omise เป็นเลขสุ่ม จึงไม่นับรวม ไม่เช่นนั้นจะเจอ 987 ได้โดยบังเอิญ
+    const stored = JSON.stringify(
+      db.prepare("SELECT id, group_id, amount, method, status, failure_reason, card_last4, qr_image_url, started_at, resolved_at FROM payments").all(),
+    );
     expect(stored).not.toMatch(/5555555555554444|5555551111110011|987/);
     expect(stored).toContain('"card_last4":"4444"');
   });

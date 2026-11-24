@@ -13,7 +13,6 @@ export function getPaymentProvider(env: Record<string, string | undefined> = pro
   const secretKey = env.OMISE_SECRET_KEY?.trim();
   if (!publicKey && !secretKey) return (holder.blanksongPaymentSimulator ??= createSimulator());
   if (!publicKey || !secretKey) throw new Error("ต้องใส่ทั้ง OMISE_PUBLIC_KEY และ OMISE_SECRET_KEY หรือไม่ใส่ทั้งคู่เพื่อใช้ตัวจำลอง");
-  // รุ่นนี้ไม่รับเงินจริง กุญแจทดลองของ Omise มีคำว่า _test_ เสมอ
   if (!publicKey.includes("_test_") || !secretKey.includes("_test_")) throw new Error("ใช้ได้เฉพาะกุญแจโหมดทดลองของ Omise");
   return createOmiseProvider({ publicKey, secretKey });
 }

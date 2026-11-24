@@ -17,7 +17,7 @@ export type PayPageProps = {
   /** กด "จ่ายใหม่" มาจากหน้าจ่ายไม่สำเร็จ */
   retry?: boolean;
   notice?: "paid" | "pending";
-  simulator?: { mode: SimulatorMode; waiting: PaymentView[] } | null;
+  simulator?: { mode: SimulatorMode; canSwitchMode: boolean; waiting: PaymentView[] } | null;
 };
 
 const paidWith = (payment: PaymentView) =>
@@ -230,7 +230,7 @@ export function PayPageView({ page, method, retry = false, notice, simulator }: 
         </details>
       )}
       {page.poll && <PaymentPoller groupId={page.groupId} />}
-      {simulator && <SimulatorPanel groupId={page.groupId} mode={simulator.mode} waiting={simulator.waiting} />}
+      {simulator && <SimulatorPanel groupId={page.groupId} {...simulator} />}
     </div>
   );
 }

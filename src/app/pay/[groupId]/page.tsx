@@ -28,7 +28,11 @@ export default async function PayPage({ params, searchParams }: PageProps<"/pay/
       notice={notice === "paid" || notice === "pending" ? notice : undefined}
       simulator={
         provider.kind === "simulator"
-          ? { mode: provider.mode, waiting: page.unresolved.filter((p) => p.chargeId && provider.find(p.chargeId)?.status === "pending") }
+          ? {
+              mode: provider.mode,
+              canSwitchMode: viewer.isAdmin,
+              waiting: page.unresolved.filter((p) => p.chargeId && provider.find(p.chargeId)?.status === "pending"),
+            }
           : null
       }
     />

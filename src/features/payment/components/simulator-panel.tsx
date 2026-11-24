@@ -11,7 +11,17 @@ const MODES: { mode: SimulatorMode; label: string }[] = [
 ];
 
 /** ส่วนควบคุมตัวจำลอง ใช้แทนหน้าจัดการของ Omise ตอนลองเส้นทางต่างๆ ในเครื่อง */
-export function SimulatorPanel({ groupId, mode, waiting }: { groupId: number; mode: SimulatorMode; waiting: PaymentView[] }) {
+export function SimulatorPanel({
+  groupId,
+  mode,
+  canSwitchMode,
+  waiting,
+}: {
+  groupId: number;
+  mode: SimulatorMode;
+  canSwitchMode: boolean;
+  waiting: PaymentView[];
+}) {
   return (
     <section className={styles.simulatorPanel} aria-label="ตัวจำลองการจ่ายเงิน">
       <h2>ตัวจำลองการจ่ายเงิน</h2>
@@ -21,21 +31,27 @@ export function SimulatorPanel({ groupId, mode, waiting }: { groupId: number; mo
         <li>บัตรวงเงินไม่พอ: 4111 1111 1114 0011</li>
         <li>บัตรถูกปฏิเสธ: 4111 1111 1111 0014</li>
       </ul>
-      <form action={setSimulatorModeAction} className={styles.row}>
-        <input type="hidden" name="groupId" value={groupId} />
-        {MODES.map((option) => (
-          <button
-            key={option.mode}
-            type="submit"
-            name="mode"
-            value={option.mode}
-            className={option.mode === mode ? "button" : "button button-secondary"}
-            aria-pressed={option.mode === mode}
-          >
-            {option.label}
-          </button>
-        ))}
-      </form>
+      {canSwitchMode ? (
+        <form action={setSimulatorModeAction} className={styles.row}>
+          <input type="hidden" name="groupId" value={groupId} />
+          {MODES.map((option) => (
+            <button
+              key={option.mode}
+              type="submit"
+              name="mode"
+              value={option.mode}
+              className={option.mode === mode ? "button" : "button button-secondary"}
+              aria-pressed={option.mode === mode}
+            >
+              {option.label}
+            </button>
+          ))}
+        </form>
+      ) : (
+        <p>
+          โหมดที่ใช้อยู่: {MODES.find((option) => option.mode === mode)?.label} (ผู้ดูแลแพลตฟอร์มเปลี่ยนได้)
+        </p>
+      )}
       {waiting.map((payment) => (
         <form key={payment.id} action={markSimulatorChargeAction} className={styles.row}>
           <input type="hidden" name="groupId" value={groupId} />

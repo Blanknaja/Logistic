@@ -1,0 +1,6 @@
+#!/bin/bash
+# รันตัวตรวจเนื้อหาของ repo ทุกตัวก่อน commit
+cd "$(git rev-parse --show-toplevel)" || exit 1
+for check in scripts/agent-checks/repo/*.sh; do
+  "$check" || exit 1
+done

@@ -1,0 +1,18 @@
+{
+  "description": "Project rules enforced before shell commands. See scripts/agent-checks/.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$(git rev-parse --show-toplevel)/scripts/agent-checks/run-command-checks.sh\"",
+            "timeout": 30,
+            "statusMessage": "Checking command against project rules"
+          }
+        ]
+      }
+    ]
+  }
+}

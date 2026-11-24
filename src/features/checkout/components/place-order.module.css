@@ -1,0 +1,101 @@
+.section {
+  margin-bottom: var(--space);
+}
+
+.section h2 {
+  margin-top: 0;
+}
+
+.addresses {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 var(--space);
+  padding: 0;
+  border: 0;
+}
+
+.address {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  min-height: var(--tap);
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.address input {
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  flex: none;
+}
+
+.badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 0.8rem;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.lines {
+  margin: 0 0 var(--space);
+  padding: 0;
+  list-style: none;
+}
+
+.line {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.image {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  object-fit: cover;
+}
+
+.muted {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.totals {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px var(--space);
+  margin: 0 0 var(--space);
+}
+
+.totals dd {
+  margin: 0;
+  text-align: right;
+}
+
+.grandTotal {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

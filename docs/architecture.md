@@ -135,6 +135,39 @@ export function cancelExpiredOrders(db: Db, now: Date = new Date()): number {
 - สถานะใช้ค่าจาก `@/shared/statuses` ฐานข้อมูลมี CHECK ที่รับเฉพาะคำเหล่านี้
 - ตารางทั้งหมดอยู่ใน `src/shared/db/migrations/0001-initial-schema.sql` อ่านไฟล์นี้ก่อนเขียน SQL
 
+## งานที่ทำเองตามเวลา
+
+งานที่ต้องเกิดตามเวลาโดยไม่มีใครเปิดหน้าเว็บ เช่นยกเลิกคำสั่งซื้อที่ไม่จ่ายภายใน 30 นาที ใช้ `setInterval` ในโปรเซสของแอปเอง แอปมีโปรเซสเดียว จึงไม่มี cron หรือคิวงานแยก
+
+- เริ่มงานใน `register()` ของ `src/instrumentation.ts` ซึ่ง Next.js เรียกครั้งเดียวตอนเปิดเซิร์ฟเวอร์ ทั้ง `pnpm dev` และ `pnpm start` เพิ่มงานใหม่ได้ด้วยบรรทัดเดียวในนั้น
+- ตัวงานเป็นฟังก์ชันใน `server/` ที่รับ `db` และ `now` test จึงเรียกตรงได้
+- รันครั้งแรกทันทีตอนเริ่ม เพื่อจัดการสิ่งที่ครบเวลาระหว่างที่แอปปิดอยู่ แล้วรันซ้ำทุกช่วงที่สั้นกว่าความคลาดเคลื่อนที่ requirement ยอม
+- รอบที่พังให้ log แล้วรอรอบถัดไป แอปไม่ล่ม และกันการเริ่มซ้ำด้วยค่าบน `globalThis` เพราะ next dev โหลดโมดูลใหม่บ่อย
+- แบบอย่างคือ `startPaymentDeadlineTimer` ใน `src/features/checkout/server/order-groups.ts` ตรวจหมดเวลาจ่ายเงินทุก 15 วินาที (CHK-Q03 ยอม 1 นาที)
+- กฎที่ต้องเป็นจริงตรงเวลาเป๊ะ อย่ารอแค่รอบตรวจ ให้ตรวจเวลาเองตอนทำรายการด้วย เช่น `checkOrderGroupPayable`
+
+## สั่งซื้อ จองสต็อก และกลุ่มคำสั่งซื้อ
+
+กด "สั่งซื้อ" ที่ `/checkout` สร้างหนึ่งคำสั่งซื้อต่อร้านในกลุ่มคำสั่งซื้อเดียว จองสต็อก เอารายการออกจากตะกร้า แล้วพาไป `/pay/[groupId]`
+
+- หน้าสั่งซื้ออ่านแถว `cart_items` ที่ `selected = 1` ของผู้ซื้อ และที่อยู่จาก `shipping_addresses` เลือกที่อยู่หลักไว้ให้ก่อน ยกเว้นมาจากหน้าเพิ่มที่อยู่ด้วย `/checkout?addressId=` ซึ่งเลือกที่อยู่นั้นแทน
+- `variants.stock` คือจำนวนที่ยังขายได้ หักจำนวนที่จองอยู่ออกแล้ว คำสั่งซื้อเปลี่ยนเป็น `จ่ายแล้ว` ไม่ต้องทำอะไรกับสต็อก
+- test ที่ต้องมีคำสั่งซื้อที่จองสต็อกจริงให้เรียก `placeOrder` เพราะ `addOrder` ใน builders ไม่ตัดสต็อก test ที่ต้องกดพร้อมกันจริงดูแบบอย่างที่ `src/features/checkout/server/checkout.race.test.ts`
+- ลองหน้าสั่งซื้อด้วย curl: `pnpm tsx scripts/fill-cart.ts buyer1@example.com` ใส่ของ 3 ชิ้นจาก 2 ร้านลงตะกร้าและเพิ่มที่อยู่หลักให้
+
+ฟังก์ชันที่ feature อื่นเรียกได้
+
+| ฟังก์ชัน | อยู่ที่ | ใช้ตอนไหน |
+|---|---|---|
+| `getOrderGroup(db, groupId, buyerId)` | `checkout/server/order-groups.ts` | อ่านกลุ่มคำสั่งซื้อพร้อมยอดรวม `total` เวลาหมดเขต `paymentDeadline` และยอดของแต่ละร้าน ได้ null ถ้าไม่มีหรือเป็นของบัญชีอื่น |
+| `checkOrderGroupPayable(db, groupId, buyerId, now)` | `checkout/server/order-groups.ts` | ก่อนพาไปจ่ายเงินหรือก่อนเริ่มการจ่ายเงิน ครบ 30 นาทีแล้วจ่ายไม่ได้ทันที ได้ `reason: "expired"` ให้แสดง `PAYMENT_EXPIRED_MESSAGE` |
+| `cancelAwaitingPaymentGroup(db, groupId, reason, now)` | `checkout/server/order-groups.ts` | ยกเลิกทุกคำสั่งซื้อในกลุ่มที่ยัง `รอจ่ายเงิน` พร้อมคืนสต็อก เช่นผู้ซื้อยกเลิกด้วย `CANCEL_REASON.buyer` หลังตรวจเงื่อนไขของตัวเองแล้ว ได้ 0 ถ้าจ่ายแล้วหรือถูกยกเลิกไปก่อน |
+| `releaseCancelledOrderStock(db, orderId, now)` | `stock/server/reservation.ts` | หลังเปลี่ยนคำสั่งซื้อเป็น `ยกเลิก` เอง เช่นพัสดุ `ส่งไม่สำเร็จ` คืนสต็อกครั้งเดียวต่อคำสั่งซื้อ เรียกซ้ำได้ |
+| `releaseCancelledOrderGroupStock(db, groupId, now)` | `stock/server/reservation.ts` | เหมือนข้างบน กับทุกคำสั่งซื้อที่ `ยกเลิก` แล้วในกลุ่ม |
+| `reservedQuantity(db, variantId)` | `stock/server/reservation.ts` | จำนวนที่จองอยู่ของแบบย่อย |
+
+เหตุผลการยกเลิกใช้ `CANCEL_REASON` ใน `order-groups.ts` ("ผู้ซื้อยกเลิก" "หมดเวลาจ่ายเงิน" "ส่งไม่สำเร็จ")
+
 ## เพิ่มหรือเปลี่ยนโครงข้อมูล
 
 ห้ามแก้ไฟล์ migration ที่มีอยู่แล้ว ให้เพิ่มไฟล์ใหม่หนึ่งไฟล์ต่อหนึ่งการเปลี่ยน ใน `src/shared/db/migrations/`

@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { ShopLogo } from "@/features/shop/components/shop-logo";
 import styles from "@/features/shop/components/shop.module.css";
 import { requireShop } from "@/features/shop/require-shop";
-import { countOrdersAwaitingPacking, countShopProducts, getShopSummary } from "@/features/shop/server/shops";
+import { countShopProducts, getShopSummary } from "@/features/shop/server/shops";
+import { countOrdersAwaitingPacking, UNCOUNTED } from "@/features/shop-orders/server/orders";
 import { getDb } from "@/shared/db";
 import { formatNumber } from "@/shared/format";
 import { RetryButton } from "@/shared/ui/retry-button";
@@ -52,7 +53,7 @@ export default async function SellerHomePage({ searchParams }: PageProps<"/selle
         </div>
         <div className={`card ${styles.stat}`}>
           <dt>คำสั่งซื้อที่รอร้านจัดของ</dt>
-          <dd>{awaitingPacking === null ? "-" : formatNumber(awaitingPacking)}</dd>
+          <dd>{awaitingPacking === null ? UNCOUNTED : formatNumber(awaitingPacking)}</dd>
           {awaitingPacking === null && (
             <div className={styles.statError} role="alert">
               <span>โหลดไม่สำเร็จ</span>

@@ -64,6 +64,19 @@ describe("ข้อมูลตัวอย่าง", () => {
     expect(count("SELECT count(*) AS n FROM shops s JOIN accounts a ON a.id = s.owner_account_id WHERE a.email LIKE 'buyer%'")).toBe(0);
   });
 
+  test("มีคำสั่งซื้อตัวอย่างของร้าน seller01 ครบทุกสถานะ พร้อมพัสดุของคำสั่งซื้อที่จ่ายแล้ว", () => {
+    const statuses = db
+      .prepare(
+        `SELECT o.status, count(*) AS n FROM orders o JOIN shops s ON s.id = o.shop_id JOIN accounts a ON a.id = s.owner_account_id
+         WHERE a.email = 'seller01@example.com' GROUP BY o.status`,
+      )
+      .all()
+      .map((row) => [row.status, row.n]);
+    expect(Object.fromEntries(statuses)).toEqual({ จ่ายแล้ว: 2, กำลังจัดส่ง: 2, สำเร็จ: 2, ยกเลิก: 2 });
+    expect(count("SELECT count(*) AS n FROM orders o WHERE o.status <> 'ยกเลิก' AND NOT EXISTS (SELECT 1 FROM parcels p WHERE p.order_id = o.id)")).toBe(0);
+    expect(count("SELECT count(*) AS n FROM parcels WHERE status = 'ส่งสำเร็จ' AND receipt_confirmed_at IS NULL")).toBe(1);
+  });
+
   test("รันซ้ำแล้วข้อมูลไม่ซ้ำ และของที่ผู้ใช้สร้างเองยังอยู่", async () => {
     const shopId = Number(db.prepare("SELECT id FROM shops LIMIT 1").get()?.id);
     addProduct(db, { shopId, name: "สินค้าใหม่ของผู้ขาย" });

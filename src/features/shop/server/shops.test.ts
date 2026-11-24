@@ -7,10 +7,10 @@ import { openDb, type Db } from "@/shared/db";
 import { addAccount, addOrder, addParcel, addProduct, addShop } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
 import { ORDER_STATUS, PRODUCT_STATUS, SHOP_STATUS } from "@/shared/statuses";
-import { PROVINCES } from "./provinces";
+import { PROVINCES } from "@/shared/provinces";
 import { checkShopInput, logoLetter, SHOP_ERRORS, type ShopInput } from "./rules";
+import { countOrdersAwaitingPacking } from "@/features/shop-orders/server/orders";
 import {
-  countOrdersAwaitingPacking,
   countShopProducts,
   getShopLogo,
   getShopSettings,
@@ -257,7 +257,7 @@ describe("SHP-006 ตัวเลขของหน้าแรกของห�
     expect(countOrdersAwaitingPacking(db, shopId)).toBe(0);
   });
 
-  test("SHP-006 นับคำสั่งซื้อไม่ได้ ฟังก์ชันโยน error ให้หน้าแสดง - แทน", () => {
+  test("SHP-006 นับคำสั่งซื้อไม่ได้ ฟังก์ชันโยน error ให้หน้าแสดง – แทน", () => {
     const { shopId } = openSomchaiShop();
     db.exec("ALTER TABLE orders RENAME TO orders_broken");
 

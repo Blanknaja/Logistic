@@ -1,3 +1,4 @@
+import { CANCEL_REASON, cancelAwaitingPaymentGroup, expireOverdueOrderGroups } from "@/features/checkout/server/order-groups";
 import { transaction, type Db } from "@/shared/db";
 import { ORDER_STATUS, PAYMENT_STATUS, type OrderStatus } from "@/shared/statuses";
 
@@ -5,7 +6,7 @@ import { ORDER_STATUS, PAYMENT_STATUS, type OrderStatus } from "@/shared/statuse
 
 export const ORDERS_PAGE_SIZE = 20;
 
-export const BUYER_CANCEL_REASON = "ผู้ซื้อยกเลิก";
+export const BUYER_CANCEL_REASON = CANCEL_REASON.buyer;
 
 const ORDER_STATUSES = Object.values(ORDER_STATUS) as string[];
 
@@ -57,6 +58,8 @@ export function listBuyerOrders(
   options: { status?: OrderStatus | null; after?: OrderCursor | null } = {},
   now: Date = new Date(),
 ): BuyerOrderPage {
+  // ไม่รอรอบตรวจ 15 วินาที คำสั่งซื้อที่เลยเขตจ่ายจึงขึ้น `ยกเลิก` ทันทีที่เปิดหน้า (CHK-008)
+  expireOverdueOrderGroups(db, now);
   const status = options.status ?? null;
   const after = options.after ?? null;
   const rows = db
@@ -138,6 +141,7 @@ export type BuyerOrderDetail = {
 
 /** คำสั่งซื้อของผู้ซื้อคนนี้ หรือ null ถ้าไม่มีหรือเป็นของบัญชีอื่น */
 export function getBuyerOrder(db: Db, buyerAccountId: number, orderNo: string, now: Date = new Date()): BuyerOrderDetail | null {
+  expireOverdueOrderGroups(db, now);
   const row = db
     .prepare(
       `SELECT o.*, s.name AS shop_name, g.payment_deadline,
@@ -202,9 +206,6 @@ export function getBuyerOrder(db: Db, buyerAccountId: number, orderNo: string, n
   };
 }
 
-/** คืนสต็อกที่จองไว้ของคำสั่งซื้อที่เพิ่งเป็น `ยกเลิก` (INV-013) ทำงานใน transaction เดียวกับการยกเลิก */
-export type ReleaseStock = (db: Db, orderId: number, now: Date) => void;
-
 export type CancelRefusal = "notFound" | "alreadyCancelled" | "alreadyPaid" | "expired" | "paymentPending";
 
 export const CANCEL_REFUSED: Record<CancelRefusal, string> = {
@@ -215,10 +216,10 @@ export const CANCEL_REFUSED: Record<CancelRefusal, string> = {
   paymentPending: "มีการจ่ายเงินที่กำลังรอผลอยู่ กดเปลี่ยนวิธีจ่ายก่อนจึงยกเลิกได้",
 };
 
-/** ยกเลิกทุกคำสั่งซื้อในกลุ่มคำสั่งซื้อเดียวกับ orderNo ตอนรอจ่ายเงิน แล้วคืนสต็อกทีละคำสั่งซื้อ */
+/** ยกเลิกทุกคำสั่งซื้อในกลุ่มคำสั่งซื้อเดียวกับ orderNo ตอนรอจ่ายเงิน แล้วคืนสต็อกทีละคำสั่งซื้อ (INV-013) */
 export function cancelOrderGroup(
   db: Db,
-  input: { buyerAccountId: number; orderNo: string; releaseStock: ReleaseStock },
+  input: { buyerAccountId: number; orderNo: string },
   now: Date = new Date(),
 ): { ok: true } | { ok: false; reason: CancelRefusal } {
   return transaction(db, () => {
@@ -231,22 +232,17 @@ export function cancelOrderGroup(
     if (!order) return { ok: false, reason: "notFound" } as const;
     if (order.status === ORDER_STATUS.cancelled) return { ok: false, reason: "alreadyCancelled" } as const;
     if (order.status !== ORDER_STATUS.awaitingPayment) return { ok: false, reason: "alreadyPaid" } as const;
-    // ครบเวลาแล้วเป็นงานของการหมดเวลาจ่ายเงิน เหตุผลจึงต้องเป็น "หมดเวลาจ่ายเงิน" และคืนสต็อกครั้งเดียว
-    if (!isPayable(order.status, order.payment_deadline, now)) return { ok: false, reason: "expired" } as const;
+    // ครบเวลาแล้วเป็นการหมดเวลาจ่ายเงิน เหตุผลจึงต้องเป็น "หมดเวลาจ่ายเงิน" ไม่ใช่ผู้ซื้อยกเลิก
+    if (!isPayable(order.status, order.payment_deadline, now)) {
+      cancelAwaitingPaymentGroup(db, order.group_id, CANCEL_REASON.paymentTimeout, now);
+      return { ok: false, reason: "expired" } as const;
+    }
     const pending = db
       .prepare("SELECT 1 FROM payments WHERE group_id = ? AND status = ?")
       .get(order.group_id, PAYMENT_STATUS.pending);
     if (pending) return { ok: false, reason: "paymentPending" } as const;
 
-    const cancelled = db
-      .prepare(
-        `UPDATE orders SET status = ?, cancelled_at = ?, cancel_reason = ?
-         WHERE group_id = ? AND status = ? RETURNING id`,
-      )
-      .all(ORDER_STATUS.cancelled, now.toISOString(), BUYER_CANCEL_REASON, order.group_id, ORDER_STATUS.awaitingPayment) as {
-      id: number;
-    }[];
-    for (const { id } of cancelled) input.releaseStock(db, id, now);
+    cancelAwaitingPaymentGroup(db, order.group_id, BUYER_CANCEL_REASON, now);
     return { ok: true } as const;
   });
 }

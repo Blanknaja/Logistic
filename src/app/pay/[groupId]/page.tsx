@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { expireOverdueOrderGroups } from "@/features/checkout/server/order-groups";
 import { PayPageView } from "@/features/payment/components/pay-page";
 import { getPaymentProvider } from "@/features/payment/server/config";
 import { getPayPage } from "@/features/payment/server/payments";
@@ -12,7 +13,10 @@ export default async function PayPage({ params, searchParams }: PageProps<"/pay/
   const { groupId } = await params;
   const viewer = await requireAccount(`/pay/${groupId}`);
   const provider = getPaymentProvider();
-  const page = getPayPage(getDb(), viewer.id, Number(groupId));
+  const db = getDb();
+  // เลยเขตจ่ายแล้วให้เห็น `ยกเลิก` ทันที ไม่รอรอบตรวจ (CHK-008 PAY-013)
+  expireOverdueOrderGroups(db);
+  const page = getPayPage(db, viewer.id, Number(groupId));
   if (!page) notFound();
   const { method, retry, notice } = await searchParams;
 

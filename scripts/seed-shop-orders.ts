@@ -1,5 +1,5 @@
 // pnpm tsx scripts/seed-shop-orders.ts seller01@example.com
-// เพิ่มคำสั่งซื้อตัวอย่าง 45 รายการครบทุกสถานะให้ร้านของบัญชีนี้ พร้อมการจ่ายเงินและพัสดุ ไว้ลองหน้า /seller/orders
+// เพิ่มคำสั่งซื้อตัวอย่าง 42 รายการทุกสถานะยกเว้นรอจ่ายเงินให้ร้านของบัญชีนี้ พร้อมการจ่ายเงินและพัสดุ ไว้ลองหน้า /seller/orders
 // และเพิ่ม 5 รายการให้ร้านถัดไป ไว้ลองว่าเปิดคำสั่งซื้อของร้านอื่นไม่ได้
 // เขียนตรงลงฐานข้อมูลของเครื่องนี้โดยข้ามกฎของการสั่งซื้อ การจ่ายเงิน และการจัดส่ง รันซ้ำจะได้อีกชุด
 
@@ -41,7 +41,7 @@ function variantsOf(shopId: number): number[] {
   return rows.map((row) => row.id);
 }
 
-// เรียงจากเก่าไปใหม่ คำสั่งซื้อที่รอจ่ายเงินจึงอยู่บนสุดและยังไม่หมดเวลา 30 นาที
+// เรียงจากเก่าไปใหม่ ไม่มีคำสั่งซื้อที่รอจ่ายเงิน เพราะสคริปต์ไม่จองสต็อก พอหมดเวลาแล้วระบบจะคืนสต็อกที่ไม่เคยจอง
 const plan: [OrderStatus, ParcelStatus | null][] = [
   ...Array.from({ length: 26 }, (): [OrderStatus, ParcelStatus] => [ORDER_STATUS.completed, PARCEL_STATUS.delivered]),
   [ORDER_STATUS.cancelled, null],
@@ -56,7 +56,6 @@ const plan: [OrderStatus, ParcelStatus | null][] = [
   [ORDER_STATUS.shipping, PARCEL_STATUS.outForDelivery],
   [ORDER_STATUS.shipping, PARCEL_STATUS.delivered],
   ...Array.from({ length: 5 }, (): [OrderStatus, ParcelStatus] => [ORDER_STATUS.paid, PARCEL_STATUS.awaitingPacking]),
-  ...Array.from({ length: 3 }, (): [OrderStatus, null] => [ORDER_STATUS.awaitingPayment, null]),
 ];
 
 function addSampleOrders(shopId: number, rows: [OrderStatus, ParcelStatus | null][]): string[] {
@@ -85,8 +84,6 @@ function addSampleOrders(shopId: number, rows: [OrderStatus, ParcelStatus | null
         payment.id,
       );
       addParcel(db, { orderId: created.id, status: parcelStatus });
-    } else if (status === ORDER_STATUS.awaitingPayment && i % 2 === 0) {
-      addPayment(db, { groupId: created.groupId, method: PAYMENT_METHOD.promptPay, status: PAYMENT_STATUS.pending });
     }
     return orderNo;
   });

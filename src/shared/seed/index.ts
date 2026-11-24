@@ -2,6 +2,7 @@ import { hashPassword } from "@/features/account/server/password";
 import { transaction, type Db } from "@/shared/db";
 import { addAccount, addProduct, addShop } from "@/shared/db/builders";
 import { CATEGORIES, LOCATIONS, PERSON_FIRST, PERSON_LAST, SHOP_NAME_FIRST, SHOP_NAME_LAST } from "./catalog";
+import { addSampleOrders } from "./orders";
 
 /** รหัสผ่านสาธิตของบัญชีตัวอย่าง ห้ามใช้กับระบบจริง (เขียนไว้ใน README) */
 export const ADMIN_PASSWORD = "admin1234";
@@ -34,7 +35,7 @@ function nicePrice(value: number): number {
 }
 
 /**
- * สร้างข้อมูลตัวอย่างของชุด 1 ถ้ายังไม่เคยสร้าง
+ * สร้างข้อมูลตัวอย่างของชุด 1 ถ้ายังไม่เคยสร้าง รวมคำสั่งซื้อตัวอย่างของร้าน seller01 ครบทุกสถานะ
  * รู้ว่าเคยสร้างแล้วจากบัญชีผู้ดูแลแพลตฟอร์มตัวอย่าง จึงรันซ้ำได้โดยข้อมูลไม่ซ้ำ
  */
 export async function seed(db: Db): Promise<{ created: boolean }> {
@@ -110,5 +111,6 @@ export async function seed(db: Db): Promise<{ created: boolean }> {
     }
   });
 
+  await addSampleOrders(db, now);
   return { created: true };
 }

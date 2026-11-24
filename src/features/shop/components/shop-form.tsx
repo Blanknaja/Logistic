@@ -4,22 +4,13 @@ import Link from "next/link";
 import { startTransition, useActionState, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Field, withTimeout, type Failed } from "@/features/account/components/action-form";
 import type { ShopFormState } from "@/features/shop/actions";
-import { PROVINCES } from "@/features/shop/server/provinces";
-import { LOGO_MAX_BYTES, LOGO_TYPES, SHOP_ERRORS, type ShopErrors, type ShopInput } from "@/features/shop/server/rules";
+import { PROVINCES } from "@/shared/provinces";
+import { LOGO_MAX_BYTES, LOGO_TYPES, SHOP_ERRORS, SHOP_FORM_MESSAGES, type ShopErrors, type ShopInput } from "@/features/shop/server/rules";
 import { LeaveGuard } from "./leave-guard";
 import { ShopLogo } from "./shop-logo";
 import styles from "./shop.module.css";
 
 export type ShopFormMode = "open" | "settings";
-
-export const SHOP_FORM_MESSAGES = {
-  openFailed: "เปิดร้านไม่สำเร็จ ลองใหม่อีกครั้ง",
-  saveFailed: "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง",
-  uploadFailed: "อัปโหลดรูปไม่สำเร็จ ลองใหม่อีกครั้ง",
-  admin: "บัญชีนี้เปิดร้านไม่ได้",
-  suspended: "ร้านถูกระงับ แก้การตั้งค่าร้านไม่ได้",
-  "not-found": "ไม่พบหน้านี้",
-} as const;
 
 /** ข้อความเหนือปุ่มบันทึกเมื่อบันทึกไม่ได้ทั้งฟอร์ม null เมื่อไม่มี (SHP-002 SHP-007 SHP-008 SHP-014 SHP-015) */
 export function formMessage(mode: ShopFormMode, state: ShopFormState | Failed, sentLogo: boolean): string | null {

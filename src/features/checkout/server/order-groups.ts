@@ -1,3 +1,4 @@
+import { abandonPendingPayments } from "@/features/payment/server/payments";
 import { releaseCancelledOrderStock } from "@/features/stock/server/reservation";
 import { transaction, type Db } from "@/shared/db";
 import { ORDER_STATUS, type OrderStatus } from "@/shared/statuses";
@@ -74,7 +75,7 @@ export function getOrderGroup(db: Db, groupId: number, buyerAccountId: number): 
 }
 
 /**
- * ยกเลิกทุกคำสั่งซื้อในกลุ่มที่ยัง `รอจ่ายเงิน` พร้อมกัน แล้วคืนสต็อก (CHK-008 CHK-011 INV-013)
+ * ยกเลิกทุกคำสั่งซื้อในกลุ่มที่ยัง `รอจ่ายเงิน` พร้อมกัน คืนสต็อก (CHK-008 CHK-011 INV-013) และเลิกรอการจ่ายเงินที่รอผลอยู่ (PAY-013)
  * คืนจำนวนคำสั่งซื้อที่ยกเลิกในครั้งนี้ ได้ 0 ถ้าจ่ายแล้วหรือถูกยกเลิกไปก่อน จึงยกเลิกสองทางพร้อมกันได้โดยสต็อกคืนครั้งเดียว
  */
 export function cancelAwaitingPaymentGroup(db: Db, groupId: number, reason: string, now: Date = new Date()): number {
@@ -86,6 +87,7 @@ export function cancelAwaitingPaymentGroup(db: Db, groupId: number, reason: stri
       )
       .all(ORDER_STATUS.cancelled, now.toISOString(), reason, groupId, ORDER_STATUS.awaitingPayment);
     for (const order of cancelled) releaseCancelledOrderStock(db, Number(order.id), now);
+    if (cancelled.length > 0) abandonPendingPayments(db, groupId);
     return cancelled.length;
   });
 }

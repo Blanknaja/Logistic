@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ActionForm, Field } from "@/features/account/components/action-form";
 import { saveAddressAction } from "@/features/checkout/address-actions";
 import type { ShippingAddress } from "@/features/checkout/server/addresses";
-import { PROVINCES } from "@/features/checkout/server/provinces";
+import { PROVINCES } from "@/shared/provinces";
 
 /** CHK-002 แบบกรอกที่อยู่ใหม่ หรือแก้ที่อยู่เดิมเมื่อส่ง address มา หลังบันทึกกลับไปที่ next ถ้ามี */
 export function AddressForm({ address, next }: { address?: ShippingAddress; next: string | null }) {

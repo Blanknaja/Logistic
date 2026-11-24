@@ -16,3 +16,7 @@ next-env.d.ts
 
 # agent worktrees
 /.claude/worktrees/
+
+# playwright output
+/test-results/
+/playwright-report/

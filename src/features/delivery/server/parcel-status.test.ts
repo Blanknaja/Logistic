@@ -342,7 +342,7 @@ describe("DLV-006 ส่งไม่สำเร็จ ต้องมีเห�
     expect(getParcelForStatusChange(db, parcel.trackingNo, somchai)?.nextStatuses).toEqual([]);
   });
 
-  test.fails("DLV-006 ส่งไม่สำเร็จแล้วสต็อกคืน (รอต่อ INV-013 ของ #13 ใน #19 ต่อแล้วให้เปลี่ยนเป็น test)", () => {
+  test("DLV-006 INV-013 ส่งไม่สำเร็จแล้วสต็อกคืน", () => {
     const screwdriver = addProduct(db, { shopId: somchai.shopId!, name: "ไขควง", stock: 7 }).variantIds[0];
     const order = paidOrder(screwdriver, 3);
     const parcel = createParcelForPaidOrder(db, order.id);
@@ -363,6 +363,7 @@ describe("DLV-006 ส่งไม่สำเร็จ ต้องมีเห�
   test("DLV-006 ไม่กรอกเหตุผล บันทึกไม่ได้ และพัสดุที่ส่งไม่สำเร็จแล้วเปลี่ยนต่อไม่ได้", () => {
     const parcel = parcelAt(S.outForDelivery);
     const ended = parcelAt(S.failed);
+    const stockBefore = stockOf(hammerVariant);
 
     for (const reason of [undefined, "  ", "ก".repeat(201)]) {
       const result = changeParcelStatus(db, {
@@ -376,7 +377,7 @@ describe("DLV-006 ส่งไม่สำเร็จ ต้องมีเห�
       expect(result).toEqual({ ok: false, fieldErrors: { reason: REASON_ERROR } });
     }
     expect(parcelRow(parcel.id).status).toBe(S.outForDelivery);
-    expect(stockOf(hammerVariant)).toBe(8);
+    expect(stockOf(hammerVariant)).toBe(stockBefore);
     expect(orderRow(parcel.orderId).status).toBe(ORDER_STATUS.shipping);
 
     const result = changeParcelStatus(db, {

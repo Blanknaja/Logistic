@@ -124,6 +124,9 @@ describe("ACC-010 ตั้งรหัสผ่านใหม่จากล�
     ]);
 
     expect(results.map((result) => result.status).sort()).toEqual(["done", "link-unusable"]);
-    expect(await canLogIn("laptop123456")).toBe(true);
+    // คำขอที่ hash เสร็จก่อนได้ลิงก์ไป ลำดับนี้ขึ้นกับเครื่อง จึงตรวจจากผลที่ได้จริง
+    const [winner, loser] = results[0].status === "done" ? ["laptop123456", "mobile123456"] : ["mobile123456", "laptop123456"];
+    expect(await canLogIn(winner)).toBe(true);
+    expect(await canLogIn(loser)).toBe(false);
   });
 });

@@ -1,5 +1,6 @@
 import { randomInt } from "node:crypto";
 import type { CurrentAccount } from "@/features/account/server/sessions";
+import { releaseCancelledOrderStock } from "@/features/stock/server/reservation";
 import { transaction, type Db } from "@/shared/db";
 import { ORDER_STATUS, PARCEL_STATUS, type OrderStatus, type ParcelStatus } from "@/shared/statuses";
 
@@ -221,7 +222,7 @@ export function changeParcelStatus(db: Db, input: StatusChangeInput, now: Date =
   });
 }
 
-/** DLV-006 คำสั่งซื้อของพัสดุที่ส่งไม่สำเร็จเป็น `ยกเลิก` เหตุผล "ส่งไม่สำเร็จ" (CHK-010) */
+/** DLV-006 คำสั่งซื้อของพัสดุที่ส่งไม่สำเร็จเป็น `ยกเลิก` เหตุผล "ส่งไม่สำเร็จ" (CHK-010) แล้วคืนสต็อก (INV-013) */
 function cancelOrderOfFailedParcel(db: Db, orderId: number, now: Date): void {
   db.prepare("UPDATE orders SET status = ?, cancelled_at = ?, cancel_reason = ? WHERE id = ?").run(
     ORDER_STATUS.cancelled,
@@ -229,4 +230,5 @@ function cancelOrderOfFailedParcel(db: Db, orderId: number, now: Date): void {
     S.failed,
     orderId,
   );
+  releaseCancelledOrderStock(db, orderId, now);
 }

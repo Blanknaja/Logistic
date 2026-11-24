@@ -1,0 +1,109 @@
+import { PAGE_SIZE, priceError, type BrowseParams, type Sort } from "@/features/browse/search-params";
+import type { Category } from "@/features/product-listing/server/categories";
+import type { Db } from "@/shared/db";
+import { PRODUCT_STATUS, SHOP_STATUS } from "@/shared/statuses";
+
+export type ProductCard = {
+  id: number;
+  name: string;
+  /** ราคาต่ำสุดของแบบย่อยที่ยังใช้อยู่ */
+  price: number;
+  shopName: string;
+  coverUrl: string | null;
+  soldOut: boolean;
+};
+
+export type SearchResult = {
+  items: ProductCard[];
+  total: number;
+  /** หน้าที่แสดงจริง ถ้าหน้าที่ขอเกินหน้าสุดท้ายจะเป็นหน้าสุดท้าย */
+  page: number;
+  totalPages: number;
+  category: Category | null;
+  categoryNotFound: boolean;
+  /** ช่วงราคาใช้ไม่ได้ จึงไม่ได้กรองราคา */
+  priceError: string | null;
+};
+
+// ราคาเท่ากันให้สินค้าที่ลงขายใหม่กว่าขึ้นก่อน (BRW-005)
+const ORDER_BY: Record<Sort, string> = {
+  newest: "p.published_at DESC, p.id DESC",
+  "price-asc": "price ASC, p.published_at DESC, p.id DESC",
+  "price-desc": "price DESC, p.published_at DESC, p.id DESC",
+};
+
+/** สินค้าที่ผู้ซื้อเห็นได้ตามคำค้นและตัวกรอง หน้าละ 20 รายการ (BRW-001 ถึง BRW-007) */
+export function searchProducts(db: Db, params: BrowseParams): SearchResult {
+  const error = priceError(params.min, params.max);
+  let category: Category | null = null;
+  if (params.category !== null) {
+    category = /^\d+$/.test(params.category)
+      ? ((db.prepare("SELECT id, name FROM categories WHERE id = ?").get(Number(params.category)) as Category | undefined) ?? null)
+      : null;
+    if (!category) {
+      return { items: [], total: 0, page: 1, totalPages: 0, category: null, categoryNotFound: true, priceError: error };
+    }
+  }
+
+  const where = ["p.status = ?", "s.status = ?"];
+  const whereArgs: (string | number)[] = [PRODUCT_STATUS.onSale, SHOP_STATUS.open];
+  if (params.q) {
+    // instr ไม่มีอักษรพิเศษแบบ LIKE ส่วน lower แปลงเฉพาะอักษรอังกฤษ
+    where.push("instr(lower(p.name), lower(?)) > 0");
+    whereArgs.push(params.q);
+  }
+  if (category) {
+    where.push("p.category_id = ?");
+    whereArgs.push(category.id);
+  }
+  const having = ["1"];
+  const havingArgs: number[] = [];
+  if (!error && params.min !== null) {
+    having.push("price >= ?");
+    havingArgs.push(params.min);
+  }
+  if (!error && params.max !== null) {
+    having.push("price <= ?");
+    havingArgs.push(params.max);
+  }
+
+  const listed = `
+    SELECT p.id, p.name, p.published_at, s.name AS shop_name, min(v.price) AS price, sum(v.stock) AS stock
+    FROM products p
+    JOIN shops s ON s.id = p.shop_id
+    JOIN variants v ON v.product_id = p.id AND v.removed_at IS NULL AND v.price IS NOT NULL
+    WHERE ${where.join(" AND ")}
+    GROUP BY p.id
+    HAVING ${having.join(" AND ")}`;
+  const args = [...whereArgs, ...havingArgs];
+
+  const total = Number(db.prepare(`SELECT count(*) AS n FROM (${listed})`).get(...args)?.n);
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const page = Math.min(params.page, Math.max(totalPages, 1));
+
+  const rows = db
+    .prepare(
+      `${listed}
+       ORDER BY ${ORDER_BY[params.sort]}
+       LIMIT ? OFFSET ?`,
+    )
+    .all(...args, PAGE_SIZE, (page - 1) * PAGE_SIZE) as {
+    id: number;
+    name: string;
+    shop_name: string;
+    price: number;
+    stock: number;
+  }[];
+
+  const cover = db.prepare("SELECT url FROM product_images WHERE product_id = ? ORDER BY position LIMIT 1");
+  const items = rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    price: row.price,
+    shopName: row.shop_name,
+    coverUrl: (cover.get(row.id)?.url as string | undefined) ?? null,
+    soldOut: row.stock <= 0,
+  }));
+
+  return { items, total, page, totalPages, category, categoryNotFound: false, priceError: error };
+}

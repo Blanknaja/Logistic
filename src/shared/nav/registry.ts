@@ -36,6 +36,7 @@ export function headerLinks(
   return navs
     .flatMap((nav) => nav.header)
     .filter((link) => !link.visibleTo || link.visibleTo(viewer))
+    .map(({ label, href, order }) => ({ label: typeof label === "function" ? label(viewer) : label, href, order }))
     .sort(byOrder)
     .map(({ label, href }) => ({ label, href }));
 }

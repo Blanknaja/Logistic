@@ -2,7 +2,8 @@ import type { CurrentAccount } from "@/features/account/server/sessions";
 
 /** ลิงก์ในแถบนำทางด้านบนของทุกหน้า */
 export type HeaderLink = {
-  label: string;
+  /** ใส่ฟังก์ชันเมื่อข้อความขึ้นกับคนที่ดู เช่น ชื่อที่แสดงของบัญชี */
+  label: string | ((viewer: CurrentAccount | null) => string);
   href: string;
   /** น้อยอยู่ซ้าย ดูเลขที่จองไว้ของแต่ละ feature ใน docs/architecture.md */
   order: number;

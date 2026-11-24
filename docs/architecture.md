@@ -42,6 +42,7 @@ src/
     seed/                 ข้อมูลตัวอย่าง
 scripts/seed.ts           คำสั่ง pnpm seed
 scripts/login-as.ts       พิมพ์ cookie ของบัญชีตัวอย่าง ไว้ลองหน้าที่ต้องเข้าสู่ระบบด้วย curl
+scripts/seed-shop-orders.ts  เพิ่มคำสั่งซื้อตัวอย่างทุกสถานะให้ร้านของบัญชีผู้ขายหนึ่งบัญชี
 ```
 
 feature ทั้ง 10: `account` `shop` `product-listing` `stock` `browse` `cart` `checkout` `payment` `shop-orders` `delivery`
@@ -78,7 +79,7 @@ export const nav: FeatureNav = {
 };
 ```
 
-`visibleTo: (viewer) => viewer !== null` ใช้ซ่อนลิงก์ตามคนที่ดู `label` ใส่เป็นฟังก์ชัน `(viewer) => string` ได้เมื่อข้อความขึ้นกับคนที่ดู ลำดับที่จองไว้ (น้อยอยู่ซ้าย)
+`visibleTo: (viewer) => viewer !== null` ใช้ซ่อนลิงก์ตามคนที่ดู `label` ใส่เป็นฟังก์ชัน `(viewer) => string` ได้เมื่อข้อความขึ้นกับคนที่ดู ในเมนูหลังบ้านใส่เป็น `(shopId) => string` ได้ เช่น "รอจัดของ 5" ลำดับที่จองไว้ (น้อยอยู่ซ้าย)
 
 - แถบด้านบน: browse 10, cart 20, checkout 30, delivery 40, shop 50, account 90 ถึง 99
 - เมนูหลังบ้าน: product-listing 10, stock 20, shop-orders 30, shop 40 (ตั้งค่าร้าน) และ 50 (หน้าร้าน)

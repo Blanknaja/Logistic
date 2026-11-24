@@ -1,5 +1,6 @@
 // test ระดับหน้า server action และ route ของรูป ส่วน vi.mock ลอกมาจาก src/features/account/account-pages.test.tsx
 
+import { randomUUID } from "node:crypto";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { GET as getImage } from "@/app/product-images/[key]/route";
@@ -199,7 +200,7 @@ describe("PRD-002 สร้างสินค้าและเปิดขา�
       prices: { "[]": "250" },
     };
 
-    const result = await submit(createProductAction("publish", values));
+    const result = await submit(createProductAction(randomUUID(), "publish", values));
     expect(result.redirect).toBe("/seller/products?notice=published");
 
     const page = text((await open(listPage({ notice: "published" }))).html);
@@ -219,7 +220,7 @@ describe("PRD-002 สร้างสินค้าและเปิดขา�
       prices: { "[]": "0" },
     };
 
-    const result = await submit(createProductAction("publish", values));
+    const result = await submit(createProductAction(randomUUID(), "publish", values));
     expect(result.redirect).toBeUndefined();
     expect(result.state?.errors).toEqual({
       description: "กรอกรายละเอียดสินค้า",
@@ -231,8 +232,8 @@ describe("PRD-002 สร้างสินค้าและเปิดขา�
 
   test("PRD-002 ข้อมูลที่ไม่ได้มาจากหน้าฟอร์ม ไม่ถูกบันทึก", async () => {
     signInSeller();
-    await expect(createProductAction("publish", { name: 1 })).rejects.toThrow();
-    await expect(createProductAction("hide" as "draft", { name: "ก" })).rejects.toThrow();
+    await expect(createProductAction(randomUUID(), "publish", { name: 1 })).rejects.toThrow();
+    await expect(createProductAction(randomUUID(), "hide" as "draft", { name: "ก" })).rejects.toThrow();
     expect(count("products")).toBe(0);
   });
 
@@ -343,7 +344,7 @@ describe("PRD-005 บันทึกร่างผ่านหน้าเว�
     signInSeller();
     const values: ProductValues = { name: "หมวกแก๊ป", description: "", categoryId: null, images: [], options: [], prices: { "[]": "120" } };
 
-    expect((await submit(createProductAction("draft", values))).redirect).toBe("/seller/products?notice=draft");
+    expect((await submit(createProductAction(randomUUID(), "draft", values))).redirect).toBe("/seller/products?notice=draft");
     const page = text((await open(listPage({ notice: "draft" }))).html);
     expect(page).toContain("บันทึกร่างแล้ว");
     expect(page).toContain("ไม่มีรูป หมวกแก๊ป ฿120 สต็อก 0 ร่าง");
@@ -353,7 +354,7 @@ describe("PRD-005 บันทึกร่างผ่านหน้าเว�
     signInSeller();
     const values: ProductValues = { name: "", description: "", categoryId: null, images: [], options: [], prices: { "[]": "120" } };
 
-    const result = await submit(createProductAction("draft", values));
+    const result = await submit(createProductAction(randomUUID(), "draft", values));
     expect(result.state?.errors).toEqual({ name: "กรอกชื่อสินค้าก่อนบันทึกร่าง" });
     expect(count("products")).toBe(0);
   });
@@ -380,7 +381,7 @@ describe("PRD-012 จัดการได้เฉพาะสินค้า�
     expect((await open(listPage())).redirect).toBe("/open-shop");
     expect((await open(NewProductPage())).redirect).toBe("/open-shop");
     const values: ProductValues = { name: "หมวก", description: "", categoryId: null, images: [], options: [], prices: {} };
-    expect((await submit(createProductAction("draft", values))).redirect).toBe("/open-shop");
+    expect((await submit(createProductAction(randomUUID(), "draft", values))).redirect).toBe("/open-shop");
     expect((await uploadImage(new Request("http://localhost/product-images", { method: "POST", body: "x" }))).status).toBe(401);
     expect(count("products")).toBe(0);
   });
@@ -388,14 +389,14 @@ describe("PRD-012 จัดการได้เฉพาะสินค้า�
   test("PRD-012 ผู้ดูแลแพลตฟอร์มไม่มีร้าน สร้างหรือแก้สินค้าแทนร้านไม่ได้", async () => {
     signInAs(addAccount(db, { isAdmin: true }).id);
     expect((await open(listPage())).redirect).toBe("/open-shop");
-    expect((await submit(createProductAction("publish", { name: "x" }))).redirect).toBe("/open-shop");
+    expect((await submit(createProductAction(randomUUID(), "publish", { name: "x" }))).redirect).toBe("/open-shop");
   });
 
   test("PRD-012 ยังไม่เข้าสู่ระบบ ถูกพาไปหน้าเข้าสู่ระบบก่อน แล้วกลับมาหน้าเดิม", async () => {
     expect((await open(listPage())).redirect).toBe("/login?next=%2Fseller%2Fproducts");
     expect((await open(NewProductPage())).redirect).toBe("/login?next=%2Fseller%2Fproducts%2Fnew");
     const values: ProductValues = { name: "หมวก", description: "", categoryId: null, images: [], options: [], prices: {} };
-    expect((await submit(createProductAction("draft", values))).redirect).toBe(
+    expect((await submit(createProductAction(randomUUID(), "draft", values))).redirect).toBe(
       "/login?next=%2Fseller%2Fproducts%2Fnew&notice=relogin",
     );
   });
@@ -411,7 +412,7 @@ describe("PRD-012 จัดการได้เฉพาะสินค้า�
       options: [],
       prices: { "[]": "100" },
     };
-    expect((await submit(createProductAction("publish", values))).state?.errors.images).toBe("ไม่พบรูปบางรูป ลบรูปนั้นแล้วใส่ใหม่");
+    expect((await submit(createProductAction(randomUUID(), "publish", values))).state?.errors.images).toBe("ไม่พบรูปบางรูป ลบรูปนั้นแล้วใส่ใหม่");
     expect(count("products")).toBe(0);
   });
 });

@@ -1,9 +1,10 @@
 import Link from "next/link";
-import type { SavedNotice } from "@/features/product-listing/actions";
+import { deleteProductAction, setHiddenAction, type SavedNotice } from "@/features/product-listing/actions";
 import type { ListedStatus, ShopProductRow } from "@/features/product-listing/server/products";
 import { formatBaht, formatDateTime, formatNumber } from "@/shared/format";
 import { PRODUCT_STATUS } from "@/shared/statuses";
 import { EmptyState } from "@/shared/ui/states";
+import { DeleteButton } from "./delete-button";
 import styles from "./product-listing.module.css";
 
 const LIST_PATH = "/seller/products";
@@ -19,6 +20,8 @@ const STATUS_FILTERS: Record<string, ListedStatus> = {
 const NOTICES: Record<SavedNotice, string> = {
   published: "เปิดขายสินค้าแล้ว",
   draft: "บันทึกร่างแล้ว",
+  saved: "บันทึกแล้ว",
+  deleted: "ลบสินค้าแล้ว",
 };
 
 type Params = Record<string, string | string[] | undefined>;
@@ -83,6 +86,7 @@ export function ProductList({
   statusKey?: string;
   q: string;
 }) {
+  const back = href({ status: statusKey, q, page: result.page });
   const chips = [
     { key: undefined, label: "ทั้งหมด", count: counts.all },
     ...Object.entries(STATUS_FILTERS).map(([key, status]) => ({ key, label: status, count: counts[status] })),
@@ -141,6 +145,19 @@ export function ProductList({
                   <span className={styles.status}>{item.status}</span>
                 </p>
                 <p className={styles.meta}>แก้ล่าสุด {formatDateTime(item.updatedAt)}</p>
+              </div>
+              <div className={styles.rowActions}>
+                <Link href={`${LIST_PATH}/${item.id}`} className="button button-secondary">
+                  แก้ไข
+                </Link>
+                {item.status !== PRODUCT_STATUS.draft && (
+                  <form action={setHiddenAction.bind(null, item.id, item.status === PRODUCT_STATUS.onSale, back)}>
+                    <button type="submit" className="button button-secondary">
+                      {item.status === PRODUCT_STATUS.onSale ? "ซ่อน" : "เลิกซ่อน"}
+                    </button>
+                  </form>
+                )}
+                <DeleteButton name={item.name} action={deleteProductAction.bind(null, item.id)} />
               </div>
             </li>
           ))}

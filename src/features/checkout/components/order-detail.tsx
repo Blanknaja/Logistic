@@ -3,6 +3,7 @@ import { CANCEL_REFUSED, type BuyerOrderDetail, type CancelRefusal } from "@/fea
 import { formatBaht, formatDateTime, formatNumber } from "@/shared/format";
 import { ORDER_STATUS } from "@/shared/statuses";
 import { CancelOrderForm } from "./cancel-order-form";
+import { PayButton } from "./pay-button";
 import styles from "./buyer-orders.module.css";
 
 /** "จะยกเลิก 2 คำสั่งซื้อที่จ่ายรวมกัน: ผ้าดี และ บ้านแก้ว" */
@@ -56,9 +57,7 @@ export function OrderDetail({
             <CancelOrderForm orderNo={order.orderNo} message={cancelConfirmMessage(order.group)} />
           ) : (
             <div className={styles.actions}>
-              <Link href={`/pay/${order.groupId}`} className="button">
-                จ่ายเงิน
-              </Link>
+              <PayButton orderNo={order.orderNo} groupId={order.groupId} />
               <Link href={`/orders/${order.orderNo}?cancel=1`} className="button button-secondary">
                 ยกเลิกคำสั่งซื้อ
               </Link>

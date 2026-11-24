@@ -18,6 +18,7 @@
 | `pnpm seed` | รัน migration และสร้างข้อมูลตัวอย่างถ้ายังไม่มี รันซ้ำได้ |
 | `pnpm seed --reset` | ลบฐานข้อมูลในเครื่องแล้วสร้างใหม่ |
 | `pnpm check` | ตรวจชนิดข้อมูล ตรวจรูปแบบโค้ด และรัน test ทั้งหมด ต้องผ่านก่อน commit ใช้เวลาราว 20 วินาที |
+| `pnpm test:full` | รัน test ทั้งหมดโดยให้ผู้ซื้อ 20 คนแย่งชิ้นสุดท้ายครบ 100 รอบตาม CHK-Q02 (`pnpm check` รัน 10 รอบ) ต้องผ่านก่อน merge งานที่แตะการสั่งซื้อหรือการจองสต็อก |
 | `pnpm e2e` | เดินเส้นทางหลักผ่านหน้าเว็บจริงด้วย Playwright (`e2e/main-path.spec.ts`) build แอปแล้วเปิดที่พอร์ต 3300 กับฐานข้อมูล `data/e2e.db` ที่ล้างใหม่ทุกครั้ง ใช้ Google Chrome ในเครื่อง ราว 30 วินาที ไม่อยู่ใน `pnpm check` แต่ต้องผ่านก่อน merge งานที่แตะหน้าในเส้นทางหลัก วิธีใช้อื่นอยู่ใน README |
 
 ถ้าทำงานหลาย worktree พร้อมกัน ให้แต่ละ worktree ใช้พอร์ตของตัวเอง ฐานข้อมูลอยู่ที่ `data/blanksong.db` ของแต่ละ worktree จึงไม่ชนกัน
@@ -175,7 +176,6 @@ export function cancelExpiredOrders(db: Db, now: Date = new Date()): number {
 | `releaseCancelledOrderStock(db, orderId, now)` | `stock/server/reservation.ts` | หลังเปลี่ยนคำสั่งซื้อเป็น `ยกเลิก` เอง เช่นพัสดุ `ส่งไม่สำเร็จ` (`changeParcelStatus` เรียกให้แล้ว) คืนสต็อกครั้งเดียวต่อคำสั่งซื้อ เรียกซ้ำได้ |
 | `createParcelForPaidOrder(db, orderId, now)` | `delivery/server/parcel-status.ts` | `markGroupPaid` ของการจ่ายเงินเรียกให้ทุกคำสั่งซื้อที่เพิ่งเป็น `จ่ายแล้ว` ในการบันทึกเดียวกัน เรียกซ้ำได้ |
 | `countOrdersAwaitingPacking(db, shopId)` | `shop-orders/server/orders.ts` | ตัวนับ "รอจัดของ" ตัวเดียวของทั้งระบบ นับไม่ได้ให้แสดง `UNCOUNTED` ("–") |
-| `releaseCancelledOrderGroupStock(db, groupId, now)` | `stock/server/reservation.ts` | เหมือนข้างบน กับทุกคำสั่งซื้อที่ `ยกเลิก` แล้วในกลุ่ม |
 | `reservedQuantity(db, variantId)` | `stock/server/reservation.ts` | จำนวนที่จองอยู่ของแบบย่อย |
 
 เหตุผลการยกเลิกใช้ `CANCEL_REASON` ใน `order-groups.ts` ("ผู้ซื้อยกเลิก" "หมดเวลาจ่ายเงิน" "ส่งไม่สำเร็จ")

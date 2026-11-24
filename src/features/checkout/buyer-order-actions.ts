@@ -9,6 +9,7 @@ import {
   type BuyerOrderPage,
   type OrderCursor,
 } from "@/features/checkout/server/buyer-orders";
+import { checkOrderGroupPayable } from "@/features/checkout/server/order-groups";
 import { getDb } from "@/shared/db";
 import { requireAccount } from "@/shared/session";
 
@@ -27,4 +28,14 @@ export async function cancelOrderAction(formData: FormData): Promise<{ error: st
   if (result.reason === "paymentPending") return { error: CANCEL_REFUSED.paymentPending };
   // สถานะเปลี่ยนไปแล้ว โหลดหน้าใหม่ให้เห็นสถานะจริงพร้อมเหตุผลที่ยกเลิกไม่ได้
   redirect(`${orderPath}?notice=${result.reason}`);
+}
+
+/** ปุ่ม "จ่ายเงิน" ตรวจเวลาก่อนพาไปหน้าจ่ายเงิน เลยเขตแล้วโหลดหน้าคำสั่งซื้อใหม่พร้อมข้อความหมดเวลา (CHK-008) */
+export async function goToPaymentAction(formData: FormData): Promise<void> {
+  const orderPath = `/orders/${encodeURIComponent(String(formData.get("orderNo") ?? ""))}`;
+  const groupId = Number(formData.get("groupId"));
+  const viewer = await requireAccount(orderPath);
+  const check = checkOrderGroupPayable(getDb(), groupId, viewer.id);
+  if (!check.payable && check.reason === "expired") redirect(`${orderPath}?notice=expired`);
+  redirect(`/pay/${groupId}`);
 }

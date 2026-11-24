@@ -15,6 +15,7 @@
     "lint": "eslint --max-warnings 0",
     "test": "vitest run",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "test:full": "CHK_Q02_ROUNDS=100 vitest run",
     "e2e": "playwright test"
   },
   "dependencies": {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { getCheckout, placeOrder, parseCheckoutLines, type Checkout } from "@/features/checkout/server/checkout";
+import { CART_CHANGED_MESSAGE, getCheckout, placeOrder, parseCheckoutLines, type Checkout } from "@/features/checkout/server/checkout";
 import { reservedQuantity } from "@/features/stock/server/reservation";
 import type { Db } from "@/shared/db";
 import { addAccount, addAddress, addCartItem, addProduct, addShop } from "@/shared/db/builders";
@@ -131,21 +131,44 @@ describe("CHK-005 กดสั่งซื้อ", () => {
     expect(db.prepare("SELECT variant_id FROM cart_items WHERE account_id = ?").all(s.buyer.id)).toEqual([{ variant_id: s.hat }]);
   });
 
-  test("CHK-005 คำสั่งซื้อเก็บสำเนาสินค้าและที่อยู่ ร้านหรือผู้ซื้อแก้ทีหลังไม่กระทบ", () => {
-    const s = somchai();
-    const result = press(s.buyer.id, getCheckout(db, s.buyer.id));
+  test("CHK-005 คำสั่งซื้อเก็บสำเนาสินค้า แบบย่อย ค่าส่ง และที่อยู่ ร้านหรือผู้ซื้อแก้ทีหลังไม่กระทบ", () => {
+    const buyer = addAccount(db);
+    addAddress(db, { accountId: buyer.id, isDefault: true, address: sampleOther });
+    const shirt = addProduct(db, { name: "เสื้อยืด", price: 200, options: [{ name: "สี", values: ["ดำ"] }, { name: "ขนาด", values: ["L"] }] });
+    addCartItem(db, { accountId: buyer.id, variantId: shirt.variantIds[0], quantity: 2 });
+    const result = press(buyer.id, getCheckout(db, buyer.id));
+    if (!result.ok) throw new Error("ต้องสั่งซื้อสำเร็จ");
     db.prepare("UPDATE variants SET price = 999").run();
     db.prepare("UPDATE products SET name = 'ชื่อใหม่'").run();
-    db.prepare("UPDATE shipping_addresses SET phone = '0899999999'").run();
+    db.prepare("UPDATE product_option_values SET value = 'แดง' WHERE value = 'ดำ'").run();
+    db.prepare("UPDATE product_images SET url = '/sample-images/new.svg'").run();
+    db.prepare(
+      "UPDATE shipping_addresses SET recipient_name = 'คนใหม่', phone = '0899999999', address = 'ที่ใหม่', subdistrict = 'ใหม่', district = 'ใหม่', province = 'เชียงใหม่', postcode = '50000'",
+    ).run();
 
-    const items = db.prepare("SELECT product_name, unit_price, quantity, cover_image_url FROM order_items ORDER BY id").all();
-    expect(items.map((i) => [i.product_name, i.unit_price, i.quantity])).toEqual([
-      ["เสื้อยืด", 200, 2],
-      ["แก้วน้ำ", 150, 1],
+    expect(db.prepare("SELECT product_name, variant_label, unit_price, quantity, cover_image_url FROM order_items").all()).toEqual([
+      { product_name: "เสื้อยืด", variant_label: "ดำ L", unit_price: 200, quantity: 2, cover_image_url: `/sample-images/p${shirt.id}-1.svg` },
     ]);
-    expect(items[0].cover_image_url).toMatch(/^\/sample-images\//);
-    expect(db.prepare("SELECT DISTINCT ship_phone FROM orders WHERE group_id = ?").all(result.ok ? result.groupId : 0)).toEqual([
-      { ship_phone: "0100000000" },
+    expect(
+      db
+        .prepare(
+          `SELECT items_total, shipping_fee, total, ship_recipient_name, ship_phone, ship_address, ship_subdistrict, ship_district,
+             ship_province, ship_postcode FROM orders WHERE group_id = ?`,
+        )
+        .all(result.groupId),
+    ).toEqual([
+      {
+        items_total: 400,
+        shipping_fee: 40,
+        total: 440,
+        ship_recipient_name: sampleOther.name,
+        ship_phone: sampleOther.phone,
+        ship_address: sampleOther.address,
+        ship_subdistrict: sampleOther.subdistrict,
+        ship_district: sampleOther.district,
+        ship_province: sampleOther.province,
+        ship_postcode: sampleOther.postcode,
+      },
     ]);
   });
 
@@ -262,8 +285,36 @@ describe("CHK-006 ตรวจสินค้าตอนกดสั่งซ�
     addAddress(db, { accountId: other.id, isDefault: true });
     const page = { ...getCheckout(db, s.buyer.id), addresses: getCheckout(db, other.id).addresses };
 
-    expect(press(other.id, page)).toMatchObject({ ok: false });
+    expect(press(other.id, page)).toEqual({
+      ok: false,
+      problems: { [s.shirtItem]: CART_CHANGED_MESSAGE, [s.glassItem]: CART_CHANGED_MESSAGE },
+      addressProblem: null,
+    });
     expect(count("orders")).toBe(0);
+    expect(cartCount(s.buyer.id)).toBe(3);
+  });
+
+  test("CHK-006 ส่งที่อยู่ของบัญชีอื่นมา ไม่สร้างคำสั่งซื้อ และไม่จองสต็อก", () => {
+    const s = somchai();
+    const other = addAccount(db);
+    const page = { ...getCheckout(db, s.buyer.id), addresses: [{ ...getCheckout(db, s.buyer.id).addresses[0], id: addAddress(db, { accountId: other.id }).id }] };
+
+    expect(press(s.buyer.id, page)).toEqual({ ok: false, problems: {}, addressProblem: "ที่อยู่ที่เลือกถูกลบไปแล้ว เลือกที่อยู่อื่น" });
+    expect(count("orders")).toBe(0);
+    expect([stock(s.shirt), stock(s.glass)]).toEqual([5, 3]);
+  });
+
+  test("CHK-005 ส่งรายการที่ไม่ได้เลือกในตะกร้ามาเอง ไม่สร้างคำสั่งซื้อ และหมวกยังอยู่ในตะกร้า", () => {
+    const s = somchai();
+    const page = getCheckout(db, s.buyer.id);
+    const hatItem = Number(db.prepare("SELECT id FROM cart_items WHERE variant_id = ?").get(s.hat)?.id);
+    const forged = { ...page, lines: [...linesOf(page), { cartItemId: hatItem, quantity: 1, unitPrice: 99 }] };
+
+    expect(
+      placeOrder(db, { buyerAccountId: s.buyer.id, addressId: s.address.id, orderKey: page.orderKey, lines: forged.lines }, at("14:10:00")),
+    ).toEqual({ ok: false, problems: { [hatItem]: CART_CHANGED_MESSAGE }, addressProblem: null });
+    expect(count("orders")).toBe(0);
+    expect(stock(s.hat)).toBe(5);
     expect(cartCount(s.buyer.id)).toBe(3);
   });
 

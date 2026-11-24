@@ -8,6 +8,7 @@ import type { BuyerOrderPage, BuyerOrderSummary, OrderCursor } from "@/features/
 import { formatBaht, formatDateTime, formatNumber } from "@/shared/format";
 import type { OrderStatus } from "@/shared/statuses";
 import styles from "./buyer-orders.module.css";
+import { PayButton } from "./pay-button";
 
 export type OrderListState = BuyerOrderPage & { failed: boolean };
 
@@ -80,9 +81,7 @@ function OrderCard({ order }: { order: BuyerOrderSummary }) {
       {order.payable && (
         <div className={styles.payRow}>
           <span>จ่ายภายใน {formatDateTime(order.paymentDeadline)}</span>
-          <Link href={`/pay/${order.groupId}`} className="button">
-            จ่ายเงิน
-          </Link>
+          <PayButton orderNo={order.orderNo} groupId={order.groupId} />
         </div>
       )}
     </li>

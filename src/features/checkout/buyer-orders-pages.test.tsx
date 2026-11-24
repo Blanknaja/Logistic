@@ -8,7 +8,7 @@ import OrdersError from "@/app/orders/error";
 import OrdersPage from "@/app/orders/page";
 import Loading from "@/app/loading";
 import { createSession } from "@/features/account/server/sessions";
-import { cancelOrderAction, loadMoreOrdersAction } from "@/features/checkout/buyer-order-actions";
+import { cancelOrderAction, goToPaymentAction, loadMoreOrdersAction } from "@/features/checkout/buyer-order-actions";
 import { cancelConfirmMessage } from "@/features/checkout/components/order-detail";
 import { loadMore, OrderList } from "@/features/checkout/components/order-list";
 import { nav } from "@/features/checkout/nav";
@@ -100,18 +100,28 @@ const cancel = (orderNo: string) => {
   return submit(cancelOrderAction(form));
 };
 
+const goToPayment = (orderNo: string, groupId: number) => {
+  const form = new FormData();
+  form.set("orderNo", orderNo);
+  form.set("groupId", String(groupId));
+  return submit(goToPaymentAction(form));
+};
+
 const count = (html: string | undefined, text: string) => html?.split(text).length ?? 0;
+/** ปุ่ม "จ่ายเงิน" เป็นฟอร์มที่ส่งเลขกลุ่มคำสั่งซื้อ ไม่ใช่ลิงก์ไปหน้าจ่ายเงินตรงๆ (CHK-008) */
+const payButton = (groupId: number) => `<input type="hidden" name="groupId" value="${groupId}"/>`;
+const PAY_BUTTON = ">จ่ายเงิน</button>";
 const cards = (html: string | undefined) => count(html, '<li class="card">') - 1;
 const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
 const statusOf = (orderNo: string) =>
   (db.prepare("SELECT status FROM orders WHERE order_no = ?").get(orderNo) as { status: string }).status;
 
 /** สมชายกดสั่งซื้อเมื่อ 5 นาทีก่อน ได้คำสั่งซื้อร้าน "ผ้าดี" 440 บาท และ "บ้านแก้ว" 190 บาท ในกลุ่มเดียวกัน */
-function somchaiOrdersTwoShops() {
+function somchaiOrdersTwoShops(orderedMinutesAgo = 5) {
   const somchai = addAccount(db, { displayName: "สมชาย" });
   const shirt = addProduct(db, { shopId: addShop(db, { name: "ผ้าดี" }).id, name: "เสื้อยืด", price: 200 });
   const glass = addProduct(db, { shopId: addShop(db, { name: "บ้านแก้ว" }).id, name: "แก้วน้ำ", price: 150 });
-  const orderedAt = minutesAgo(5);
+  const orderedAt = minutesAgo(orderedMinutesAgo);
   const first = addOrder(db, { buyerAccountId: somchai.id, items: [{ variantId: shirt.variantIds[0], quantity: 2 }], orderedAt });
   const second = addOrder(db, {
     buyerAccountId: somchai.id,
@@ -165,7 +175,8 @@ describe("CHK-009 หน้ารายการคำสั่งซื้อ�
 
     expect(cards(html)).toBe(2);
     expect(count(html, `จ่ายภายใน ${formatDateTime(deadline)}`) - 1).toBe(2);
-    expect(count(html, `href="/pay/${first.groupId}"`) - 1).toBe(2);
+    expect(count(html, payButton(first.groupId)) - 1).toBe(2);
+    expect(count(html, PAY_BUTTON) - 1).toBe(2);
     expect(html).toContain("ผ้าดี");
     expect(html).toContain("เสื้อยืด · รวม 2 ชิ้น");
     expect(html).toContain("฿440");
@@ -232,7 +243,7 @@ describe("CHK-010 หน้ารายละเอียดคำสั่ง�
     expect(html).toContain(`href="/track/${parcel.trackingNo}"`);
     expect(html).toContain("ติดตามพัสดุ");
     expect(html).not.toContain("ยกเลิกคำสั่งซื้อ");
-    expect(html).not.toContain("/pay/");
+    expect(html).not.toContain(PAY_BUTTON);
   });
 
   test("CHK-010 รอจ่ายเงิน เห็นเวลาหมดเขต ปุ่มจ่ายเงิน ปุ่มยกเลิก และเลขคำสั่งซื้ออื่นในกลุ่ม", async () => {
@@ -241,7 +252,8 @@ describe("CHK-010 หน้ารายละเอียดคำสั่ง�
     const { html } = await orderPage(first.orderNo);
 
     expect(html).toContain("จ่ายภายใน");
-    expect(html).toContain(`href="/pay/${first.groupId}"`);
+    expect(html).toContain(payButton(first.groupId));
+    expect(html).toContain(PAY_BUTTON);
     expect(html).toContain("ยกเลิกคำสั่งซื้อ");
     expect(html).toContain(`href="/orders/${second.orderNo}"`);
     expect(html).toContain("บ้านแก้ว");
@@ -283,6 +295,38 @@ describe("CHK-010 หน้ารายละเอียดคำสั่ง�
   });
 });
 
+describe("CHK-008 กดจ่ายเงินหลังหมดเวลา", () => {
+  test("CHK-008 ก่อนหมดเขต กดจ่ายเงินแล้วไปหน้าจ่ายเงินของกลุ่มคำสั่งซื้อ", async () => {
+    const { first } = somchaiOrdersTwoShops();
+
+    expect((await goToPayment(first.orderNo, first.groupId)).redirect).toBe(`/pay/${first.groupId}`);
+    expect(statusOf(first.orderNo)).toBe(ORDER_STATUS.awaitingPayment);
+  });
+
+  test("CHK-008 เปิดหน้าค้างไว้จนเลยเวลาแล้วกดจ่ายเงิน เห็นข้อความหมดเวลา หน้าเป็นยกเลิก และไม่ถูกพาไปหน้าจ่ายเงิน", async () => {
+    const { first, second } = somchaiOrdersTwoShops(32);
+
+    const result = await goToPayment(first.orderNo, first.groupId);
+
+    expect(result.redirect).toBe(`/orders/${first.orderNo}?notice=expired`);
+    expect(statusOf(first.orderNo)).toBe(ORDER_STATUS.cancelled);
+    expect(statusOf(second.orderNo)).toBe(ORDER_STATUS.cancelled);
+    const { html } = await orderPage(first.orderNo, { notice: "expired" });
+    expect(html).toContain("คำสั่งซื้อนี้หมดเวลาจ่ายเงินแล้ว");
+    expect(html).toContain("เหตุผล: หมดเวลาจ่ายเงิน");
+    expect(html).not.toContain(PAY_BUTTON);
+  });
+
+  test("CHK-008 กดจ่ายเงินจากหน้ารายการหลังหมดเวลา ได้ผลเดียวกัน", async () => {
+    const { first, second } = somchaiOrdersTwoShops(29);
+    const { html } = await ordersPage();
+    expect(html).toContain(payButton(first.groupId));
+    db.prepare("UPDATE order_groups SET payment_deadline = ? WHERE id = ?").run(minutesAgo(1), first.groupId);
+
+    expect((await goToPayment(second.orderNo, first.groupId)).redirect).toBe(`/orders/${second.orderNo}?notice=expired`);
+  });
+});
+
 describe("CHK-011 ผู้ซื้อยกเลิกคำสั่งซื้อตอนรอจ่ายเงิน", () => {
   test("CHK-011 ก่อนยืนยันบอกว่าจะยกเลิกกี่คำสั่งซื้อจากร้านไหน แล้วยืนยันได้ทั้งกลุ่ม", async () => {
     const { first, second } = somchaiOrdersTwoShops();
@@ -297,7 +341,7 @@ describe("CHK-011 ผู้ซื้อยกเลิกคำสั่งซ�
 
     const { html } = await orderPage(first.orderNo);
     expect(html).toContain("เหตุผล: ผู้ซื้อยกเลิก");
-    expect(html).not.toContain("/pay/");
+    expect(html).not.toContain(PAY_BUTTON);
     expect(html).not.toContain("ยกเลิกคำสั่งซื้อ");
   });
 
@@ -308,7 +352,7 @@ describe("CHK-011 ผู้ซื้อยกเลิกคำสั่งซ�
     expect(confirm.html).toMatch(new RegExp(`href="/orders/${first.orderNo}"[^>]*>ไม่ยกเลิก`));
 
     const back = await orderPage(first.orderNo);
-    expect(back.html).toContain(`href="/pay/${first.groupId}"`);
+    expect(back.html).toContain(payButton(first.groupId));
     expect(statusOf(first.orderNo)).toBe(ORDER_STATUS.awaitingPayment);
     expect(statusOf(second.orderNo)).toBe(ORDER_STATUS.awaitingPayment);
   });

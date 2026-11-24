@@ -1,4 +1,8 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { beforeEach, describe, expect, test } from "vitest";
+import { dynamic } from "@/app/layout";
+import { getProductDetail } from "@/features/browse/server/product-detail";
 import { parseBrowseParams, type RawSearchParams } from "@/features/browse/search-params";
 import { searchProducts } from "@/features/browse/server/search";
 import type { Db } from "@/shared/db";
@@ -288,5 +292,35 @@ describe("BRW-Q02 ผลลัพธ์ตรงกับเงื่อนไ�
       }
       expect(got.toSorted((a, b) => a - b), JSON.stringify(raw)).toEqual(expected);
     }
+  });
+});
+
+describe("BRW-Q04 ความสดของข้อมูล", () => {
+  test("BRW-Q04 ซ่อนสินค้าหรือระงับร้าน แล้วสินค้าหายจากผลค้นหาและหน้ารายละเอียดในคำขอถัดไป เพราะทุกหน้าอ่านฐานข้อมูลใหม่ทุกครั้ง", () => {
+    const hidden = product({ name: "ผ้าคลุมไหล่" });
+    const other = addProduct(db, { shopId: addShop(db).id, name: "ผ้าคลุมไหล่ลายดอก" });
+    expect(search({ q: "ผ้าคลุมไหล่" }).total).toBe(2);
+
+    db.prepare("UPDATE products SET status = 'ซ่อน' WHERE id = ?").run(hidden.id);
+    expect(search({ q: "ผ้าคลุมไหล่" }).items.map((item) => item.id)).toEqual([other.id]);
+    expect(getProductDetail(db, hidden.id)).toBeNull();
+
+    db.prepare("UPDATE shops SET status = 'ถูกระงับ' WHERE id = ?").run(other.shopId);
+    expect(search({ q: "ผ้าคลุมไหล่" }).total).toBe(0);
+    expect(getProductDetail(db, other.id)).toBeNull();
+    expect(dynamic).toBe("force-dynamic");
+  });
+});
+
+describe("BRW-Q03 ใช้บนมือถือได้", () => {
+  test("BRW-Q03 สไตล์ของหน้าแรก หน้าผลลัพธ์ และหน้ารายละเอียด ไม่มีความกว้างตายตัวเกินจอ 360 จุด และปุ่มเลือกตัวเลือกกว้างอย่างน้อย 44 จุด", () => {
+    const css = readFileSync(join(process.cwd(), "src/features/browse/components/browse.module.css"), "utf8");
+    const widths = [...css.matchAll(/(?:^|[\s;{])(?:min-)?width:\s*(\d+)px/g)].map((match) => Number(match[1]));
+    const globals = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
+
+    expect(widths.filter((width) => width > 328)).toEqual([]);
+    expect(css).toMatch(/\.choice \{[^}]*min-width: var\(--tap\)/);
+    expect(globals).toMatch(/--tap: 44px/);
+    expect(globals).toMatch(/\.button \{[^}]*min-height: var\(--tap\)/);
   });
 });

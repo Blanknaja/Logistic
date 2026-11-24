@@ -243,7 +243,7 @@ export function placeOrder(db: Db, input: PlaceOrderInput, now: Date = new Date(
     const byId = new Map(
       (
         db
-          .prepare(`${LINE_SELECT} WHERE ci.account_id = ? AND ci.id IN (SELECT value FROM json_each(?))`)
+          .prepare(`${LINE_SELECT} WHERE ci.account_id = ? AND ci.selected = 1 AND ci.id IN (SELECT value FROM json_each(?))`)
           .all(input.buyerAccountId, JSON.stringify(input.lines.map((line) => line.cartItemId))) as LineRow[]
       ).map((row) => [row.cart_item_id, row]),
     );

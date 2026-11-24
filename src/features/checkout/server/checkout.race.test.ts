@@ -97,6 +97,35 @@ describe("INV-011 สองคนแย่งชิ้นสุดท้าย",
   });
 });
 
+/** สต็อกของทุกแบบย่อยตรงกับ "สต็อกหลังเปลี่ยน" ของบรรทัดล่าสุดในประวัติ (INV-Q05) */
+const stockMismatches = () =>
+  db
+    .prepare(
+      `SELECT v.id FROM variants v JOIN stock_history h ON h.id = (SELECT max(id) FROM stock_history WHERE variant_id = v.id)
+       WHERE v.stock != h.stock_after`,
+    )
+    .all();
+
+describe("INV-Q02 ไม่ขายเกินสต็อก", () => {
+  test("INV-Q02 สต็อก 5 ชิ้น ผู้ซื้อ 20 คนกดสั่งซื้อคนละ 1 ชิ้นพร้อมกัน 10 รอบ ทุกรอบสำเร็จ 5 คน เห็น สินค้าหมด 15 คน สต็อกเป็น 0", async () => {
+    const ROUNDS = 10;
+    const products = Array.from({ length: ROUNDS }, () => addProduct(db, { stock: 5, recordStockHistory: true }).variantIds[0]);
+    const buyers = Array.from({ length: 20 }, () => buyerAtCheckout(products.map((variantId) => ({ variantId }))));
+    const presses = buyers.map((buyer) => buyer.lines.map((line, round) => ({ ...buyer, orderKey: `round-${round}`, lines: [line] })));
+
+    const results = await race(presses);
+
+    for (let round = 0; round < ROUNDS; round++) {
+      const thisRound = results.map((byWorker) => byWorker[round]);
+      expect(thisRound.filter((r) => r.ok)).toHaveLength(5);
+      expect(thisRound.filter((r) => !r.ok && Object.values(r.problems).includes("สินค้าหมด"))).toHaveLength(15);
+      expect([stock(products[round]), reservedQuantity(db, products[round])]).toEqual([0, 5]);
+    }
+    expect(count("variants WHERE stock < 0")).toBe(0);
+    expect(stockMismatches()).toEqual([]);
+  }, 60_000);
+});
+
 describe("CHK-Q02 ไม่ขายเกินและไม่สร้างซ้ำ", () => {
   const ROUNDS = 100;
   const CROWD_ROUNDS = Number(process.env.CHK_Q02_ROUNDS) || 10;
@@ -118,15 +147,7 @@ describe("CHK-Q02 ไม่ขายเกินและไม่สร้า�
     expect(glasses.every((glass) => stock(glass) === 0)).toBe(true);
     expect(count("orders")).toBe(CROWD_ROUNDS);
     expect(db.prepare("SELECT variant_id FROM order_items GROUP BY variant_id HAVING count(*) > 1").all()).toEqual([]);
-    // INV-Q05 สต็อกของทุกแถวตรงกับบรรทัดล่าสุดในประวัติ
-    expect(
-      db
-        .prepare(
-          `SELECT v.id FROM variants v JOIN stock_history h ON h.id = (SELECT max(id) FROM stock_history WHERE variant_id = v.id)
-           WHERE v.stock != h.stock_after`,
-        )
-        .all(),
-    ).toEqual([]);
+    expect(stockMismatches()).toEqual([]);
   }, 60_000);
 
   test("CHK-Q02 ระบบได้รับการกดสั่งซื้อเดียวกัน 5 ครั้งพร้อมกัน 100 รอบ ทุกรอบได้คำสั่งซื้อ 2 รายการพอดี และสต็อกลดเท่าของ 3 ชิ้น", async () => {

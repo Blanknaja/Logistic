@@ -53,14 +53,6 @@ export function releaseCancelledOrderStock(db: Db, orderId: number, now: Date = 
   });
 }
 
-/** คืนสต็อกของทุกคำสั่งซื้อในกลุ่มที่เป็น `ยกเลิก` แล้ว คืนจำนวนคำสั่งซื้อที่คืนในครั้งนี้ */
-export function releaseCancelledOrderGroupStock(db: Db, groupId: number, now: Date = new Date()): number {
-  return transaction(db, () => {
-    const orders = db.prepare("SELECT id FROM orders WHERE group_id = ? AND status = ? ORDER BY id").all(groupId, ORDER_STATUS.cancelled);
-    return orders.filter((order) => releaseCancelledOrderStock(db, Number(order.id), now)).length;
-  });
-}
-
 /** จำนวนที่จองอยู่ของแบบย่อย คือจำนวนในคำสั่งซื้อที่ยัง `รอจ่ายเงิน` */
 export function reservedQuantity(db: Db, variantId: number): number {
   const row = db

@@ -10,7 +10,6 @@ import {
   expireOverdueOrderGroups,
 } from "@/features/checkout/server/order-groups";
 import {
-  releaseCancelledOrderGroupStock,
   releaseCancelledOrderStock,
   reservedQuantity,
 } from "@/features/stock/server/reservation";
@@ -91,7 +90,6 @@ describe("INV-013 คืนสต็อกเมื่อคำสั่งซ�
     expect(expireOverdueOrderGroups(db, at("10:30:00"))).toBe(0);
     expect(cancelAwaitingPaymentGroup(db, mani.groupId, CANCEL_REASON.paymentTimeout, at("10:30:00"))).toBe(0);
     expect(releaseCancelledOrderStock(db, mani.orderId, at("10:30:00"))).toBe(false);
-    expect(releaseCancelledOrderGroupStock(db, mani.groupId, at("10:30:00"))).toBe(0);
 
     expect(stock(ball)).toBe(10);
     expect(returnLines(mani.orderId)).toHaveLength(1);
@@ -116,16 +114,6 @@ describe("INV-013 คืนสต็อกเมื่อคำสั่งซ�
     expect(stock(ball)).toBe(8);
   });
 
-  test("INV-013 คืนทั้งกลุ่ม คืนทุกคำสั่งซื้อที่ยกเลิกแล้วของกลุ่ม", () => {
-    const shirt = addProduct(db, { stock: 5 }).variantIds[0];
-    const glass = addProduct(db, { stock: 3 }).variantIds[0];
-    const buyer = addAccount(db);
-    const first = addOrder(db, { buyerAccountId: buyer.id, items: [{ variantId: shirt, quantity: 2 }], status: ORDER_STATUS.cancelled });
-    addOrder(db, { buyerAccountId: buyer.id, items: [{ variantId: glass }], status: ORDER_STATUS.cancelled, groupId: first.groupId });
-
-    expect(releaseCancelledOrderGroupStock(db, first.groupId)).toBe(2);
-    expect([stock(shirt), stock(glass)]).toEqual([7, 4]);
-  });
 });
 
 describe("INV-Q05 สต็อกตรงกับประวัติ", () => {

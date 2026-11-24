@@ -5,13 +5,24 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import ForgotPasswordPage from "@/app/forgot-password/page";
 import LoginPage from "@/app/login/page";
 import ProfileError from "@/app/profile/error";
 import ProfilePage from "@/app/profile/page";
+import ResetPasswordError from "@/app/reset-password/error";
+import ResetPasswordPage from "@/app/reset-password/page";
 import SignupPage from "@/app/signup/page";
-import { logInAction, logOutAction, saveProfileAction, signUpAction } from "@/features/account/actions";
-import { signUp } from "@/features/account/server/accounts";
+import {
+  logInAction,
+  logOutAction,
+  requestPasswordResetAction,
+  resetPasswordAction,
+  saveProfileAction,
+  signUpAction,
+} from "@/features/account/actions";
+import { logIn, signUp } from "@/features/account/server/accounts";
+import { requestPasswordReset } from "@/features/account/server/password-reset";
 import { createSession, resumeSession } from "@/features/account/server/sessions";
 import type { Db } from "@/shared/db";
 import { addAccount, TEST_PASSWORD } from "@/shared/db/builders";
@@ -22,6 +33,8 @@ import { getCurrentAccount, SESSION_COOKIE } from "@/shared/session";
 const request = vi.hoisted(() => ({
   db: undefined as Db | undefined,
   cookies: new Map<string, string>(),
+  /** งานที่ after() รอทำหลังตอบหน้าเว็บ */
+  after: [] as (() => Promise<void>)[],
   Redirected: class Redirected extends Error {
     constructor(readonly url: string) {
       super(`redirect ${url}`);
@@ -51,6 +64,8 @@ vi.mock("next/navigation", async (importOriginal) => ({
 
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 
+vi.mock("next/server", () => ({ after: (task: () => Promise<void>) => void request.after.push(task) }));
+
 vi.mock("@/shared/db", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/shared/db")>()),
   getDb: () => request.db,
@@ -62,6 +77,13 @@ beforeEach(() => {
   db = createTestDb();
   request.db = db;
   request.cookies.clear();
+  request.after.length = 0;
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 /** ผลของการเรียกหน้า: ที่อยู่ที่ถูกพาไป หรือ HTML ที่ได้ */
@@ -102,6 +124,13 @@ function signInAs(accountId: number, now?: Date): string {
 }
 
 const header = async () => renderToStaticMarkup(await SiteHeader());
+
+/** ขอลิงก์ตั้งรหัสผ่านใหม่ให้อีเมลนี้ แล้วคืน token ในลิงก์ */
+function resetLink(email: string, now?: Date): string {
+  const token = requestPasswordReset(db, email, "http://localhost", now)?.text.match(/token=([\w-]+)/)?.[1];
+  if (!token) throw new Error(`${email} ต้องได้ลิงก์`);
+  return token;
+}
 
 describe("ACC-001 สมัครบัญชีผ่านหน้าเว็บ", () => {
   test("ACC-001 สมัครแล้วถูกพาไปหน้าแรก มีชื่อที่มุมบน โดยไม่ต้องเข้าสู่ระบบซ้ำ", async () => {
@@ -313,6 +342,117 @@ describe("ACC-012 แก้โปรไฟล์ผ่านหน้าเว�
   });
 });
 
+describe("ACC-009 ขอลิงก์ตั้งรหัสผ่านใหม่ผ่านหน้าเว็บ", () => {
+  test("ACC-009 อีเมลที่มีบัญชี เห็นข้อความ และเมื่อยังไม่ตั้งค่าระบบส่งอีเมล ลิงก์ถูกเขียนลงบันทึกของเซิร์ฟเวอร์", async () => {
+    vi.stubEnv("RESEND_API_KEY", "");
+    vi.stubEnv("APP_URL", "https://blanksong.example");
+    const log = vi.spyOn(console, "info").mockImplementation(() => {});
+    addAccount(db, { email: "somchai@example.com" });
+
+    const { html } = await open(Promise.resolve(ForgotPasswordPage()));
+    expect(html?.match(/<input [^>]*name="email"/g)).toHaveLength(1);
+    expect(html).toContain("ส่งลิงก์");
+
+    const result = await submit(requestPasswordResetAction(form({ email: "somchai@example.com" })));
+    expect(result.state).toEqual({ notice: "ถ้าอีเมลนี้มีบัญชี เราส่งลิงก์ตั้งรหัสผ่านใหม่ให้แล้ว" });
+    expect(request.after).toHaveLength(1);
+    await request.after[0]();
+    expect(log.mock.calls[0][0]).toContain("somchai@example.com");
+    expect(log.mock.calls[0][0]).toContain("https://blanksong.example/reset-password?token=");
+  });
+
+  test("ACC-009 อีเมลที่ไม่มีบัญชี เห็นข้อความเดียวกันทุกตัวอักษร และไม่มีอีเมลถูกส่ง", async () => {
+    addAccount(db, { email: "somchai@example.com" });
+    const known = await submit(requestPasswordResetAction(form({ email: "somchai@example.com" })));
+    request.after.length = 0;
+
+    for (const email of ["nobody@example.com", "", "ไม่ใช่อีเมล"]) {
+      expect(await submit(requestPasswordResetAction(form({ email })))).toEqual(known);
+    }
+    expect(request.after).toHaveLength(0);
+  });
+});
+
+describe("ACC-010 ตั้งรหัสผ่านใหม่ผ่านหน้าเว็บ", () => {
+  const canLogIn = async (email: string, password: string) => (await logIn(db, { email, password })).ok;
+
+  test("ACC-010 บันทึกรหัสใหม่ ไปหน้าเข้าสู่ระบบพร้อมข้อความ รหัสใหม่ใช้ได้ และทุกเครื่องออกจากระบบ", async () => {
+    const somchai = addAccount(db, { email: "somchai@example.com" });
+    const mobile = createSession(db, somchai.id);
+    signInAs(somchai.id);
+    const token = resetLink("somchai@example.com");
+
+    const { html } = await open(ResetPasswordPage(props({ token })));
+    expect(html).toContain('type="password"');
+    expect(html).toContain("บันทึก");
+
+    const result = await submit(resetPasswordAction(form({ token, password: "newpass12345" })));
+    expect(result.redirect).toBe("/login?next=%2F&notice=password-reset");
+    expect(request.cookies.has(SESSION_COOKIE)).toBe(false);
+    expect((await open(LoginPage(props({ next: "/", notice: "password-reset" })))).html).toContain(
+      "ตั้งรหัสผ่านใหม่แล้ว กรุณาเข้าสู่ระบบ",
+    );
+    expect(resumeSession(db, mobile).account).toBeNull();
+    expect(await canLogIn("somchai@example.com", TEST_PASSWORD)).toBe(false);
+    expect(await canLogIn("somchai@example.com", "newpass12345")).toBe(true);
+  });
+
+  test("ACC-010 ลิงก์หมดเวลา ใช้ไปแล้ว หรือไม่มี token เห็นข้อความพร้อมปุ่มขอลิงก์ใหม่ ไม่เห็นช่องกรอกรหัสผ่าน", async () => {
+    addAccount(db, { email: "late@example.com" });
+    addAccount(db, { email: "used@example.com" });
+    const late = resetLink("late@example.com", new Date(Date.now() - 31 * 60 * 1000));
+    const used = resetLink("used@example.com");
+    await submit(resetPasswordAction(form({ token: used, password: "firstnew1234" })));
+
+    for (const searchParams of [{ token: late }, { token: used }, {}] as Record<string, string>[]) {
+      const { html } = await open(ResetPasswordPage(props(searchParams)));
+      expect(html).toContain("ลิงก์นี้ใช้ไม่ได้แล้ว");
+      expect(html).toMatch(/<a [^>]*href="\/forgot-password"[^>]*>ขอลิงก์ใหม่<\/a>/);
+      expect(html).not.toContain("<input");
+    }
+    expect(await submit(resetPasswordAction(form({ token: late, password: "newpass12345" })))).toEqual({
+      redirect: `/reset-password?token=${late}`,
+    });
+    expect(await canLogIn("late@example.com", TEST_PASSWORD)).toBe(true);
+  });
+
+  test("ACC-010 รหัสใหม่ 5 ตัวอักษร เห็นข้อความใต้ช่อง รหัสเดิมยังใช้ได้ และลิงก์เดิมยังเปิดได้", async () => {
+    addAccount(db, { email: "somchai@example.com" });
+    const token = resetLink("somchai@example.com");
+
+    expect((await submit(resetPasswordAction(form({ token, password: "12345" })))).state).toEqual({
+      errors: { password: "รหัสผ่านต้องยาว 8 ถึง 64 ตัวอักษร" },
+    });
+    expect((await open(ResetPasswordPage(props({ token })))).html).toContain('type="password"');
+    expect(await canLogIn("somchai@example.com", TEST_PASSWORD)).toBe(true);
+  });
+
+  test("ACC-010 หน้าตั้งรหัสผ่านใหม่โหลดไม่ขึ้น เห็นข้อความตาม ACC-014 พร้อมปุ่มลองใหม่", async () => {
+    const html = renderToStaticMarkup(<ResetPasswordError error={new Error("ล่ม")} retry={() => {}} />);
+    expect(html).toContain("ทำรายการไม่สำเร็จ กรุณาลองใหม่");
+    expect(html).toContain("ลองใหม่");
+    db.close();
+    await expect(open(ResetPasswordPage(props({ token: "abc" })))).rejects.toThrow();
+  });
+});
+
+describe("ACC-Q05 อีเมลตั้งรหัสผ่านใหม่", () => {
+  test("ACC-Q05 ระบบส่งอีเมลล่ม คนที่ขอยังเห็นข้อความเดิม และกดขอลิงก์ใหม่ได้", async () => {
+    vi.stubEnv("RESEND_API_KEY", "re_test");
+    vi.stubEnv("EMAIL_FROM", "no-reply@blanksong.example");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("down", { status: 503 })));
+    addAccount(db, { email: "somchai@example.com" });
+
+    const first = await submit(requestPasswordResetAction(form({ email: "somchai@example.com" })));
+    await expect(request.after[0]()).rejects.toThrow(/503/);
+    const second = await submit(requestPasswordResetAction(form({ email: "somchai@example.com" })));
+
+    expect(first.state).toEqual({ notice: "ถ้าอีเมลนี้มีบัญชี เราส่งลิงก์ตั้งรหัสผ่านใหม่ให้แล้ว" });
+    expect(second).toEqual(first);
+    expect(request.after).toHaveLength(2);
+  });
+});
+
 describe("ACC-014 หน้าโปรไฟล์โหลดไม่ขึ้น", () => {
   test("ACC-014 หน้าผิดพลาดของโปรไฟล์ใช้ข้อความตาม requirement พร้อมปุ่มลองใหม่", () => {
     const html = renderToStaticMarkup(<ProfileError error={new Error("ล่ม")} retry={() => {}} />);
@@ -393,6 +533,12 @@ describe("ACC-Q07 เปิดบนมือถือ", () => {
     const pages = [(await open(ProfilePage(props()))).html ?? "", (await open(ProfilePage(props({ edit: "1" })))).html ?? ""];
     request.cookies.clear();
     pages.push((await open(LoginPage(props()))).html ?? "", (await open(SignupPage())).html ?? "");
+    const token = resetLink(addAccount(db).email);
+    pages.push(
+      (await open(Promise.resolve(ForgotPasswordPage()))).html ?? "",
+      (await open(ResetPasswordPage(props({ token })))).html ?? "",
+      (await open(ResetPasswordPage(props()))).html ?? "",
+    );
 
     for (const html of pages) {
       for (const input of html.match(/<input [^>]*>/g) ?? []) {

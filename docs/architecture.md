@@ -56,7 +56,7 @@ feature ทั้ง 10: `account` `shop` `product-listing` `stock` `browse` `ca
 |---|---|
 | account | `/login` (รับ `?next=` เพื่อพากลับหน้าเดิม) `/signup` `/profile` `/forgot-password` `/reset-password` |
 | shop | `/open-shop` `/seller` (หน้าแรกของหลังบ้าน) `/seller/settings` `/shops/[shopId]` (หน้าร้าน) |
-| product-listing | `/seller/products` `/seller/products/new` `/seller/products/[productId]` |
+| product-listing | `/seller/products` `/seller/products/new` `/seller/products/[productId]` `/product-images/[key]` (รูปที่ผู้ขายส่งขึ้นมา) |
 | stock | `/seller/stock` |
 | browse | `/` (หน้าแรก) `/products/[productId]` ส่วนหน้าผลค้นหา BRW เลือกเอง |
 | cart | `/cart` |

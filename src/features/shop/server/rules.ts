@@ -1,4 +1,4 @@
-import { PROVINCES } from "./provinces";
+import { PROVINCES } from "@/shared/provinces";
 
 // กติกาของข้อมูลร้าน (SHP-003 SHP-008) ไม่แตะฐานข้อมูล หน้าเว็บจึงใช้ค่าคงที่ในไฟล์นี้ได้ด้วย
 

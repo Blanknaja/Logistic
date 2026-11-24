@@ -4,7 +4,7 @@ import Link from "next/link";
 import { startTransition, useActionState, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Field, withTimeout, type Failed } from "@/features/account/components/action-form";
 import type { ShopFormState } from "@/features/shop/actions";
-import { PROVINCES } from "@/features/shop/server/provinces";
+import { PROVINCES } from "@/shared/provinces";
 import { LOGO_MAX_BYTES, LOGO_TYPES, SHOP_ERRORS, type ShopErrors, type ShopInput } from "@/features/shop/server/rules";
 import { LeaveGuard } from "./leave-guard";
 import { ShopLogo } from "./shop-logo";

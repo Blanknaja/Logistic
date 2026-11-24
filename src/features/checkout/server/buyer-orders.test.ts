@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import type { Db } from "@/shared/db";
 import { addAccount, addOrder, addParcel, addPayment, addProduct, addShop } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
@@ -42,6 +42,8 @@ function somchaiOrdersTwoShops() {
   });
   return { somchai, first, second, shirt, glass };
 }
+
+const stockOf = (variantId: number) => Number(db.prepare("SELECT stock FROM variants WHERE id = ?").get(variantId)?.stock);
 
 const status = (orderNo: string) =>
   (db.prepare("SELECT status, cancel_reason, cancelled_at FROM orders WHERE order_no = ?").get(orderNo) as {
@@ -162,11 +164,10 @@ describe("CHK-010 รายละเอียดคำสั่งซื้อ",
 });
 
 describe("CHK-011 ผู้ซื้อยกเลิกคำสั่งซื้อตอนรอจ่ายเงิน", () => {
-  test("CHK-011 ยกเลิกทั้งกลุ่ม เหตุผลผู้ซื้อยกเลิก และคืนสต็อกทีละคำสั่งซื้อ", () => {
-    const { somchai, first, second } = somchaiOrdersTwoShops();
-    const releaseStock = vi.fn();
+  test("CHK-011 INV-013 ยกเลิกทั้งกลุ่ม เหตุผลผู้ซื้อยกเลิก และคืนสต็อกทีละคำสั่งซื้อ", () => {
+    const { somchai, first, second, shirt, glass } = somchaiOrdersTwoShops();
 
-    const result = cancelOrderGroup(db, { buyerAccountId: somchai.id, orderNo: first.orderNo, releaseStock }, at("14:20"));
+    const result = cancelOrderGroup(db, { buyerAccountId: somchai.id, orderNo: first.orderNo }, at("14:20"));
 
     expect(result).toEqual({ ok: true });
     for (const order of [first, second]) {
@@ -177,22 +178,21 @@ describe("CHK-011 ผู้ซื้อยกเลิกคำสั่งซ�
       });
     }
     expect(BUYER_CANCEL_REASON).toBe("ผู้ซื้อยกเลิก");
-    expect(releaseStock.mock.calls.map(([, orderId]) => orderId).sort()).toEqual([first.id, second.id].sort());
-    expect(releaseStock).toHaveBeenCalledWith(db, first.id, at("14:20"));
+    expect(stockOf(shirt.variantIds[0])).toBe(3 + 2);
+    expect(stockOf(glass.variantIds[0])).toBe(2 + 1);
   });
 
   test("CHK-011 มีการจ่ายเงินที่รอผล ยกเลิกไม่ได้ ทุกอย่างคงเดิม", () => {
-    const { somchai, first, second } = somchaiOrdersTwoShops();
+    const { somchai, first, second, shirt } = somchaiOrdersTwoShops();
     addPayment(db, { groupId: first.groupId, status: PAYMENT_STATUS.pending });
-    const releaseStock = vi.fn();
 
-    const result = cancelOrderGroup(db, { buyerAccountId: somchai.id, orderNo: second.orderNo, releaseStock }, at("14:18"));
+    const result = cancelOrderGroup(db, { buyerAccountId: somchai.id, orderNo: second.orderNo }, at("14:18"));
 
     expect(result).toEqual({ ok: false, reason: "paymentPending" });
     expect(CANCEL_REFUSED.paymentPending).toBe("มีการจ่ายเงินที่กำลังรอผลอยู่ กดเปลี่ยนวิธีจ่ายก่อนจึงยกเลิกได้");
     expect(status(first.orderNo).status).toBe(ORDER_STATUS.awaitingPayment);
     expect(status(second.orderNo).status).toBe(ORDER_STATUS.awaitingPayment);
-    expect(releaseStock).not.toHaveBeenCalled();
+    expect(stockOf(shirt.variantIds[0])).toBe(3);
   });
 
   test("CHK-011 การจ่ายเงินที่ไม่สำเร็จหรือเลิกรอแล้ว ไม่กันการยกเลิก", () => {
@@ -200,72 +200,58 @@ describe("CHK-011 ผู้ซื้อยกเลิกคำสั่งซ�
     addPayment(db, { groupId: first.groupId, status: PAYMENT_STATUS.failed });
     addPayment(db, { groupId: first.groupId, status: PAYMENT_STATUS.abandoned });
 
-    const result = cancelOrderGroup(db, { buyerAccountId: somchai.id, orderNo: first.orderNo, releaseStock: () => {} }, at("14:20"));
+    const result = cancelOrderGroup(db, { buyerAccountId: somchai.id, orderNo: first.orderNo }, at("14:20"));
 
     expect(result).toEqual({ ok: true });
   });
 
   test("CHK-011 ระบบรับการจ่ายเงินก่อน ยกเลิกไม่ได้และคำสั่งซื้อยังจ่ายแล้ว", () => {
-    const { somchai, first, second } = somchaiOrdersTwoShops();
+    const { somchai, first, second, shirt } = somchaiOrdersTwoShops();
     db.prepare("UPDATE orders SET status = ? WHERE group_id = ?").run(ORDER_STATUS.paid, first.groupId);
-    const releaseStock = vi.fn();
 
-    const result = cancelOrderGroup(db, { buyerAccountId: somchai.id, orderNo: first.orderNo, releaseStock }, at("14:22"));
+    const result = cancelOrderGroup(db, { buyerAccountId: somchai.id, orderNo: first.orderNo }, at("14:22"));
 
     expect(result).toEqual({ ok: false, reason: "alreadyPaid" });
     expect(CANCEL_REFUSED.alreadyPaid).toBe("คำสั่งซื้อนี้จ่ายเงินแล้ว ยกเลิกจากหน้านี้ไม่ได้");
     expect(status(second.orderNo).status).toBe(ORDER_STATUS.paid);
-    expect(releaseStock).not.toHaveBeenCalled();
+    expect(stockOf(shirt.variantIds[0])).toBe(3);
   });
 
   test("CHK-011 ยกเลิกซ้ำหลังหมดเวลา เหตุผลเดิมคงอยู่และไม่คืนสต็อกซ้ำ", () => {
-    const { somchai, first } = somchaiOrdersTwoShops();
+    const { somchai, first, shirt } = somchaiOrdersTwoShops();
     db.prepare("UPDATE orders SET status = ?, cancel_reason = 'หมดเวลาจ่ายเงิน', cancelled_at = ? WHERE group_id = ?").run(
       ORDER_STATUS.cancelled,
       at("14:40").toISOString(),
       first.groupId,
     );
-    const releaseStock = vi.fn();
 
-    const result = cancelOrderGroup(db, { buyerAccountId: somchai.id, orderNo: first.orderNo, releaseStock }, at("14:43"));
+    const result = cancelOrderGroup(db, { buyerAccountId: somchai.id, orderNo: first.orderNo }, at("14:43"));
 
     expect(result).toEqual({ ok: false, reason: "alreadyCancelled" });
     expect(CANCEL_REFUSED.alreadyCancelled).toBe("คำสั่งซื้อนี้ถูกยกเลิกไปแล้ว");
     expect(status(first.orderNo).cancel_reason).toBe("หมดเวลาจ่ายเงิน");
-    expect(releaseStock).not.toHaveBeenCalled();
+    expect(stockOf(shirt.variantIds[0])).toBe(3);
   });
 
-  test("CHK-011 กดยกเลิกตรงเวลาหมดเขต ไม่ยกเลิกเอง ปล่อยให้การหมดเวลาคืนสต็อกครั้งเดียว", () => {
-    const { somchai, first } = somchaiOrdersTwoShops();
-    const releaseStock = vi.fn();
+  test("CHK-011 CHK-008 กดยกเลิกตรงเวลาหมดเขต ได้เหตุผลหมดเวลาจ่ายเงิน และคืนสต็อกครั้งเดียว", () => {
+    const { somchai, first, shirt } = somchaiOrdersTwoShops();
 
-    const result = cancelOrderGroup(db, { buyerAccountId: somchai.id, orderNo: first.orderNo, releaseStock }, at("14:40"));
+    const result = cancelOrderGroup(db, { buyerAccountId: somchai.id, orderNo: first.orderNo }, at("14:40"));
 
     expect(result).toEqual({ ok: false, reason: "expired" });
-    expect(status(first.orderNo).status).toBe(ORDER_STATUS.awaitingPayment);
-    expect(releaseStock).not.toHaveBeenCalled();
+    expect(status(first.orderNo)).toMatchObject({ status: ORDER_STATUS.cancelled, cancel_reason: "หมดเวลาจ่ายเงิน" });
+    expect(stockOf(shirt.variantIds[0])).toBe(3 + 2);
+    cancelOrderGroup(db, { buyerAccountId: somchai.id, orderNo: first.orderNo }, at("14:41"));
+    expect(stockOf(shirt.variantIds[0])).toBe(3 + 2);
   });
 
   test("CHK-011 ยกเลิกคำสั่งซื้อของคนอื่นไม่ได้", () => {
     const { first } = somchaiOrdersTwoShops();
     const somying = addAccount(db);
 
-    const result = cancelOrderGroup(db, { buyerAccountId: somying.id, orderNo: first.orderNo, releaseStock: () => {} }, at("14:20"));
+    const result = cancelOrderGroup(db, { buyerAccountId: somying.id, orderNo: first.orderNo }, at("14:20"));
 
     expect(result).toEqual({ ok: false, reason: "notFound" });
     expect(status(first.orderNo).status).toBe(ORDER_STATUS.awaitingPayment);
-  });
-
-  test("CHK-011 คืนสต็อกไม่สำเร็จ ย้อนการยกเลิกทั้งกลุ่ม", () => {
-    const { somchai, first, second } = somchaiOrdersTwoShops();
-    const releaseStock = vi.fn((_db: Db, orderId: number) => {
-      if (orderId === second.id) throw new Error("คืนสต็อกไม่สำเร็จ");
-    });
-
-    expect(() =>
-      cancelOrderGroup(db, { buyerAccountId: somchai.id, orderNo: first.orderNo, releaseStock }, at("14:20")),
-    ).toThrow("คืนสต็อกไม่สำเร็จ");
-    expect(status(first.orderNo).status).toBe(ORDER_STATUS.awaitingPayment);
-    expect(status(second.orderNo).status).toBe(ORDER_STATUS.awaitingPayment);
   });
 });

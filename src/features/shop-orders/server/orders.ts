@@ -22,6 +22,16 @@ export function countShopOrders(db: Db, shopId: number): StatusCounts {
   return counts;
 }
 
+/** คำสั่งซื้อที่รอร้านจัดของ คือคำสั่งซื้อ `จ่ายแล้ว` ของร้าน ใช้ทั้งเมนูหลังบ้านและหน้าแรกของหลังบ้าน (ORD-004 SHP-006) */
+export function countOrdersAwaitingPacking(db: Db, shopId: number): number {
+  return Number(
+    db.prepare("SELECT count(*) AS n FROM orders WHERE shop_id = ? AND status = ?").get(shopId, ORDER_STATUS.paid)?.n,
+  );
+}
+
+/** แสดงแทนตัวเลขที่นับไม่ได้ (ORD-004 SHP-006) */
+export const UNCOUNTED = "–";
+
 export type ListQuery = {
   status: OrderStatus | null;
   /** เลขคำสั่งซื้อทั้งเลขหรือบางส่วน ถ้ามีจะค้นทุกสถานะโดยไม่สนตัวกรอง ส่ง "" เมื่อไม่ค้น */

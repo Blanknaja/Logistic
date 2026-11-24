@@ -15,7 +15,7 @@ import {
   updateAddress,
   type AddressInput,
 } from "./addresses";
-import { PROVINCES } from "./provinces";
+import { PROVINCES } from "@/shared/provinces";
 
 let db: Db;
 beforeEach(() => {

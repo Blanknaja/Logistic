@@ -22,7 +22,7 @@ export async function cancelOrderAction(formData: FormData): Promise<{ error: st
   const orderNo = String(formData.get("orderNo") ?? "");
   const orderPath = `/orders/${encodeURIComponent(orderNo)}`;
   const viewer = await requireAccount(orderPath);
-  const result = cancelOrderGroup(getDb(), { buyerAccountId: viewer.id, orderNo, releaseStock: () => {} });
+  const result = cancelOrderGroup(getDb(), { buyerAccountId: viewer.id, orderNo });
   if (result.ok) redirect(orderPath);
   if (result.reason === "paymentPending") return { error: CANCEL_REFUSED.paymentPending };
   // สถานะเปลี่ยนไปแล้ว โหลดหน้าใหม่ให้เห็นสถานะจริงพร้อมเหตุผลที่ยกเลิกไม่ได้

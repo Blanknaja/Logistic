@@ -1,5 +1,5 @@
 import { transaction, type Db } from "@/shared/db";
-import { ORDER_STATUS, PRODUCT_STATUS, SHOP_STATUS, type ShopStatus } from "@/shared/statuses";
+import { PRODUCT_STATUS, SHOP_STATUS, type ShopStatus } from "@/shared/statuses";
 import { checkShopInput, logoType, SHOP_ERRORS, type ShopErrors, type ShopInput } from "./rules";
 
 /** ไบต์ของรูปที่ผู้ขายส่งมา ยังไม่ได้ตรวจ */
@@ -182,13 +182,6 @@ export function countShopProducts(db: Db, shopId: number): { onSale: number; lis
     )
     .get(PRODUCT_STATUS.onSale, PRODUCT_STATUS.deleted, shopId) as { on_sale: number; listed: number };
   return { onSale: row.on_sale, listed: row.listed };
-}
-
-/** คำสั่งซื้อที่รอร้านจัดของ คือคำสั่งซื้อ `จ่ายแล้ว` ของร้าน (ORD-004) */
-export function countOrdersAwaitingPacking(db: Db, shopId: number): number {
-  return Number(
-    db.prepare("SELECT count(*) AS n FROM orders WHERE shop_id = ? AND status = ?").get(shopId, ORDER_STATUS.paid)?.n,
-  );
 }
 
 /** รูปโลโก้ที่ /shop-logos/<id> ชี้ถึง */

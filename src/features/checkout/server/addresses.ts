@@ -1,5 +1,5 @@
 import { transaction, type Db } from "@/shared/db";
-import { PROVINCES } from "./provinces";
+import { PROVINCES } from "@/shared/provinces";
 
 export const MAX_ADDRESSES = 10;
 export const ADDRESS_LIMIT = "มีที่อยู่ได้ไม่เกิน 10 แห่ง กรุณาลบที่อยู่ที่ไม่ใช้ก่อน";

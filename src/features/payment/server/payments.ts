@@ -1,3 +1,4 @@
+import { createParcelForPaidOrder } from "@/features/delivery/server/parcel-status";
 import { transaction, type Db } from "@/shared/db";
 import {
   ORDER_STATUS,
@@ -173,7 +174,7 @@ export function getPayPage(db: Db, buyerId: number, groupId: number, now: Date =
 /**
  * ที่เดียวในระบบที่เปลี่ยนคำสั่งซื้อของกลุ่มคำสั่งซื้อเป็น `จ่ายแล้ว` เรียกเมื่อผู้ให้บริการยืนยันว่าการจ่ายเงินนี้สำเร็จ (PAY-005)
  * คำสั่งซื้อทุกรายการที่ครอบคลุมต้องยัง `รอจ่ายเงิน` และยังไม่เลยเขตจ่าย ไม่เช่นนั้นเงินนี้เป็น `สำเร็จแต่ไม่ถูกใช้` (PAY-010)
- * คืนคำสั่งซื้อที่เพิ่งเป็น `จ่ายแล้ว` ไว้ให้สร้างพัสดุต่อ เรียกซ้ำได้ ครั้งหลังได้รายการว่าง
+ * สร้างพัสดุของทุกคำสั่งซื้อที่เพิ่งเป็น `จ่ายแล้ว` ในการบันทึกเดียวกัน (DLV-001) เรียกซ้ำได้ ครั้งหลังได้รายการว่าง
  */
 export function markGroupPaid(db: Db, paymentId: number, now: Date = new Date()): { status: PaymentStatus; paidOrderIds: number[] } {
   return transaction(db, () => {
@@ -200,7 +201,10 @@ export function markGroupPaid(db: Db, paymentId: number, now: Date = new Date())
     }
 
     const markPaid = db.prepare("UPDATE orders SET status = ?, paid_at = ? WHERE id = ?");
-    for (const order of orders) markPaid.run(ORDER_STATUS.paid, at, order.id);
+    for (const order of orders) {
+      markPaid.run(ORDER_STATUS.paid, at, order.id);
+      createParcelForPaidOrder(db, order.id, now);
+    }
     db.prepare("UPDATE payments SET status = ? WHERE group_id = ? AND status = ? AND id != ?").run(
       PAYMENT_STATUS.abandoned,
       payment.group_id,

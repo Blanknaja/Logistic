@@ -320,7 +320,7 @@ describe("SHP-006 หน้าแรกของหลังบ้าน", () =>
     expect(html).toMatch(/<a class="button" href="\/seller\/products\/new">ลงสินค้าชิ้นแรก<\/a>/);
   });
 
-  test("SHP-006 นับคำสั่งซื้อไม่สำเร็จ แสดง - โหลดไม่สำเร็จ และปุ่มลองใหม่ ส่วนอื่นยังแสดง", async () => {
+  test("SHP-006 นับคำสั่งซื้อไม่สำเร็จ แสดง – โหลดไม่สำเร็จ และปุ่มลองใหม่ ส่วนอื่นยังแสดง", async () => {
     const { shopId } = await somchaiOpensShop();
     addProduct(db, { shopId, price: 100 });
     db.exec("ALTER TABLE orders RENAME TO orders_broken");
@@ -328,7 +328,7 @@ describe("SHP-006 หน้าแรกของหลังบ้าน", () =>
 
     const home = text((await open(sellerHome())).html);
 
-    expect(home).toContain("คำสั่งซื้อที่รอร้านจัดของ - โหลดไม่สำเร็จ ลองใหม่");
+    expect(home).toContain("คำสั่งซื้อที่รอร้านจัดของ – โหลดไม่สำเร็จ ลองใหม่");
     expect(home).toContain("ร้านสมชายผ้าไทย");
     expect(home).toContain("สินค้าที่ขายอยู่ 1");
     expect((await open(layout())).html).toContain('href="/seller/settings"');

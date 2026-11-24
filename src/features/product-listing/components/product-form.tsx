@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition, useActionState, useEffect, useMemo, useRef, useState } from "react";
 import type { Category } from "@/features/product-listing/server/categories";
+import type { ListedStatus } from "@/features/product-listing/server/products";
 import {
   EMPTY_PRODUCT,
   LIMITS,
@@ -12,13 +13,15 @@ import {
   type ProductValues,
   type SaveIntent,
 } from "@/features/product-listing/server/product-rules";
+import { PRODUCT_STATUS } from "@/shared/statuses";
 import { canSaveImages, isDirty, normalizeValues, raceSave, type SaveFailed } from "./form-state";
 import { ImagePicker, savedImage } from "./image-picker";
 import { LeaveDialog } from "./leave-dialog";
 import { OptionEditor, type EditableOption } from "./option-editor";
 import styles from "./product-listing.module.css";
 
-type SaveResult = { errors: ProductErrors };
+/** conflict คือข้อความเมื่อสินค้าถูกแก้จากที่อื่นหลังเปิดหน้าฟอร์ม (PRD-013) */
+export type SaveResult = { errors: ProductErrors; conflict?: string };
 type Payload = { intent: SaveIntent; values: ProductValues };
 
 const LIST_PATH = "/seller/products";
@@ -29,6 +32,18 @@ function ErrorText({ id, text }: { id: string; text?: string }) {
       {text}
     </p>
   ) : null;
+}
+
+/** บันทึกจากข้อมูลเก่าไม่ได้ ต้องโหลดข้อมูลล่าสุดก่อน การแก้ในฟอร์มนี้จะหาย (PRD-013) */
+export function ConflictAlert({ message, onReload }: { message: string; onReload: () => void }) {
+  return (
+    <div role="alert" className={styles.alert}>
+      <p>{message}</p>
+      <button type="button" className="button button-secondary" onClick={onReload}>
+        โหลดข้อมูลล่าสุด
+      </button>
+    </div>
+  );
 }
 
 const describedBy = (id: string, error?: string) => ({
@@ -63,14 +78,17 @@ function useLeaveGuard(dirty: boolean, ask: (path: string) => void) {
 /**
  * หน้าฟอร์มสินค้า ใช้ได้ทั้งสร้างใหม่และแก้ไข: ส่ง initial เป็นข้อมูลที่บันทึกไว้ และ save เป็น server action
  * save ที่สำเร็จต้อง redirect ไปหน้าอื่น ถ้าไม่ผ่านให้คืนข้อความผิดของแต่ละช่อง
+ * status คือสถานะของสินค้าที่เปิดมาแก้ สินค้าที่ ขายอยู่ หรือ ซ่อน มีปุ่ม "บันทึก" ปุ่มเดียว (PRD-007)
  */
 export function ProductForm({
   categories,
   initial = EMPTY_PRODUCT,
+  status,
   save,
 }: {
   categories: Category[];
   initial?: ProductValues;
+  status?: ListedStatus;
   save: (intent: SaveIntent, values: ProductValues) => Promise<SaveResult>;
 }) {
   const router = useRouter();
@@ -113,6 +131,8 @@ export function ProductForm({
   };
 
   const errors = "errors" in state ? state.errors : {};
+  const conflict = "conflict" in state ? state.conflict : undefined;
+  const listed = status === PRODUCT_STATUS.onSale || status === PRODUCT_STATUS.hidden;
   const label = (forIntent: SaveIntent, text: string) => (pending && intent === forIntent ? "กำลังบันทึก..." : text);
 
   return (
@@ -172,6 +192,7 @@ export function ProductForm({
           {MESSAGES.saveFailed}
         </p>
       )}
+      {conflict && <ConflictAlert message={conflict} onReload={() => router.refresh()} />}
       {Object.keys(errors).length > 0 && (
         <p role="alert" className={styles.alert}>
           ยังบันทึกไม่ได้ ดูข้อความใต้ช่องที่ผิด
@@ -180,12 +201,21 @@ export function ProductForm({
       {!imagesReady && <p className={styles.hint}>รอรูปส่งเสร็จ หรือลบรูปที่ส่งไม่สำเร็จ ก่อนบันทึก</p>}
 
       <div className={styles.actions}>
-        <button type="button" className="button button-secondary" disabled={pending || !imagesReady} onClick={() => submit("draft")}>
-          {label("draft", "บันทึกร่าง")}
-        </button>
-        <button type="button" className="button" disabled={pending || !imagesReady} onClick={() => submit("publish")}>
-          {label("publish", "บันทึกและเปิดขาย")}
-        </button>
+        {listed ? (
+          // แก้สินค้าที่ลงขายแล้วต้องข้อมูลครบเหมือนเปิดขาย และสถานะคงเดิม
+          <button type="button" className="button" disabled={pending || !imagesReady} onClick={() => submit("publish")}>
+            {label("publish", "บันทึก")}
+          </button>
+        ) : (
+          <>
+            <button type="button" className="button button-secondary" disabled={pending || !imagesReady} onClick={() => submit("draft")}>
+              {label("draft", "บันทึกร่าง")}
+            </button>
+            <button type="button" className="button" disabled={pending || !imagesReady} onClick={() => submit("publish")}>
+              {label("publish", "บันทึกและเปิดขาย")}
+            </button>
+          </>
+        )}
         <Link href={LIST_PATH} className="button button-secondary">
           กลับไปรายการสินค้า
         </Link>

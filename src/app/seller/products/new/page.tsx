@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { randomUUID } from "node:crypto";
 import { createProductAction } from "@/features/product-listing/actions";
 import { ProductForm } from "@/features/product-listing/components/product-form";
 import { requireSeller } from "@/features/product-listing/require-seller";
@@ -12,7 +13,7 @@ export default async function NewProductPage() {
   return (
     <>
       <h1>เพิ่มสินค้า</h1>
-      <ProductForm categories={listCategories(getDb())} save={createProductAction} />
+      <ProductForm categories={listCategories(getDb())} save={createProductAction.bind(null, randomUUID())} />
     </>
   );
 }

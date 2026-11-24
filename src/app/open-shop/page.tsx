@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { openShopAction } from "@/features/shop/actions";
-import { SHOP_FORM_MESSAGES, ShopForm } from "@/features/shop/components/shop-form";
+import { ShopForm } from "@/features/shop/components/shop-form";
 import styles from "@/features/shop/components/shop.module.css";
+import { SHOP_FORM_MESSAGES } from "@/features/shop/server/rules";
 import { requireAccount } from "@/shared/session";
 import { EmptyState } from "@/shared/ui/states";
 

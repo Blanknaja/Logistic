@@ -16,8 +16,8 @@ export async function placeOrderAction(formData: FormData): Promise<PlaceOrderFa
     orderKey: String(formData.get("orderKey") ?? ""),
     lines: parseCheckoutLines(formData.get("lines")),
   });
-  if (result.ok) redirect(`/pay/${result.groupId}`);
-  // ให้หน้าสั่งซื้อแสดงราคาและสต็อกล่าสุดคู่กับข้อความที่ได้
+  // สำเร็จ: ตัวเลขตะกร้าที่แถบด้านบนต้องลดลง ไม่สำเร็จ: หน้าสั่งซื้อต้องแสดงราคาและสต็อกล่าสุดคู่กับข้อความที่ได้
   refresh();
+  if (result.ok) redirect(`/pay/${result.groupId}`);
   return result;
 }

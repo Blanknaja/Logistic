@@ -4,7 +4,7 @@ import { PARCEL_STATUS, type ParcelStatus } from "@/shared/statuses";
 export type HistoryEntry = { status: ParcelStatus; at: string; location: string; byAccountId?: number };
 
 /**
- * เขียนพัสดุพร้อมประวัติการจัดส่งลงฐานข้อมูลตรงๆ สำหรับ test และ scripts/sample-parcels.ts เท่านั้น
+ * เขียนพัสดุพร้อมประวัติการจัดส่งลงฐานข้อมูลตรงๆ สำหรับ test เท่านั้น
  * ข้ามกฎการเปลี่ยนสถานะ และไม่เปลี่ยนสถานะคำสั่งซื้อ สถานะของพัสดุคือรายการสุดท้ายของ history
  */
 export function writeParcel(

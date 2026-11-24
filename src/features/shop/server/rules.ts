@@ -83,3 +83,13 @@ export function logoType(bytes: Uint8Array): LogoType | null {
 export function logoLetter(name: string): string {
   return [...name.trim()][0] ?? "";
 }
+
+/** ข้อความของทั้งฟอร์ม อยู่นอกไฟล์ "use client" เพราะหน้าฝั่งเซิร์ฟเวอร์ใช้ด้วย ค่าที่ import จากไฟล์ client ไม่มีค่าจริงฝั่งเซิร์ฟเวอร์ */
+export const SHOP_FORM_MESSAGES = {
+  openFailed: "เปิดร้านไม่สำเร็จ ลองใหม่อีกครั้ง",
+  saveFailed: "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง",
+  uploadFailed: "อัปโหลดรูปไม่สำเร็จ ลองใหม่อีกครั้ง",
+  admin: "บัญชีนี้เปิดร้านไม่ได้",
+  suspended: "ร้านถูกระงับ แก้การตั้งค่าร้านไม่ได้",
+  "not-found": "ไม่พบหน้านี้",
+} as const;

@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useState, useTransition, type FormEvent } from "react";
+import { ACTION_FAILED } from "@/features/account/components/action-form";
 import type { AddToCart, AddToCartResult } from "@/features/browse/add-to-cart";
 import type { ProductDetail } from "@/features/browse/server/product-detail";
+import { settle } from "@/features/cart/components/settle";
 import { formatBaht } from "@/shared/format";
 import {
   blockedReason,
@@ -48,7 +50,9 @@ export function AddToCartForm({ product, signedIn, isOwnShop, loginHref, addToCa
       return;
     }
     if (!variant) return;
-    startTransition(async () => setResult(await addToCart({ variantId: variant.id, quantity })));
+    startTransition(async () =>
+      setResult((await settle(addToCart({ variantId: variant.id, quantity }))) ?? { ok: false, message: ACTION_FAILED }),
+    );
   }
 
   return (
@@ -119,6 +123,11 @@ export function AddToCartForm({ product, signedIn, isOwnShop, loginHref, addToCa
         <p role={result.ok ? "status" : "alert"} className={result.ok ? undefined : "field-error"}>
           {result.message}
         </p>
+      )}
+      {result?.message === ACTION_FAILED && (
+        <button type="submit" className="button button-secondary" disabled={pending}>
+          ลองใหม่
+        </button>
       )}
     </form>
   );

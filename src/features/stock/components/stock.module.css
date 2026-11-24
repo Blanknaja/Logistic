@@ -1,0 +1,128 @@
+/* หน้าสต็อกและประวัติสต็อก ใช้ได้ที่จอกว้าง 360 จุด โดยไม่ต้องเลื่อนซ้ายขวา */
+
+.rows,
+.history {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  gap: 8px;
+}
+
+.rowHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.name {
+  margin: 0;
+  font-weight: 600;
+}
+
+.variant {
+  font-weight: 400;
+  color: var(--color-muted);
+}
+
+.numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+}
+
+.badgeLow,
+.badgeOut {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-on-primary);
+}
+
+.badgeLow {
+  background: var(--color-warning);
+}
+
+.badgeOut {
+  background: var(--color-danger);
+}
+
+.form {
+  display: grid;
+  gap: 4px;
+}
+
+.label {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.input {
+  flex: 1 1 96px;
+  width: auto;
+  min-width: 0;
+}
+
+.saved,
+.alert {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.saved {
+  color: var(--color-primary);
+}
+
+.alert {
+  color: var(--color-danger);
+}
+
+.historyLink,
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  justify-self: start;
+}
+
+.chipActive {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.entry {
+  display: grid;
+  gap: 2px;
+}
+
+.entry time,
+.orderNo {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: var(--space);
+}

@@ -17,7 +17,8 @@
 | `pnpm dev` | สร้างข้อมูลตัวอย่างถ้ายังไม่มี แล้วเปิดแอปที่ http://localhost:3100 เปลี่ยนพอร์ตด้วย `PORT=3200 pnpm dev` |
 | `pnpm seed` | รัน migration และสร้างข้อมูลตัวอย่างถ้ายังไม่มี รันซ้ำได้ |
 | `pnpm seed --reset` | ลบฐานข้อมูลในเครื่องแล้วสร้างใหม่ |
-| `pnpm check` | ตรวจชนิดข้อมูล ตรวจรูปแบบโค้ด และรัน test ทั้งหมด ต้องผ่านก่อน commit ใช้เวลาราว 5 วินาที |
+| `pnpm check` | ตรวจชนิดข้อมูล ตรวจรูปแบบโค้ด และรัน test ทั้งหมด ต้องผ่านก่อน commit ใช้เวลาราว 20 วินาที |
+| `pnpm e2e` | เดินเส้นทางหลักผ่านหน้าเว็บจริงด้วย Playwright (`e2e/main-path.spec.ts`) build แอปแล้วเปิดที่พอร์ต 3300 กับฐานข้อมูล `data/e2e.db` ที่ล้างใหม่ทุกครั้ง ใช้ Google Chrome ในเครื่อง ราว 30 วินาที ไม่อยู่ใน `pnpm check` แต่ต้องผ่านก่อน merge งานที่แตะหน้าในเส้นทางหลัก วิธีใช้อื่นอยู่ใน README |
 
 ถ้าทำงานหลาย worktree พร้อมกัน ให้แต่ละ worktree ใช้พอร์ตของตัวเอง ฐานข้อมูลอยู่ที่ `data/blanksong.db` ของแต่ละ worktree จึงไม่ชนกัน
 
@@ -34,6 +35,7 @@ src/
   shared/
     db/                   เปิดฐานข้อมูล transaction migration และตัวช่วยของ test
     statuses.ts           คำสถานะทุกคำของชุด 1 ใช้จากไฟล์นี้ ห้ามพิมพ์เอง
+    provinces.ts          77 จังหวัด ใช้ทั้งที่อยู่ของร้านและที่อยู่จัดส่ง
     format.ts             formatBaht formatDate formatDateTime formatNumber
     session.ts            getCurrentAccount() requireAccount()
     ui/states.tsx         EmptyState LoadingState ErrorState NotFoundState
@@ -42,7 +44,10 @@ src/
     seed/                 ข้อมูลตัวอย่าง
 scripts/seed.ts           คำสั่ง pnpm seed
 scripts/login-as.ts       พิมพ์ cookie ของบัญชีตัวอย่าง ไว้ลองหน้าที่ต้องเข้าสู่ระบบด้วย curl
-scripts/seed-shop-orders.ts  เพิ่มคำสั่งซื้อตัวอย่างทุกสถานะให้ร้านของบัญชีผู้ขายหนึ่งบัญชี
+scripts/seed-shop-orders.ts  เพิ่มคำสั่งซื้อตัวอย่างหลายสิบรายการให้ร้านของบัญชีผู้ขายหนึ่งบัญชี ไว้ลองแบ่งหน้า
+scripts/measure-speed.ts  วัดความเร็วตาม product.md ส่วนที่ 6 (ดู README หัวข้อ "ความเร็ว")
+e2e/                      test ที่เปิดหน้าเว็บจริงด้วย Playwright ตั้งค่าที่ playwright.config.ts
+src/main-path.test.ts     test รอยต่อระหว่าง feature ของเส้นทางหลัก ใช้โมดูลจริงทั้งสองฝั่ง
 ```
 
 feature ทั้ง 10: `account` `shop` `product-listing` `stock` `browse` `cart` `checkout` `payment` `shop-orders` `delivery`
@@ -81,6 +86,8 @@ export const nav: FeatureNav = {
 };
 ```
 
+layout ไม่วาดใหม่เมื่อกดลิงก์ไปหน้าอื่นที่ใช้ layout เดียวกัน ข้อความในเมนูที่เปลี่ยนตามข้อมูลจึงค้างได้ เมนูหลังบ้านขอหน้าใหม่เองทุกครั้งที่เปลี่ยนหน้า (`src/shared/layout/refresh-on-navigate.tsx`) ส่วนแถบด้านบน server action ที่เปลี่ยนตัวเลขในแถบ เช่นจำนวนในตะกร้า ต้องเรียก `refresh()` จาก `next/cache` ก่อน `redirect`
+
 `visibleTo: (viewer) => viewer !== null` ใช้ซ่อนลิงก์ตามคนที่ดู `label` ใส่เป็นฟังก์ชัน `(viewer) => string` ได้เมื่อข้อความขึ้นกับคนที่ดู ในเมนูหลังบ้านใส่เป็น `(shopId) => string` ได้ เช่น "รอจัดของ 5" ลำดับที่จองไว้ (น้อยอยู่ซ้าย)
 
 - แถบด้านบน: browse 10, cart 20, checkout 30, delivery 40, shop 50, account 90 ถึง 99
@@ -110,6 +117,7 @@ export default async function CartPage() {
 - ข้อมูลไม่มีหรือเป็นของคนอื่น ให้เรียก `notFound()` จาก `next/navigation` ทั้งสองกรณี จะได้หน้า "ไม่พบ" แบบเดียวกัน
 - หน้ากำลังโหลด ใช้ `loading.tsx` ที่คืน `<LoadingState />` หรือ `<Suspense fallback={<LoadingState />}>`
 - หน้าผิดพลาด ใช้ `<ErrorState />` ปุ่ม "ลองใหม่" โหลดข้อมูลหน้าเดิมใหม่โดยคงที่อยู่หน้าเว็บไว้
+- หน้าและ layout ฝั่งเซิร์ฟเวอร์ import ได้เฉพาะ component จากไฟล์ที่ขึ้นต้นด้วย `"use client"` ค่าอื่นเช่นข้อความหรือค่าคงที่ที่ import มาจะไม่มีค่าจริงฝั่งเซิร์ฟเวอร์ ให้ย้ายค่าไปไว้ในไฟล์ที่ไม่ใช่ client เช่น `server/`
 - สไตล์กลาง (`button` `button-secondary` `card` `field` `input` `field-error` `chips` `chip`) อยู่ใน `src/app/globals.css` สไตล์เฉพาะ feature ให้เขียน `*.module.css` ในโฟลเดอร์ feature ไม่แก้ globals.css
 - ข้อความที่ผู้ใช้เห็นเป็นภาษาไทยตาม `GLOSSARY.md` ปุ่มสูงอย่างน้อย 44 จุด และหน้าต้องใช้ได้ที่จอกว้าง 360 จุด
 
@@ -154,6 +162,7 @@ export function cancelExpiredOrders(db: Db, now: Date = new Date()): number {
 - `variants.stock` คือจำนวนที่ยังขายได้ หักจำนวนที่จองอยู่ออกแล้ว คำสั่งซื้อเปลี่ยนเป็น `จ่ายแล้ว` ไม่ต้องทำอะไรกับสต็อก
 - test ที่ต้องมีคำสั่งซื้อที่จองสต็อกจริงให้เรียก `placeOrder` เพราะ `addOrder` ใน builders ไม่ตัดสต็อก test ที่ต้องกดพร้อมกันจริงดูแบบอย่างที่ `src/features/checkout/server/checkout.race.test.ts`
 - ลองหน้าสั่งซื้อด้วย curl: `pnpm tsx scripts/fill-cart.ts buyer1@example.com` ใส่ของ 3 ชิ้นจาก 2 ร้านลงตะกร้าและเพิ่มที่อยู่หลักให้
+- สคริปต์ที่เขียนคำสั่งซื้อด้วย `addOrder` ไม่จองสต็อก ห้ามสร้างคำสั่งซื้อ `รอจ่ายเงิน` ด้วยวิธีนี้ในฐานข้อมูลของแอป เพราะพอหมดเวลาระบบจะคืนสต็อกที่ไม่เคยจอง ถ้าต้องการให้ทำผ่าน `placeOrder` แบบ `src/shared/seed/orders.ts`
 
 ฟังก์ชันที่ feature อื่นเรียกได้
 
@@ -161,8 +170,11 @@ export function cancelExpiredOrders(db: Db, now: Date = new Date()): number {
 |---|---|---|
 | `getOrderGroup(db, groupId, buyerId)` | `checkout/server/order-groups.ts` | อ่านกลุ่มคำสั่งซื้อพร้อมยอดรวม `total` เวลาหมดเขต `paymentDeadline` และยอดของแต่ละร้าน ได้ null ถ้าไม่มีหรือเป็นของบัญชีอื่น |
 | `checkOrderGroupPayable(db, groupId, buyerId, now)` | `checkout/server/order-groups.ts` | ก่อนพาไปจ่ายเงินหรือก่อนเริ่มการจ่ายเงิน ครบ 30 นาทีแล้วจ่ายไม่ได้ทันที ได้ `reason: "expired"` ให้แสดง `PAYMENT_EXPIRED_MESSAGE` |
-| `cancelAwaitingPaymentGroup(db, groupId, reason, now)` | `checkout/server/order-groups.ts` | ยกเลิกทุกคำสั่งซื้อในกลุ่มที่ยัง `รอจ่ายเงิน` พร้อมคืนสต็อก เช่นผู้ซื้อยกเลิกด้วย `CANCEL_REASON.buyer` หลังตรวจเงื่อนไขของตัวเองแล้ว ได้ 0 ถ้าจ่ายแล้วหรือถูกยกเลิกไปก่อน |
-| `releaseCancelledOrderStock(db, orderId, now)` | `stock/server/reservation.ts` | หลังเปลี่ยนคำสั่งซื้อเป็น `ยกเลิก` เอง เช่นพัสดุ `ส่งไม่สำเร็จ` คืนสต็อกครั้งเดียวต่อคำสั่งซื้อ เรียกซ้ำได้ |
+| `cancelAwaitingPaymentGroup(db, groupId, reason, now)` | `checkout/server/order-groups.ts` | ยกเลิกทุกคำสั่งซื้อในกลุ่มที่ยัง `รอจ่ายเงิน` พร้อมคืนสต็อกและเปลี่ยนการจ่ายเงินที่ `รอผล` เป็น `เลิกรอ` ผู้ซื้อยกเลิก (`cancelOrderGroup`) และหมดเวลาจ่ายเงินใช้ตัวนี้ ได้ 0 ถ้าจ่ายแล้วหรือถูกยกเลิกไปก่อน |
+| `expireOverdueOrderGroups(db, now)` | `checkout/server/order-groups.ts` | ยกเลิกทุกกลุ่มที่เลยเวลาจ่ายเงิน รอบตรวจเรียกทุก 15 วินาที และหน้าคำสั่งซื้อกับหน้าจ่ายเงินเรียกก่อนอ่าน ผู้ซื้อจึงเห็น `ยกเลิก` ทันที |
+| `releaseCancelledOrderStock(db, orderId, now)` | `stock/server/reservation.ts` | หลังเปลี่ยนคำสั่งซื้อเป็น `ยกเลิก` เอง เช่นพัสดุ `ส่งไม่สำเร็จ` (`changeParcelStatus` เรียกให้แล้ว) คืนสต็อกครั้งเดียวต่อคำสั่งซื้อ เรียกซ้ำได้ |
+| `createParcelForPaidOrder(db, orderId, now)` | `delivery/server/parcel-status.ts` | `markGroupPaid` ของการจ่ายเงินเรียกให้ทุกคำสั่งซื้อที่เพิ่งเป็น `จ่ายแล้ว` ในการบันทึกเดียวกัน เรียกซ้ำได้ |
+| `countOrdersAwaitingPacking(db, shopId)` | `shop-orders/server/orders.ts` | ตัวนับ "รอจัดของ" ตัวเดียวของทั้งระบบ นับไม่ได้ให้แสดง `UNCOUNTED` ("–") |
 | `releaseCancelledOrderGroupStock(db, groupId, now)` | `stock/server/reservation.ts` | เหมือนข้างบน กับทุกคำสั่งซื้อที่ `ยกเลิก` แล้วในกลุ่ม |
 | `reservedQuantity(db, variantId)` | `stock/server/reservation.ts` | จำนวนที่จองอยู่ของแบบย่อย |
 
@@ -235,6 +247,6 @@ const buyer: CurrentAccount = await requireAccount(`/orders/${orderNo}`);
 
 ## ข้อมูลตัวอย่าง
 
-`pnpm seed` สร้าง 12 หมวดหมู่ 50 ร้าน 1,000 สินค้าที่ขายอยู่ พร้อมแบบย่อย สต็อก และประวัติสต็อก บัญชีผู้ดูแลแพลตฟอร์ม 1 บัญชี ผู้ขาย 50 บัญชี และผู้ซื้อ 3 บัญชี (อีเมลและรหัสผ่านอยู่ใน README) รูปเป็น SVG ที่สร้างจากชื่อไฟล์ที่ `/sample-images/<ชื่อ>.svg`
+`pnpm seed` สร้าง 12 หมวดหมู่ 50 ร้าน 1,000 สินค้าที่ขายอยู่ พร้อมแบบย่อย สต็อก และประวัติสต็อก บัญชีผู้ดูแลแพลตฟอร์ม 1 บัญชี ผู้ขาย 50 บัญชี และผู้ซื้อ 3 บัญชี (อีเมลและรหัสผ่านอยู่ใน README) และคำสั่งซื้อตัวอย่าง 8 รายการของร้าน seller01 ครบทุกสถานะ ที่สร้างผ่านกฎจริง (`src/shared/seed/orders.ts`) รูปเป็น SVG ที่สร้างจากชื่อไฟล์ที่ `/sample-images/<ชื่อ>.svg`
 
 ระบบรู้ว่าเคยสร้างแล้วจากบัญชี `admin@example.com` จึงรันซ้ำได้ ถ้าต้องเพิ่มข้อมูลตัวอย่าง ให้แก้ `src/shared/seed/index.ts` และ test ใน `seed.test.ts`

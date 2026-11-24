@@ -13,3 +13,6 @@ next-env.d.ts
 
 # database and uploaded files
 /data/
+
+# agent worktrees
+/.claude/worktrees/

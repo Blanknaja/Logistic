@@ -11,7 +11,7 @@
     "build": "next build",
     "start": "tsx scripts/seed.ts && next start -p ${PORT:-3100}",
     "seed": "tsx scripts/seed.ts",
-    "typecheck": "next typegen && tsc --noEmit",
+    "typecheck": "rm -rf .next/types .next/dev/types && next typegen && tsc --noEmit",
     "lint": "eslint --max-warnings 0",
     "test": "vitest run",
     "check": "pnpm typecheck && pnpm lint && pnpm test"

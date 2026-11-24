@@ -31,3 +31,17 @@
 
 - ก่อนเพิ่มกฎในไฟล์นี้ ให้ดูก่อนว่าเครื่องตรวจเรื่องนั้นได้ไหม ถ้าได้ ให้เสนอทำเป็นตัวตรวจด้วยสกิล `rule-to-hook` แทนการเขียนกฎ
 - ไฟล์นี้เก็บเฉพาะเรื่องที่ต้องใช้วิจารณญาณ ซึ่งเครื่องตรวจไม่ได้
+
+## Agent skills
+
+### Issue tracker
+
+ticket อยู่ใน GitHub Issues ของ Blanknaja/Logistic ดูที่ `docs/agents/issue-tracker.md`
+
+### Triage labels
+
+ใช้ label ชุดเริ่มต้นห้าตัว ดูที่ `docs/agents/triage-labels.md`
+
+### Domain docs
+
+แบบ context เดียว: `GLOSSARY.md` กับ `docs/adr/` ที่ root ดูที่ `docs/agents/domain.md`

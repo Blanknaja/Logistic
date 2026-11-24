@@ -1,0 +1,86 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { deleteAddressAction, setDefaultAddressAction } from "@/features/checkout/address-actions";
+import styles from "@/features/checkout/components/addresses.module.css";
+import { PendingButton } from "@/features/checkout/components/pending-button";
+import { ADDRESS_GONE, fullAddress, listAddresses } from "@/features/checkout/server/addresses";
+import { getDb } from "@/shared/db";
+import { requireAccount } from "@/shared/session";
+import { EmptyState } from "@/shared/ui/states";
+
+export const metadata: Metadata = { title: "ที่อยู่จัดส่ง" };
+
+const NOTICES: Record<string, string> = {
+  saved: "บันทึกที่อยู่แล้ว",
+  deleted: "ลบที่อยู่แล้ว",
+  gone: ADDRESS_GONE,
+};
+
+export default async function AddressesPage({ searchParams }: PageProps<"/addresses">) {
+  const viewer = await requireAccount("/addresses");
+  const addresses = listAddresses(getDb(), viewer.id);
+  const { notice, delete: confirming } = await searchParams;
+  const message = typeof notice === "string" && Object.hasOwn(NOTICES, notice) ? NOTICES[notice] : null;
+  const addButton = (
+    <Link href="/addresses/new" className="button">
+      เพิ่มที่อยู่
+    </Link>
+  );
+
+  return (
+    <div className={styles.page}>
+      <h1>ที่อยู่จัดส่ง</h1>
+      {message && (
+        <p role={notice === "gone" ? "alert" : "status"} className={`${styles.notice} ${notice === "gone" ? styles.gone : ""}`}>
+          {message}
+        </p>
+      )}
+      {addresses.length === 0 ? (
+        <EmptyState title="ยังไม่มีที่อยู่จัดส่ง">{addButton}</EmptyState>
+      ) : (
+        <>
+          {addButton}
+          <ul className={styles.list}>
+            {addresses.map((address) => (
+              <li key={address.id} className="card">
+                <p>
+                  <strong>{address.recipientName}</strong>
+                  {address.isDefault && <span className={styles.badge}>ที่อยู่หลัก</span>}
+                </p>
+                <p>{address.phone}</p>
+                <p>{fullAddress(address)}</p>
+                {String(address.id) === confirming ? (
+                  <div className={styles.actions}>
+                    <p>ลบที่อยู่นี้ใช่ไหม</p>
+                    <form action={deleteAddressAction}>
+                      <input type="hidden" name="addressId" value={address.id} />
+                      <PendingButton label="ยืนยันลบ" pendingLabel="กำลังลบ..." />
+                    </form>
+                    <Link href="/addresses" scroll={false} className="button button-secondary">
+                      ไม่ลบ
+                    </Link>
+                  </div>
+                ) : (
+                  <div className={styles.actions}>
+                    <Link href={`/addresses/${address.id}`} className="button button-secondary">
+                      แก้ไข
+                    </Link>
+                    <Link href={`/addresses?delete=${address.id}`} scroll={false} className="button button-secondary">
+                      ลบ
+                    </Link>
+                    {!address.isDefault && (
+                      <form action={setDefaultAddressAction}>
+                        <input type="hidden" name="addressId" value={address.id} />
+                        <PendingButton label="ตั้งเป็นที่อยู่หลัก" pendingLabel="กำลังตั้ง..." secondary />
+                      </form>
+                    )}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}

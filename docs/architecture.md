@@ -42,6 +42,7 @@ src/
     seed/                 ข้อมูลตัวอย่าง
 scripts/seed.ts           คำสั่ง pnpm seed
 scripts/login-as.ts       พิมพ์ cookie ของบัญชีตัวอย่าง ไว้ลองหน้าที่ต้องเข้าสู่ระบบด้วย curl
+scripts/seed-shop-orders.ts  เพิ่มคำสั่งซื้อตัวอย่างทุกสถานะให้ร้านของบัญชีผู้ขายหนึ่งบัญชี
 ```
 
 feature ทั้ง 10: `account` `shop` `product-listing` `stock` `browse` `cart` `checkout` `payment` `shop-orders` `delivery`
@@ -56,7 +57,7 @@ feature ทั้ง 10: `account` `shop` `product-listing` `stock` `browse` `ca
 |---|---|
 | account | `/login` (รับ `?next=` เพื่อพากลับหน้าเดิม) `/signup` `/profile` `/forgot-password` `/reset-password` |
 | shop | `/open-shop` `/seller` (หน้าแรกของหลังบ้าน) `/seller/settings` `/shops/[shopId]` (หน้าร้าน) |
-| product-listing | `/seller/products` `/seller/products/new` `/seller/products/[productId]` |
+| product-listing | `/seller/products` `/seller/products/new` `/seller/products/[productId]` `/product-images/[key]` (รูปที่ผู้ขายส่งขึ้นมา) |
 | stock | `/seller/stock` |
 | browse | `/` (หน้าแรก) `/products/[productId]` ส่วนหน้าผลค้นหา BRW เลือกเอง |
 | cart | `/cart` |
@@ -66,6 +67,8 @@ feature ทั้ง 10: `account` `shop` `product-listing` `stock` `browse` `ca
 | delivery | `/parcels/[trackingNo]` (ผู้ขายและผู้ดูแลแพลตฟอร์มเปลี่ยนสถานะ) `/track/[trackingNo]` (หน้าติดตามพัสดุ) |
 
 `src/app/seller/layout.tsx` ให้ ticket ของ shop สร้างที่เดียว และใช้ `<SellerMenu shopId={...} />` ในนั้น
+
+หน้าใน `/seller/...` เริ่มด้วย `const viewer = await requireShop("/seller/stock")` จาก `@/features/shop/require-shop` แทน `requireAccount` จะได้ `viewer.shopId` ที่ไม่เป็น null ยังไม่เข้าสู่ระบบถูกพาไปหน้าเข้าสู่ระบบแล้วกลับมาหน้าเดิม ยังไม่มีร้านถูกพาไปหน้าเปิดร้าน (SHP-001) layout พาไปหน้าเปิดร้านให้ด้วย แต่ไม่รู้ที่อยู่ของหน้า จึงไม่พาไปหน้าเข้าสู่ระบบแทนหน้า ข้อมูลที่ไม่มีหรือเป็นของร้านอื่นให้เรียก `notFound()` จะได้หน้า "ไม่พบหน้านี้" ของหลังบ้าน
 
 ## เพิ่มลิงก์ในแถบนำทางหรือเมนูหลังบ้าน
 
@@ -78,7 +81,7 @@ export const nav: FeatureNav = {
 };
 ```
 
-`visibleTo: (viewer) => viewer !== null` ใช้ซ่อนลิงก์ตามคนที่ดู `label` ใส่เป็นฟังก์ชัน `(viewer) => string` ได้เมื่อข้อความขึ้นกับคนที่ดู ลำดับที่จองไว้ (น้อยอยู่ซ้าย)
+`visibleTo: (viewer) => viewer !== null` ใช้ซ่อนลิงก์ตามคนที่ดู `label` ใส่เป็นฟังก์ชัน `(viewer) => string` ได้เมื่อข้อความขึ้นกับคนที่ดู ในเมนูหลังบ้านใส่เป็น `(shopId) => string` ได้ เช่น "รอจัดของ 5" ลำดับที่จองไว้ (น้อยอยู่ซ้าย)
 
 - แถบด้านบน: browse 10, cart 20, checkout 30, delivery 40, shop 50, account 90 ถึง 99
 - เมนูหลังบ้าน: product-listing 10, stock 20, shop-orders 30, shop 40 (ตั้งค่าร้าน) และ 50 (หน้าร้าน)

@@ -13,7 +13,8 @@ export type HeaderLink = {
 
 /** ลิงก์ในเมนูหลังบ้านของร้าน */
 export type SellerMenuLink = {
-  label: string;
+  /** ใส่ฟังก์ชันเมื่อข้อความขึ้นกับร้าน เช่น จำนวนคำสั่งซื้อที่รอจัดของ */
+  label: string | ((shopId: number) => string);
   /** ใส่ฟังก์ชันเมื่อที่อยู่ต้องมีเลขร้าน เช่น หน้าร้านของตัวเอง */
   href: string | ((shopId: number) => string);
   order: number;

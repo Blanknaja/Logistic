@@ -3,8 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { logIn, signUp, updateProfile, type ProfileErrors, type SignUpErrors } from "@/features/account/server/accounts";
+import { sendEmail } from "@/features/account/server/email";
 import { loginPath, safeNextPath } from "@/features/account/server/login-path";
+import { requestPasswordReset, RESET_LINK_SENT, resetPassword } from "@/features/account/server/password-reset";
 import { endSession } from "@/features/account/server/sessions";
 import { getDb } from "@/shared/db";
 import { getCurrentAccount, SESSION_COOKIE } from "@/shared/session";
@@ -70,4 +73,23 @@ export async function saveProfileAction(formData: FormData): Promise<{ errors: P
   // ชื่อใหม่ต้องขึ้นที่แถบด้านบนด้วย ซึ่งอยู่ใน layout
   revalidatePath("/", "layout");
   redirect("/profile?saved=1");
+}
+
+export async function requestPasswordResetAction(formData: FormData): Promise<{ notice: string | null }> {
+  // ลิงก์ในอีเมลใช้ที่อยู่ที่ตั้งไว้ ไม่ใช้ Host ของคำขอ เพราะคนนอกปลอม Host ให้ลิงก์ชี้ไปเว็บของตัวเองได้
+  const appUrl = process.env.APP_URL ?? `http://localhost:${process.env.PORT ?? 3100}`;
+  const message = requestPasswordReset(getDb(), text(formData, "email"), appUrl);
+  // ส่งหลังตอบหน้าเว็บแล้ว เวลาที่รอจึงเท่ากันไม่ว่าอีเมลนี้มีบัญชีหรือระบบส่งอีเมลจะช้าหรือล่ม (ACC-009)
+  if (message) after(() => sendEmail(message));
+  return { notice: RESET_LINK_SENT };
+}
+
+export async function resetPasswordAction(formData: FormData): Promise<{ errors: { password?: string } }> {
+  const token = text(formData, "token");
+  const result = await resetPassword(getDb(), { token, password: text(formData, "password") });
+  if (result.status === "invalid") return { errors: result.errors };
+  // หน้าเดิมจะแสดงว่าลิงก์ใช้ไม่ได้แล้ว
+  if (result.status === "link-unusable") redirect(`/reset-password?${new URLSearchParams({ token })}`);
+  (await cookies()).delete(SESSION_COOKIE);
+  redirect(loginPath("/", "password-reset"));
 }

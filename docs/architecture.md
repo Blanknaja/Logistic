@@ -35,12 +35,13 @@ src/
     db/                   เปิดฐานข้อมูล transaction migration และตัวช่วยของ test
     statuses.ts           คำสถานะทุกคำของชุด 1 ใช้จากไฟล์นี้ ห้ามพิมพ์เอง
     format.ts             formatBaht formatDate formatDateTime formatNumber
-    session.ts            getCurrentAccount()
+    session.ts            getCurrentAccount() requireAccount()
     ui/states.tsx         EmptyState LoadingState ErrorState NotFoundState
     layout/               แถบนำทางด้านบน และ SellerMenu ของหลังบ้าน
     nav/                  ตัวรวมลิงก์จาก nav.ts ของทุก feature
     seed/                 ข้อมูลตัวอย่าง
 scripts/seed.ts           คำสั่ง pnpm seed
+scripts/login-as.ts       พิมพ์ cookie ของบัญชีตัวอย่าง ไว้ลองหน้าที่ต้องเข้าสู่ระบบด้วย curl
 ```
 
 feature ทั้ง 10: `account` `shop` `product-listing` `stock` `browse` `cart` `checkout` `payment` `shop-orders` `delivery`
@@ -77,7 +78,7 @@ export const nav: FeatureNav = {
 };
 ```
 
-`visibleTo: (viewer) => viewer !== null` ใช้ซ่อนลิงก์ตามคนที่ดู ลำดับที่จองไว้ (น้อยอยู่ซ้าย)
+`visibleTo: (viewer) => viewer !== null` ใช้ซ่อนลิงก์ตามคนที่ดู `label` ใส่เป็นฟังก์ชัน `(viewer) => string` ได้เมื่อข้อความขึ้นกับคนที่ดู ลำดับที่จองไว้ (น้อยอยู่ซ้าย)
 
 - แถบด้านบน: browse 10, cart 20, checkout 30, delivery 40, shop 50, account 90 ถึง 99
 - เมนูหลังบ้าน: product-listing 10, stock 20, shop-orders 30, shop 40 (ตั้งค่าร้าน) และ 50 (หน้าร้าน)
@@ -88,15 +89,13 @@ export const nav: FeatureNav = {
 2. หน้าอ่านข้อมูลผ่านฟังก์ชันใน `server/` เท่านั้น lint ห้ามเรียก `db.prepare` ในหน้า
 
 ```tsx
-import { redirect } from "next/navigation";
 import { listCartItems } from "@/features/cart/server/cart";
 import { getDb } from "@/shared/db";
-import { getCurrentAccount } from "@/shared/session";
+import { requireAccount } from "@/shared/session";
 import { EmptyState } from "@/shared/ui/states";
 
 export default async function CartPage() {
-  const viewer = await getCurrentAccount();
-  if (!viewer) redirect("/login?next=/cart");
+  const viewer = await requireAccount("/cart");
   const items = listCartItems(getDb(), viewer.id);
   if (items.length === 0) return <EmptyState title="ตะกร้ายังว่าง" />;
   // ...
@@ -173,15 +172,30 @@ test("ผู้ซื้อเห็นรายการในตะกร้�
 ## บัญชีที่เข้าสู่ระบบอยู่
 
 ```ts
-import { getCurrentAccount, type CurrentAccount } from "@/shared/session";
+import { getCurrentAccount, requireAccount, type CurrentAccount } from "@/shared/session";
 
 const viewer: CurrentAccount | null = await getCurrentAccount();
 // { id, email, displayName, isAdmin, shopId: number | null } หรือ null ถ้ายังไม่เข้าสู่ระบบ
+
+// หน้าที่ต้องเข้าสู่ระบบ: ได้บัญชีเลย หรือถูกพาไป /login?next=/orders/123 แล้วกลับมาหน้านี้หลังเข้าสู่ระบบ
+const buyer: CurrentAccount = await requireAccount(`/orders/${orderNo}`);
 ```
 
 - ใช้ได้ใน server component, server action และ route handler เรียกกี่ครั้งในคำขอเดียวก็อ่านฐานข้อมูลครั้งเดียว
-- ตอนนี้อ่าน token จาก cookie `bs_session` แล้วหาในตาราง `sessions` คืน null ถ้าหมดอายุหรือบัญชีถูกระงับ การเข้าสู่ระบบ ออกจากระบบ และการต่ออายุ เป็นงานของ ticket ของ account
+- อ่าน token จาก cookie `bs_session` แล้วหาในตาราง `sessions` คืน null ถ้าหมดอายุ (ไม่ได้ใช้เกิน 30 วัน) หรือบัญชีถูกระงับ ทุกครั้งที่ใช้จะต่ออายุอีก 30 วัน
+- `requireAccount(next)` ใส่ที่อยู่ของหน้านั้นเองเป็น `next` ใส่ query ได้ เช่น `"/checkout?step=2"` เขียน `redirect("/login?next=/cart")` เองก็ได้ผลเหมือนกัน
+- หน้าเข้าสู่ระบบดู cookie เองว่าเครื่องนี้หมดอายุหรือบัญชีถูกระงับ แล้วขึ้นข้อความให้ ไม่ต้องส่งเหตุมาด้วย
+- อยากให้หน้าเข้าสู่ระบบขึ้นข้อความเพิ่ม ใช้ `loginPath(next, notice)` จาก `@/features/account/server/login-path` notice มี `"relogin"` (กรุณาเข้าสู่ระบบอีกครั้ง) และ `"password-reset"` (ตั้งรหัสผ่านใหม่แล้ว กรุณาเข้าสู่ระบบ) เช่นตั้งรหัสผ่านใหม่สำเร็จให้ `redirect(loginPath("/", "password-reset"))`
+- ถ้าลบแถวใน `sessions` ของบัญชีหนึ่ง ทุกเครื่องของบัญชีนั้นจะออกจากระบบในครั้งถัดไปที่เปิดหน้า
+- ถ้าเลิกระงับบัญชี ให้ลบแถวใน `sessions` ของบัญชีนั้นด้วย เพราะตอนระงับ ระบบเก็บแถวไว้ให้หน้าเข้าสู่ระบบบอกว่าถูกระงับ ถ้าไม่ลบ เครื่องเก่าจะกลับมาอยู่ในระบบเอง
 - โมดูลใน `server/` ไม่เรียก `getCurrentAccount()` ให้หน้าหรือ action ส่ง `viewer.id` เข้าไปแทน
+- หน้าที่ redirect ระหว่างเรนเดอร์ได้สถานะ 200 พร้อม meta refresh ไม่ใช่ 307 เพราะ `src/app/loading.tsx` ทำให้หน้าเริ่มส่งออกไปก่อน เบราว์เซอร์ยังพาไปหน้าเข้าสู่ระบบโดยไม่แสดงข้อมูลของหน้านั้น ตอนลองด้วย curl ให้ดูคำว่า `NEXT_REDIRECT` ในเนื้อหน้า
+
+### ทำเป็นบัญชีที่เข้าสู่ระบบอยู่ ตอน test และตอนลองแอป
+
+- test ของโมดูลใน `server/` ส่ง `account.id` จาก `addAccount(db)` เข้าฟังก์ชันได้เลย ถ้าฟังก์ชันรับ `CurrentAccount` ทั้งก้อน ใช้ `findAccountBySessionToken(db, addSession(db, account.id))` จาก `@/features/account/server/sessions` จะได้ `shopId` และ `isAdmin` ตรงกับฐานข้อมูล
+- test ของหน้าหรือ server action ลอกส่วน `vi.mock` ที่ต้นไฟล์ `src/features/account/account-pages.test.tsx` ไปใช้ ส่วนนั้นจำลอง cookie และให้ `getDb()` คืนฐานข้อมูลของ test แล้วเรียก `signInAs(accountId)` ในไฟล์เดียวกันเป็นแบบอย่าง
+- ลองแอปที่รันอยู่ด้วย curl: `curl -b "$(pnpm -s tsx scripts/login-as.ts buyer1@example.com)" http://localhost:3200/cart` สคริปต์สร้างการเข้าสู่ระบบในฐานข้อมูลของ worktree นั้นแล้วพิมพ์ cookie ออกมา
 
 ## ข้อมูลตัวอย่าง
 

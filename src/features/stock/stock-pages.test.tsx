@@ -356,9 +356,14 @@ describe("INV-008 กันบัญชีอื่นดูและแก้�
     expect(stockOf(ball.variantIds[0])).toBe(12);
   });
 
-  test("INV-008 บัญชีที่ยังไม่มีร้านเปิดหน้าสต็อก เห็นไม่พบหน้านี้", async () => {
+  test("SHP-001 INV-008 บัญชีที่ยังไม่มีร้านเปิดหน้าสต็อกหรือประวัติสต็อก ถูกพาไปหน้าเปิดร้าน และบันทึกไม่ได้", async () => {
+    const ball = addProduct(db, { name: "ลูกฟุตบอล", stock: 12 });
     request.cookies.set(SESSION_COOKIE, createSession(db, addAccount(db).id));
-    expect(await stockPage()).toEqual({ redirect: "not-found" });
+
+    expect(await stockPage()).toEqual({ redirect: "/open-shop" });
+    expect(await historyPage(ball.variantIds[0])).toEqual({ redirect: "/open-shop" });
+    expect((await submit(saveStockAction(saveForm(ball.variantIds[0], 12, "0")))).redirect).toBe("/open-shop");
+    expect(stockOf(ball.variantIds[0])).toBe(12);
   });
 
   test("INV-008 ยังไม่เข้าสู่ระบบ ถูกพาไปหน้าเข้าสู่ระบบ และบันทึกไม่ได้", async () => {

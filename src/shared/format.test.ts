@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { formatBaht, formatDate, formatDateTime, formatNumber } from "@/shared/format";
+import { formatBaht, formatDate, formatDateTime, formatNumber, formatTimeOrDateTime } from "@/shared/format";
 
 describe("formatBaht", () => {
   test.each([
@@ -38,5 +38,14 @@ describe("formatDateTime", () => {
   test("แสดงวันและเวลาแบบ 24 ชั่วโมง ตามเวลาประเทศไทย", () => {
     expect(formatDateTime("2026-11-24T02:15:00.000Z")).toBe("24/11/2026 09:15");
     expect(formatDateTime("2026-11-24T17:30:00.000Z")).toBe("25/11/2026 00:30");
+  });
+});
+
+describe("formatTimeOrDateTime", () => {
+  test("วันเดียวกันตามเวลาประเทศไทยแสดงแค่เวลา วันอื่นแสดงวันที่ด้วย", () => {
+    const now = new Date("2026-11-25T10:00:00.000Z");
+    expect(formatTimeOrDateTime("2026-11-25T03:15:00.000Z", now)).toBe("10:15");
+    expect(formatTimeOrDateTime("2026-11-24T16:59:00.000Z", now)).toBe("24/11/2026 23:59");
+    expect(formatTimeOrDateTime("2026-11-24T17:00:00.000Z", now)).toBe("00:00");
   });
 });

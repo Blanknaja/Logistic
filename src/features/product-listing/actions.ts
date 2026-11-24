@@ -1,13 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { loginPath } from "@/features/account/server/login-path";
 import type { SaveResult } from "@/features/product-listing/components/product-form";
 import { parseProductValues, type SaveIntent } from "@/features/product-listing/server/product-rules";
 import { createProduct, deleteProduct, setProductHidden, updateProduct } from "@/features/product-listing/server/products";
+import { requireShopInAction } from "@/features/shop/require-shop";
 import { getDb } from "@/shared/db";
-import { formatDateTime } from "@/shared/format";
-import { getCurrentAccount } from "@/shared/session";
+import { formatTimeOrDateTime } from "@/shared/format";
 import { PRODUCT_STATUS } from "@/shared/statuses";
 
 /** ข้อความที่หน้ารายการสินค้าของร้านแสดงตาม ?notice= หลังบันทึก */
@@ -15,13 +14,7 @@ export type SavedNotice = "published" | "draft" | "saved" | "deleted";
 
 const LIST_PATH = "/seller/products";
 
-/** ร้านของบัญชีที่เข้าสู่ระบบ ฟอร์มที่ค้างอยู่ในแท็บที่ออกจากระบบไปแล้วถูกพาไปเข้าสู่ระบบใหม่ */
-async function sellerShopId(back: string): Promise<number> {
-  const viewer = await getCurrentAccount();
-  if (!viewer) redirect(loginPath(back, "relogin"));
-  if (viewer.shopId === null) redirect("/open-shop");
-  return viewer.shopId;
-}
+const sellerShopId = async (back: string) => (await requireShopInAction(back)).shopId;
 
 function parseInput(intent: SaveIntent, raw: unknown) {
   const values = parseProductValues(raw);
@@ -53,7 +46,7 @@ export async function updateProductAction(productId: number, version: string, in
   if (!result) redirect(editPath);
   if ("errors" in result) return { errors: result.errors };
   if ("changedAt" in result) {
-    return { errors: {}, conflict: `สินค้านี้ถูกแก้ไปแล้วเมื่อ ${formatDateTime(result.changedAt)} โหลดข้อมูลล่าสุดก่อนแก้ต่อ` };
+    return { errors: {}, conflict: `สินค้านี้ถูกแก้ไปแล้วเมื่อ ${formatTimeOrDateTime(result.changedAt)} โหลดข้อมูลล่าสุดก่อนแก้ต่อ` };
   }
   const notice: SavedNotice =
     result.to === PRODUCT_STATUS.draft ? "draft" : result.from === PRODUCT_STATUS.draft ? "published" : "saved";

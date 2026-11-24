@@ -64,8 +64,15 @@ export function completeDueReceipts(db: Db, now: Date = new Date()): number {
   });
 }
 
-/** รัน completeDueReceipts ทันทีหนึ่งครั้ง แล้วทุก 1 นาที คืนฟังก์ชันสำหรับหยุด */
+const timer = globalThis as { blanksongReceiptTimer?: ReturnType<typeof setInterval> };
+
+/** รัน completeDueReceipts ทันทีหนึ่งครั้ง แล้วทุก 1 นาที เรียกซ้ำได้ ครั้งหลังไม่เริ่มรอบใหม่ คืนฟังก์ชันสำหรับหยุด */
 export function startReceiptAutoCompletion(db: Db): () => void {
+  const stop = () => {
+    clearInterval(timer.blanksongReceiptTimer);
+    timer.blanksongReceiptTimer = undefined;
+  };
+  if (timer.blanksongReceiptTimer) return stop;
   const run = () => {
     try {
       completeDueReceipts(db);
@@ -74,8 +81,8 @@ export function startReceiptAutoCompletion(db: Db): () => void {
     }
   };
   run();
-  const timer = setInterval(run, AUTO_CONFIRM_CHECK_MS);
+  timer.blanksongReceiptTimer = setInterval(run, AUTO_CONFIRM_CHECK_MS);
   // ไม่ให้ตัวจับเวลานี้ค้างโปรเซสไว้ตอนแอปกำลังปิด
-  timer.unref();
-  return () => clearInterval(timer);
+  timer.blanksongReceiptTimer.unref();
+  return stop;
 }

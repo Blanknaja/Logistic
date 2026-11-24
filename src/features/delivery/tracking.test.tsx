@@ -375,6 +375,16 @@ describe("DLV-Q03 ความตรงเวลาของการปิด�
     stop();
   });
 
+  test("DLV-013 เรียกเริ่มรอบตรวจซ้ำ ไม่เปิดรอบตรวจซ้อน", () => {
+    vi.useFakeTimers({ now: new Date(thai("2026-12-03T15:29")) });
+    const stop = startReceiptAutoCompletion(db);
+    startReceiptAutoCompletion(db);
+
+    expect(vi.getTimerCount()).toBe(1);
+    stop();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   test("DLV-Q03 ระบบปิดอยู่ตอนครบกำหนด เปิดกลับมาเวลา 16:00 ก็ปิดครบ 100 รายการทันที", () => {
     const ids = addHundred();
     vi.useFakeTimers({ now: new Date(thai("2026-12-03T16:00")) });

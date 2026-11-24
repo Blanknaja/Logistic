@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { deleteProductAction, setHiddenAction, type SavedNotice } from "@/features/product-listing/actions";
 import type { ListedStatus, ShopProductRow } from "@/features/product-listing/server/products";
-import { formatBaht, formatDateTime, formatNumber } from "@/shared/format";
+import { formatBaht, formatNumber, formatTimeOrDateTime } from "@/shared/format";
 import { PRODUCT_STATUS } from "@/shared/statuses";
 import { EmptyState } from "@/shared/ui/states";
 import { DeleteButton } from "./delete-button";
@@ -144,7 +144,7 @@ export function ProductList({
                   <span>สต็อก {formatNumber(item.totalStock)}</span>
                   <span className={styles.status}>{item.status}</span>
                 </p>
-                <p className={styles.meta}>แก้ล่าสุด {formatDateTime(item.updatedAt)}</p>
+                <p className={styles.meta}>แก้ล่าสุด {formatTimeOrDateTime(item.updatedAt)}</p>
               </div>
               <div className={styles.rowActions}>
                 <Link href={`${LIST_PATH}/${item.id}`} className="button button-secondary">

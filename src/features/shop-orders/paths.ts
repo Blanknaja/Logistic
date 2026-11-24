@@ -58,7 +58,7 @@ export function orderHref(orderNo: string, params: Partial<ListParams> = {}): st
   return `/seller/orders/${encodeURIComponent(orderNo)}${listQuery(params)}`;
 }
 
-/** หน้าจัดส่งของพัสดุ ที่ผู้ขายเปลี่ยนสถานะการจัดส่งได้ (DLV) */
-export function parcelHref(trackingNo: string): string {
-  return `/parcels/${encodeURIComponent(trackingNo)}`;
+/** หน้าติดตามพัสดุ ผู้ขายเห็นประวัติการจัดส่งพร้อมปุ่มเปลี่ยนสถานะขั้นถัดไป (ORD-009 DLV-010) */
+export function trackingHref(trackingNo: string): string {
+  return `/track/${encodeURIComponent(trackingNo)}`;
 }

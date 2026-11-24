@@ -385,7 +385,7 @@ describe("ORD-005 ถึง ORD-008 หน้ารายละเอียด",
 });
 
 describe("ORD-009 ปุ่มจัดส่ง", () => {
-  test("ORD-009 คำสั่งซื้อจ่ายแล้วมีปุ่มจัดส่งทั้งในรายการและรายละเอียด กดแล้วไปหน้าจัดส่งของพัสดุโดยสถานะไม่เปลี่ยน", async () => {
+  test("ORD-009 คำสั่งซื้อจ่ายแล้วมีปุ่มจัดส่งทั้งในรายการและรายละเอียด กดแล้วไปหน้าติดตามพัสดุโดยสถานะไม่เปลี่ยน", async () => {
     const somchai = newShop("สมชายเสื้อผ้า");
     const paid = example045(somchai);
     addParcel(db, { orderId: paid.id, trackingNo: "BS0000001250" });
@@ -395,7 +395,7 @@ describe("ORD-009 ปุ่มจัดส่ง", () => {
     expect((await detail("2611240045")).html).toContain("จัดส่ง</button>");
     const result = await submit(actions.openShippingAction(null, form({ orderNo: "2611240045" })));
 
-    expect(result.redirect).toBe("/parcels/BS0000001250");
+    expect(result.redirect).toBe("/track/BS0000001250");
     expect(getShopOrder(db, somchai.id, "2611240045")?.status).toBe(ORDER_STATUS.paid);
     expect(text((await detail("2611240045")).html)).toContain(PARCEL_STATUS.awaitingPacking);
   });
@@ -425,7 +425,7 @@ describe("ORD-009 ปุ่มจัดส่ง", () => {
     const shippingHtml = (await detail(shipping.orderNo)).html;
     const pendingHtml = (await detail(pending.orderNo)).html;
 
-    expect(shippingHtml).toMatch(/href="\/parcels\/BS0000001240"[^>]*>ดูการจัดส่ง/);
+    expect(shippingHtml).toMatch(/href="\/track\/BS0000001240"[^>]*>ดูการจัดส่ง/);
     expect(shippingHtml).not.toContain("จัดส่ง</button>");
     expect(pendingHtml).not.toContain("จัดส่ง</button>");
     expect(pendingHtml).not.toContain("ดูการจัดส่ง");

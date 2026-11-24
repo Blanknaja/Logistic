@@ -135,11 +135,17 @@ describe("PRD-006 เปิดหน้าฟอร์มเพื่อแก�
   });
 
   test("PRD-006 เห็นข้อมูลที่บันทึกไว้ครบทุกช่อง และด้านบนแสดง ขายอยู่ แก้ล่าสุด 10:15", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(at("11:00")));
     const shopId = signInSeller();
     const product = tshirt(shopId);
     const { html } = await open(editPage(product.id));
+    vi.setSystemTime(new Date("2026-11-26T09:00:00.000+07:00"));
+    const nextDay = text((await open(editPage(product.id))).html);
+    vi.useRealTimers();
 
-    expect(text(html)).toContain("ขายอยู่ แก้ล่าสุด 25/11/2026 10:15");
+    expect(text(html)).toContain("ขายอยู่ แก้ล่าสุด 10:15");
+    expect(nextDay).toContain("ขายอยู่ แก้ล่าสุด 25/11/2026 10:15");
     expect(html).toContain('value="เสื้อยืดคอกลม"');
     expect(html).toContain("ผ้าฝ้าย 100%");
     expect(html).toContain('<option value="1" selected="">เสื้อผ้าและแฟชั่น</option>');
@@ -198,12 +204,16 @@ describe("PRD-007 บันทึกการแก้ไขสินค้า",
     const product = tshirt(shopId);
     const form = edit(shopId, product.id);
 
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(at("13:10")));
     const result = await submit(updateProductAction(product.id, form.updatedAt, "publish", withPrice(form.values, ["ดำ", "L"], "310")));
     expect(result.redirect).toBe("/seller/products?notice=saved");
 
     const page = text((await open(listPage({ notice: "saved" }))).html);
+    vi.useRealTimers();
     expect(page).toContain("บันทึกแล้ว");
     expect(page).toContain("฿250 - ฿310 สต็อก 40 ขายอยู่");
+    expect(page).toContain("แก้ล่าสุด 13:10");
   });
 
   test("PRD-007 ร่างที่กด บันทึกและเปิดขาย เห็น เปิดขายสินค้าแล้ว", async () => {
@@ -375,7 +385,7 @@ describe("PRD-013 กดซ้ำ และแก้พร้อมกันจ�
       vi.setSystemTime(new Date(at("17:14")));
       const result = await submit(updateProductAction(product.id, second.updatedAt, "publish", { ...second.values, name: "ชื่อใหม่" }));
 
-      const message = "สินค้านี้ถูกแก้ไปแล้วเมื่อ 25/11/2026 17:12 โหลดข้อมูลล่าสุดก่อนแก้ต่อ";
+      const message = "สินค้านี้ถูกแก้ไปแล้วเมื่อ 17:12 โหลดข้อมูลล่าสุดก่อนแก้ต่อ";
       expect(result.state).toEqual({ errors: {}, conflict: message });
       const html = renderToStaticMarkup(<ConflictAlert message={message} onReload={() => {}} />);
       expect(html).toContain(message);

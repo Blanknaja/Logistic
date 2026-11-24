@@ -36,3 +36,9 @@ export function formatDateTime(value: Date | string): string {
   const date = new Date(value);
   return `${dateFormat.format(date)} ${timeFormat.format(date)}`;
 }
+
+/** เวลาของวันนี้ตามเวลาประเทศไทยได้ "09:15" วันอื่นได้ "24/11/2026 09:15" */
+export function formatTimeOrDateTime(value: Date | string, now: Date = new Date()): string {
+  const date = new Date(value);
+  return dateFormat.format(date) === dateFormat.format(now) ? timeFormat.format(date) : formatDateTime(date);
+}

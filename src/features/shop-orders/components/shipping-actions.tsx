@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { openShippingAction } from "@/features/shop-orders/actions";
-import { parcelHref } from "@/features/shop-orders/paths";
+import { trackingHref } from "@/features/shop-orders/paths";
 import { ORDER_STATUS, type OrderStatus } from "@/shared/statuses";
 import styles from "./shop-orders.module.css";
 
@@ -35,7 +35,7 @@ export function ShippingActions({
         </form>
       )}
       {!canShip && trackingNo && (
-        <Link href={parcelHref(trackingNo)} className="button button-secondary">
+        <Link href={trackingHref(trackingNo)} className="button button-secondary">
           ดูการจัดส่ง
         </Link>
       )}

@@ -65,7 +65,11 @@ async function signUp(page: Page, account: { email: string; password: string; na
   await expect(menu(page).getByRole("link", { name: account.name })).toBeVisible();
 }
 
+/** product.md: คนหนึ่งคนใช้สองบัญชีเดินเส้นทางหลักจบภายใน 10 นาที */
+const MAIN_PATH_LIMIT_MS = 10 * 60 * 1000;
+
 test("เส้นทางหลัก: เปิดร้าน ลงสินค้า ตั้งสต็อก สั่งซื้อ จ่ายเงิน ส่งสำเร็จ และผู้ซื้อได้รับสินค้าแล้ว", async ({ browser }) => {
+  const startedAt = Date.now();
   const sellerPage = await (await browser.newContext()).newPage();
   const buyerPage = await (await browser.newContext()).newPage();
 
@@ -193,6 +197,10 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
     await expect(page.getByRole("button", { name: "จัดส่ง" })).toBeVisible();
     await shot(page, "seller-order");
     await page.getByRole("button", { name: "จัดส่ง" }).click();
+    // ORD-009 ปุ่มจัดส่งพาไปหน้าติดตามพัสดุ ที่มีทั้งประวัติการจัดส่งและปุ่มเปลี่ยนสถานะ
+    await expect(page.getByRole("heading", { name: "ติดตามพัสดุ" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "ประวัติการจัดส่ง" })).toBeVisible();
+    await expect(page.getByText("รอร้านจัดของ").first()).toBeVisible();
     for (const [status, extra] of [
       ["ร้านส่งของแล้ว", null],
       ["อยู่ระหว่างขนส่ง", null],
@@ -228,4 +236,7 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
     await menu(page).getByRole("link", { name: "คำสั่งซื้อ" }).click();
     await expect(page.getByRole("link", { name: new RegExp(`${shopName} สำเร็จ`) })).toBeVisible();
   });
+
+  // เครื่องกดเร็วกว่าคนมาก ถ้าใช้เกิน 1 ใน 5 ของเวลาที่ให้คน แปลว่ามีหน้าที่ช้าผิดปกติ
+  expect(Date.now() - startedAt, "เดินเส้นทางหลักจบภายใน 2 นาที").toBeLessThan(MAIN_PATH_LIMIT_MS / 5);
 });

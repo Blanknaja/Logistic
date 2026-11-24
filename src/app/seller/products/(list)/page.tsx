@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import styles from "@/features/product-listing/components/product-listing.module.css";
 import { listParams, NoProducts, Notice, ProductList, statusOf } from "@/features/product-listing/components/product-list";
-import { requireSeller } from "@/features/product-listing/require-seller";
+import { requireShop } from "@/features/shop/require-shop";
 import { countShopProducts, listShopProducts } from "@/features/product-listing/server/products";
 import { getDb } from "@/shared/db";
 
 export const metadata: Metadata = { title: "สินค้าของร้าน" };
 
 export default async function SellerProductsPage({ searchParams }: PageProps<"/seller/products">) {
-  const viewer = await requireSeller("/seller/products");
+  const viewer = await requireShop("/seller/products");
   const { statusKey, q, page, notice } = listParams(await searchParams);
   const db = getDb();
   const counts = countShopProducts(db, viewer.shopId);

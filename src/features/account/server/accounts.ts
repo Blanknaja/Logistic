@@ -25,7 +25,7 @@ function emailError(email: string): string | undefined {
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "รูปแบบอีเมลไม่ถูกต้อง";
 }
 
-function passwordError(password: string): string | undefined {
+export function passwordError(password: string): string | undefined {
   if (length(password) < 8 || length(password) > MAX_PASSWORD_LENGTH) return "รหัสผ่านต้องยาว 8 ถึง 64 ตัวอักษร";
 }
 

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import type { ReactNode } from "react";
 import type { TrackingView } from "@/features/delivery/server/tracking";
 import { formatDateTime } from "@/shared/format";
 import { ORDER_STATUS, RECEIPT_CONFIRMED_BY } from "@/shared/statuses";
@@ -7,8 +7,16 @@ import styles from "./tracking.module.css";
 
 type ConfirmAction = (formData: FormData) => Promise<{ error: string | null }>;
 
-/** เนื้อหาของหน้าติดตามพัสดุ (DLV-010) */
-export function TrackingDetails({ view, confirmAction }: { view: TrackingView; confirmAction: ConfirmAction }) {
+/** เนื้อหาของหน้าติดตามพัสดุ (DLV-010) statusControls แสดงเฉพาะคนที่เปลี่ยนสถานะได้ */
+export function TrackingDetails({
+  view,
+  confirmAction,
+  statusControls,
+}: {
+  view: TrackingView;
+  confirmAction: ConfirmAction;
+  statusControls: ReactNode;
+}) {
   const { receipt, origin } = view;
   return (
     <div className={styles.page}>
@@ -42,11 +50,8 @@ export function TrackingDetails({ view, confirmAction }: { view: TrackingView; c
       {view.canConfirmReceipt && <ConfirmReceipt trackingNo={view.trackingNo} action={confirmAction} />}
 
       {view.canChangeStatus && (
-        // SEAM #16/#19: ปุ่มเปลี่ยนสถานะการจัดส่งของผู้ขายและผู้ดูแลแพลตฟอร์มอยู่ตรงนี้ที่เดียว
         <section data-seam="parcel-status-controls" className={styles.receipt}>
-          <Link href={`/parcels/${view.trackingNo}`} className="button">
-            เปลี่ยนสถานะการจัดส่ง
-          </Link>
+          {statusControls}
         </section>
       )}
 

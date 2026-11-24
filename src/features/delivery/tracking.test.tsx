@@ -414,7 +414,7 @@ describe("DLV-010 หน้าติดตามพัสดุ ผ่านห�
     expect(text.indexOf("26/11/2026 15:30")).toBeLessThan(text.indexOf("25/11/2026 09:00"));
     expect(text).not.toContain("ร้านกำลังเตรียมของ");
     expect(text).not.toContain("ที่อยู่ต้นทาง");
-    expect(text).not.toContain("เปลี่ยนสถานะการจัดส่ง");
+    expect(text).not.toContain("เปลี่ยนเป็น");
     expect(text).not.toContain("เปลี่ยนโดย");
   });
 
@@ -428,13 +428,14 @@ describe("DLV-010 หน้าติดตามพัสดุ ผ่านห�
     expect(text).not.toContain("ได้รับสินค้าแล้ว");
   });
 
-  test("DLV-010 ผู้ขายเจ้าของร้านเห็นที่อยู่ต้นทางและที่วางปุ่มเปลี่ยนสถานะ", async () => {
+  test("DLV-010 ผู้ขายเจ้าของร้านเห็นที่อยู่ต้นทางและปุ่มเปลี่ยนสถานะขั้นถัดไป", async () => {
     addTrackedParcel({ history: DELIVERED_HISTORY.slice(0, 1) });
     signInAs(people.somchai.id);
     const { html } = await openTracking();
 
     expect(html).toContain('data-seam="parcel-status-controls"');
-    expect(html).toContain('href="/parcels/BS0000000123"');
+    expect(html).toContain('href="/parcels/BS0000000123?to=');
+    expect(textOf(html)).toContain("เปลี่ยนเป็น ร้านส่งของแล้ว");
     expect(textOf(html)).toContain("ที่อยู่ต้นทาง");
     expect(textOf(html)).toContain("99/1 ถนนตัวอย่าง");
   });
@@ -481,12 +482,14 @@ describe("DLV-010 หน้าติดตามพัสดุ ผ่านห�
 
 describe("DLV-011 ค้นหาพัสดุ ผ่านหน้าเว็บ", () => {
   test("DLV-011 ก่อนพิมพ์เห็นตัวอย่างเลข และผู้ดูแลแพลตฟอร์มพิมพ์ตัวเล็กมีช่องว่าง ถูกพาไปหน้าติดตามพัสดุ", async () => {
-    addTrackedParcel({});
+    addTrackedParcel({ history: DELIVERED_HISTORY.slice(0, 4) });
     signInAs(people.wichai.id);
 
     expect(textOf((await openSearch()).html)).toContain("พิมพ์เลขติดตามพัสดุ เช่น BS0000000123");
     expect(await openSearch({ no: "bs0000000123 " })).toEqual({ redirect: "/track/BS0000000123" });
-    expect((await openTracking()).html).toContain('data-seam="parcel-status-controls"');
+    const text = textOf((await openTracking()).html);
+    expect(text).toContain("เปลี่ยนเป็น ส่งสำเร็จ");
+    expect(text).toContain("เปลี่ยนเป็น ส่งไม่สำเร็จ");
   });
 
   test("DLV-011 พัสดุของคนอื่นได้ ไม่พบพัสดุนี้ รูปแบบผิดได้ข้อความรูปแบบ และค่าที่พิมพ์ยังอยู่ในช่อง", async () => {

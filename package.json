@@ -1,0 +1,35 @@
+{
+  "name": "blanksong",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "dev": "tsx scripts/seed.ts && next dev -p ${PORT:-3100}",
+    "build": "next build",
+    "start": "tsx scripts/seed.ts && next start -p ${PORT:-3100}",
+    "seed": "tsx scripts/seed.ts",
+    "typecheck": "next typegen && tsc --noEmit",
+    "lint": "eslint --max-warnings 0",
+    "test": "vitest run",
+    "check": "pnpm typecheck && pnpm lint && pnpm test"
+  },
+  "dependencies": {
+    "next": "16.4.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^10.15.0",
+    "eslint-config-next": "16.4.6",
+    "tsx": "4.23.15",
+    "typescript": "^5",
+    "vitest": "5.1.1"
+  },
+  "packageManager": "pnpm@12.10.1"
+}

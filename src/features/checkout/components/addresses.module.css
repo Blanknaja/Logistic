@@ -1,0 +1,52 @@
+.page {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.notice {
+  margin: 0 0 var(--space);
+  padding: 12px var(--space);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.gone {
+  color: var(--color-danger);
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+  margin: var(--space) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list p {
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+
+.badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.actions form {
+  display: contents;
+}

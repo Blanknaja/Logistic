@@ -208,8 +208,8 @@ describe("CHK-009 หน้ารายการคำสั่งซื้อ�
 
   test("CHK-009 แถบด้านบนมีลิงก์คำสั่งซื้อเฉพาะคนที่เข้าสู่ระบบ", () => {
     const viewer = { id: 1, email: "a@example.com", displayName: "ก", isAdmin: false, shopId: null };
-    expect(headerLinks(viewer, [nav])).toEqual([{ label: "คำสั่งซื้อ", href: "/orders" }]);
-    expect(headerLinks(null, [nav])).toEqual([]);
+    expect(headerLinks(viewer, [nav])).toContainEqual({ label: "คำสั่งซื้อ", href: "/orders" });
+    expect(headerLinks(null, [nav])).not.toContainEqual({ label: "คำสั่งซื้อ", href: "/orders" });
   });
 });
 

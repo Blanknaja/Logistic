@@ -67,6 +67,8 @@ feature ทั้ง 10: `account` `shop` `product-listing` `stock` `browse` `ca
 
 `src/app/seller/layout.tsx` ให้ ticket ของ shop สร้างที่เดียว และใช้ `<SellerMenu shopId={...} />` ในนั้น
 
+หน้าใน `/seller/...` เริ่มด้วย `const viewer = await requireShop("/seller/stock")` จาก `@/features/shop/require-shop` แทน `requireAccount` จะได้ `viewer.shopId` ที่ไม่เป็น null ยังไม่เข้าสู่ระบบถูกพาไปหน้าเข้าสู่ระบบแล้วกลับมาหน้าเดิม ยังไม่มีร้านถูกพาไปหน้าเปิดร้าน (SHP-001) layout พาไปหน้าเปิดร้านให้ด้วย แต่ไม่รู้ที่อยู่ของหน้า จึงไม่พาไปหน้าเข้าสู่ระบบแทนหน้า ข้อมูลที่ไม่มีหรือเป็นของร้านอื่นให้เรียก `notFound()` จะได้หน้า "ไม่พบหน้านี้" ของหลังบ้าน
+
 ## เพิ่มลิงก์ในแถบนำทางหรือเมนูหลังบ้าน
 
 แก้ `src/features/<feature>/nav.ts` ของตัวเองเท่านั้น ไม่ต้องแก้ไฟล์กลาง

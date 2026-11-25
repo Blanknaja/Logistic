@@ -41,6 +41,7 @@ function render(product: ProductDetail, viewer: { signedIn: boolean; isOwnShop?:
       signedIn={viewer.signedIn}
       isOwnShop={viewer.isOwnShop ?? false}
       loginHref={loginHref}
+      shippingFee={40}
       addToCart={async () => ({ ok: true, message: "ใส่ตะกร้าแล้ว" })}
     />,
   );
@@ -54,6 +55,7 @@ describe("BRW-008 หน้ารายละเอียดสินค้า",
     const html = render(bag, { signedIn: true });
 
     expect(html).toContain("฿290");
+    expect(html).toContain("ค่าส่ง ฿40 ต่อร้าน");
     expect(html).toContain("เหลือ 15 ชิ้น");
     expect(html).toMatch(/name="quantity" value="1"/);
     expect(html).toMatch(enabledButton);
@@ -72,6 +74,14 @@ describe("BRW-009 ตัวเลือกและสต็อกที่เ�
     for (const value of ["แดง", "ดำ", "M", "L"]) expect(html).toContain(`/>${value}</label>`);
     expect(html).toMatch(/<li class="_faded_\w+"><span>ดำ L<\/span><span>฿219 · สินค้าหมด<\/span><\/li>/);
     expect(html).toMatch(/<li><span>แดง M<\/span><span>฿199 · เหลือ 3 ชิ้น<\/span><\/li>/);
+  });
+
+  test("ค่าตัวเลือกที่ทุกแบบย่อยหมดสต็อก เห็นเป็นค่าที่หมด และโปรแกรมอ่านจอได้ยินคำว่าสินค้าหมด", () => {
+    const blackGone = { ...shirt, variants: shirt.variants.map((v) => (v.label.startsWith("ดำ") ? { ...v, stock: 0 } : v)) };
+    const html = render(blackGone, { signedIn: true });
+
+    expect(html).toMatch(/<label class="chip _choice_\w+ _choiceSoldOut_\w+"><input[^>]*\/>ดำ<span class="visually-hidden"> สินค้าหมด<\/span><\/label>/);
+    expect(html).toContain("/>แดง</label>");
   });
 
   test("สินค้าหมด ปุ่มใส่ตะกร้ากดไม่ได้ ทั้งคนที่เข้าสู่ระบบแล้วและยังไม่เข้าสู่ระบบ", () => {

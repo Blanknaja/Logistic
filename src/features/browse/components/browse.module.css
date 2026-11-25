@@ -1,22 +1,5 @@
 /* หน้าแรก ผลการค้นหา และหน้ารายละเอียดสินค้า ใช้ได้ที่จอกว้าง 360 จุด (BRW-Q03) */
 
-.search {
-  display: flex;
-  gap: var(--space-2);
-}
-
-/* ช่องค้นหาคืองานหลักของหน้าแรก จึงสูงเท่าปุ่มหลักของหน้า */
-.search :global(.input) {
-  flex: 1;
-  min-width: 0;
-  min-height: var(--control-main);
-}
-
-.search > :global(.button) {
-  min-height: var(--control-main);
-  font-size: var(--text-body);
-}
-
 .title {
   text-wrap: balance;
 }
@@ -259,55 +242,47 @@
   }
 }
 
-/* หน้ารายละเอียดสินค้า คอลัมน์เดียว: หัวเรื่อง รูป แถบซื้อ แล้วรายละเอียด */
+/* หน้ารายละเอียดสินค้า จอเล็กเรียง ชื่อ รูป ส่วนซื้อ จอ 900 ขึ้นไปรูปอยู่ซ้าย ชื่อกับส่วนซื้ออยู่ขวาในจอแรก
+   ร้านกับรายละเอียดอยู่ข้างล่าง */
 
 .detail {
   display: grid;
-  gap: var(--space-6);
+  gap: var(--section-gap);
 }
 
-.intro {
+.buyArea {
   display: grid;
-  gap: var(--space-1);
-  max-width: var(--measure);
+  gap: var(--space-5);
 }
 
-.intro h1 {
+.name {
   margin: 0;
-}
-
-.kicker {
-  margin: 0;
-  color: var(--color-muted);
-  font-size: var(--text-label);
-}
-
-.kicker a {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--tap);
-  color: var(--color-text);
 }
 
 .gallery {
   display: grid;
+  align-content: start;
   gap: var(--space-3);
 }
 
-/* กรอบรูปใหญ่สูงคงที่ สลับรูปกับแบบ 3 มิติแล้วหน้าไม่กระโดด บนมือถือเตี้ยกว่าจอกว้าง ราคาจึงขึ้นในจอแรก */
+/* กรอบรูปสูงคงที่ สลับรูปกับแบบ 3 มิติแล้วหน้าไม่กระโดด รูปไม่เต็มกรอบเหลือที่ว่างสีพื้น ไม่มีแถบสีข้างรูป */
 .plate {
   display: flex;
   justify-content: center;
   height: min(75vw, 640px);
   margin-inline: calc(-1 * var(--gutter));
   overflow: hidden;
-  background: var(--color-surface);
 }
 
-.plate > .image,
+.plate > .image {
+  height: 100%;
+  aspect-ratio: auto;
+  background: none;
+  object-fit: contain;
+}
+
 .plate > .noImage {
   width: auto;
-  max-width: 100%;
   height: 100%;
 }
 
@@ -337,7 +312,7 @@
 }
 
 .thumb[aria-pressed="true"] > * {
-  outline: 2px solid var(--color-text);
+  outline: 2px solid var(--color-primary);
   outline-offset: -2px;
 }
 
@@ -354,7 +329,6 @@
   color: var(--color-text);
   font: inherit;
   font-size: var(--text-label);
-  font-weight: 600;
   cursor: pointer;
   transition:
     box-shadow var(--duration) var(--ease),
@@ -366,7 +340,7 @@
 }
 
 .view3d[aria-pressed="true"] {
-  box-shadow: inset 0 0 0 2px var(--color-text);
+  box-shadow: var(--selected-ring);
 }
 
 .view3d:active {
@@ -378,24 +352,22 @@
     outline-color: var(--color-text);
   }
 
-  .view3d:hover {
-    box-shadow: inset 0 0 0 2px var(--color-text);
+  .view3d:hover:not([aria-pressed="true"]) {
+    box-shadow: inset 0 0 0 1px var(--color-text);
   }
 }
 
-/* แถบซื้อ: ราคาและสต็อก แล้วตัวเลือก จำนวน และปุ่มใส่ตะกร้า */
+/* ส่วนซื้อ: ราคา ค่าส่ง สต็อก ตัวเลือก จำนวนกับปุ่มใส่ตะกร้า แล้วสต็อกของแต่ละแบบย่อย */
 
 .purchase {
   display: grid;
+  align-content: start;
   gap: var(--space-5);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--color-text);
 }
 
 .priceBlock {
   display: grid;
-  align-content: start;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
 .priceBlock p {
@@ -403,10 +375,8 @@
 }
 
 .bigPrice {
-  color: var(--color-text);
   font-size: var(--text-heading);
-  font-weight: 600;
-  line-height: 1.1;
+  line-height: 1.3;
 }
 
 .stock {
@@ -432,7 +402,6 @@
   margin-bottom: var(--space-2);
   padding: 0;
   font-size: var(--text-label);
-  font-weight: 600;
 }
 
 .option :global(.chips) {
@@ -454,19 +423,21 @@
   cursor: pointer;
 }
 
-.choice:has(input:checked) {
-  box-shadow: inset 0 0 0 2px var(--color-text);
-  font-weight: 600;
-}
-
 .choice:has(input:focus-visible) {
   outline: var(--focus-ring);
   outline-offset: var(--focus-offset);
 }
 
+/* ค่าที่ไม่มีแบบย่อยเหลือ ยังกดเลือกได้เพื่อให้เห็นคำว่าสินค้าหมด */
+.choiceSoldOut {
+  box-shadow: inset 0 0 0 1px var(--color-border);
+  color: var(--color-muted);
+  text-decoration: line-through;
+}
+
 @media (hover: hover) {
   .choice:hover {
-    box-shadow: inset 0 0 0 2px var(--color-text);
+    box-shadow: inset 0 0 0 1px var(--color-text);
   }
 }
 
@@ -495,7 +466,6 @@
   gap: var(--space-1);
   width: 112px;
   font-size: var(--text-label);
-  font-weight: 600;
 }
 
 .quantity :global(.input) {
@@ -513,6 +483,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
+  color: var(--color-muted);
   font-size: var(--text-label);
 }
 
@@ -529,11 +500,42 @@
   opacity: 0.5;
 }
 
+/* ร้านกับหมวดหมู่ แล้วรายละเอียด */
+
+.facts {
+  display: grid;
+  margin: 0;
+  max-width: var(--measure);
+}
+
+.facts > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.facts dt {
+  flex: none;
+  width: 6em;
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+.facts a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+}
+
 .story {
   display: grid;
-  gap: var(--space-4);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--color-border);
+  gap: var(--space-3);
+  max-width: var(--measure);
 }
 
 .story h2 {
@@ -541,9 +543,7 @@
 }
 
 .description {
-  max-width: var(--measure);
   margin: 0;
-  line-height: 1.8;
   white-space: pre-line;
 }
 
@@ -570,7 +570,7 @@
     bottom: 0;
     z-index: 10;
     padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
-    border-top: 1px solid var(--color-text);
+    border-top: 1px solid var(--color-border);
     background: var(--color-bg);
   }
 
@@ -583,18 +583,32 @@
 }
 
 @media (min-width: 900px) {
-  .plate {
-    margin-inline: 0;
+  .buyArea {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "gallery name"
+      "gallery buy";
+    column-gap: var(--space-7);
+    row-gap: var(--space-4);
   }
 
-  .purchase,
-  .story {
-    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
-    column-gap: var(--space-7);
+  .name {
+    grid-area: name;
+  }
+
+  .gallery {
+    grid-area: gallery;
   }
 
   .purchase {
-    padding-block: var(--space-6);
+    grid-area: buy;
+  }
+
+  .plate {
+    height: auto;
+    aspect-ratio: 1;
+    margin-inline: 0;
   }
 }
 

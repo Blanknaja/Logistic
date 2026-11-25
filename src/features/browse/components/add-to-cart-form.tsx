@@ -10,6 +10,7 @@ import { formatBaht } from "@/shared/format";
 import {
   blockedReason,
   findVariant,
+  isValueSoldOut,
   missingOptionMessage,
   priceText,
   stockText,
@@ -23,11 +24,13 @@ type Props = {
   isOwnShop: boolean;
   /** หน้าเข้าสู่ระบบที่พากลับมาหน้าสินค้านี้ (BRW-014) */
   loginHref: string;
+  /** ค่าส่งต่อหนึ่งคำสั่งซื้อ หนึ่งคำสั่งซื้อต่อร้าน (CHK-001) */
+  shippingFee: number;
   addToCart: AddToCart;
 };
 
-/** ราคา ตัวเลือก สต็อก จำนวน และปุ่ม "ใส่ตะกร้า" ของหน้ารายละเอียดสินค้า (BRW-008 ถึง BRW-010) */
-export function AddToCartForm({ product, signedIn, isOwnShop, loginHref, addToCart }: Props) {
+/** ราคา ค่าส่ง ตัวเลือก สต็อก จำนวน และปุ่ม "ใส่ตะกร้า" ของหน้ารายละเอียดสินค้า (BRW-008 ถึง BRW-010) */
+export function AddToCartForm({ product, signedIn, isOwnShop, loginHref, shippingFee, addToCart }: Props) {
   const [selection, setSelection] = useState<Selection>(() => product.options.map(() => null));
   const [quantity, setQuantity] = useState("1");
   const [result, setResult] = useState<AddToCartResult | null>(null);
@@ -60,6 +63,7 @@ export function AddToCartForm({ product, signedIn, isOwnShop, loginHref, addToCa
     <form onSubmit={submit} noValidate className={styles.purchase}>
       <div className={styles.priceBlock}>
         <p className={styles.bigPrice}>{priceText(variant ? [variant] : product.variants)}</p>
+        <p className={styles.stock}>ค่าส่ง {formatBaht(shippingFee)} ต่อร้าน</p>
         {complete && (
           <p className={variant && variant.stock > 0 ? styles.stock : styles.soldOut}>{stockText(variant?.stock ?? 0)}</p>
         )}
@@ -70,17 +74,21 @@ export function AddToCartForm({ product, signedIn, isOwnShop, loginHref, addToCa
           <fieldset key={option.id} className={styles.option}>
             <legend>{option.name}</legend>
             <div className="chips">
-              {option.values.map((value) => (
-                <label key={value.id} className={`chip ${styles.choice}`}>
-                  <input
-                    type="radio"
-                    name={`option-${option.id}`}
-                    checked={selection[optionIndex] === value.id}
-                    onChange={() => choose(optionIndex, value.id)}
-                  />
-                  {value.value}
-                </label>
-              ))}
+              {option.values.map((value) => {
+                const soldOut = isValueSoldOut(product, selection, optionIndex, value.id);
+                return (
+                  <label key={value.id} className={`chip ${styles.choice} ${soldOut ? styles.choiceSoldOut : ""}`}>
+                    <input
+                      type="radio"
+                      name={`option-${option.id}`}
+                      checked={selection[optionIndex] === value.id}
+                      onChange={() => choose(optionIndex, value.id)}
+                    />
+                    {value.value}
+                    {soldOut && <span className="visually-hidden"> สินค้าหมด</span>}
+                  </label>
+                );
+              })}
             </div>
           </fieldset>
         ))}

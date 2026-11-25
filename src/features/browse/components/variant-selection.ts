@@ -28,6 +28,16 @@ export function stockText(stock: number): string {
   return stock > 0 ? `เหลือ ${formatNumber(stock)} ชิ้น` : "สินค้าหมด";
 }
 
+/** ค่าตัวเลือกนี้ไม่มีแบบย่อยที่ยังมีสต็อก เมื่อรวมกับค่าที่เลือกไว้แล้วในตัวเลือกอื่น */
+export function isValueSoldOut(product: Product, selection: Selection, optionIndex: number, valueId: number): boolean {
+  return !product.variants.some(
+    (v) =>
+      v.stock > 0 &&
+      v.valueIds[optionIndex] === valueId &&
+      selection.every((selected, i) => i === optionIndex || selected == null || v.valueIds[i] === selected),
+  );
+}
+
 /** เหตุที่ปุ่ม "ใส่ตะกร้า" กดไม่ได้ หรือ null ถ้ากดได้ */
 export function blockedReason(product: Product, selection: Selection, isOwnShop: boolean): string | null {
   if (isOwnShop) return "ซื้อสินค้าจากร้านตัวเองไม่ได้";

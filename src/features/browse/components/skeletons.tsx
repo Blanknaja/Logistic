@@ -43,14 +43,17 @@ export function ResultsSkeleton() {
 export function ProductDetailSkeleton() {
   return (
     <div role="status" aria-label="กำลังโหลด" className={styles.detail}>
-      <div className={styles.intro}>
-        <div className={box(styles.skeletonLine, styles.skeletonShort)} />
-        <div className={box(styles.skeletonLine)} />
-      </div>
-      <div className={box(styles.plate)} />
-      <div className={styles.purchase}>
-        <div className={box(styles.skeletonLine, styles.skeletonShort)} />
-        <div className={box(styles.skeletonButton)} />
+      <div className={styles.buyArea}>
+        <div className={styles.name}>
+          <div className={box(styles.skeletonLine)} />
+        </div>
+        <div className={styles.gallery}>
+          <div className={box(styles.plate)} />
+        </div>
+        <div className={styles.purchase}>
+          <div className={box(styles.skeletonLine, styles.skeletonShort)} />
+          <div className={box(styles.skeletonButton)} />
+        </div>
       </div>
     </div>
   );

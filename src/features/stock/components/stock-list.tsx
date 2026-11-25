@@ -4,7 +4,7 @@ import type { StockFilter, StockList } from "@/features/stock/server/stock";
 import { formatNumber } from "@/shared/format";
 import { EmptyState } from "@/shared/ui/states";
 import { Pager } from "./pager";
-import { StockRowItem } from "./stock-row";
+import { StockRowItem, type Outcome } from "./stock-row";
 import styles from "./stock.module.css";
 
 const FILTERS: { value: StockFilter; label: string }[] = [
@@ -12,6 +12,8 @@ const FILTERS: { value: StockFilter; label: string }[] = [
   { value: "low", label: STOCK_LABEL.low },
   { value: "out", label: STOCK_LABEL.out },
 ];
+
+const OUTCOMES: Outcome[] = ["saved", "invalid", "changed", "not-found"];
 
 function stockHref(filter: StockFilter, page = 1): string {
   const query = new URLSearchParams();
@@ -21,7 +23,21 @@ function stockHref(filter: StockFilter, page = 1): string {
   return text ? `/seller/stock?${text}` : "/seller/stock";
 }
 
-export function StockListView({ list, filter }: { list: StockList; filter: StockFilter }) {
+/** ผลบันทึกที่ส่งกลับมาทาง ?saved= และ ?outcome= เมื่อเบราว์เซอร์ไม่มี JavaScript ค่าที่ไม่รู้จักได้ null */
+export function savedFlash(saved: unknown, outcome: unknown): { variantId: number; outcome: Outcome } | null {
+  const variantId = Number(saved);
+  return Number.isSafeInteger(variantId) && OUTCOMES.includes(outcome as Outcome) ? { variantId, outcome: outcome as Outcome } : null;
+}
+
+export function StockListView({
+  list,
+  filter,
+  flash = null,
+}: {
+  list: StockList;
+  filter: StockFilter;
+  flash?: { variantId: number; outcome: Outcome } | null;
+}) {
   if (list.counts.all === 0) {
     return (
       <>
@@ -36,6 +52,7 @@ export function StockListView({ list, filter }: { list: StockList; filter: Stock
   }
 
   const current = FILTERS.find((item) => item.value === filter) ?? FILTERS[0];
+  const back = stockHref(filter, list.page);
   return (
     <>
       <h1>สต็อก</h1>
@@ -43,11 +60,7 @@ export function StockListView({ list, filter }: { list: StockList; filter: Stock
         <ul className="chips">
           {FILTERS.map((item) => (
             <li key={item.value}>
-              <Link
-                href={stockHref(item.value)}
-                className={item.value === filter ? `chip ${styles.chipActive}` : "chip"}
-                aria-current={item.value === filter ? "page" : undefined}
-              >
+              <Link href={stockHref(item.value)} className={`chip ${styles.chip}`} aria-current={item.value === filter ? "page" : undefined}>
                 {`${item.label} ${formatNumber(list.counts[item.value])}`}
               </Link>
             </li>
@@ -57,11 +70,23 @@ export function StockListView({ list, filter }: { list: StockList; filter: Stock
       {list.rows.length === 0 ? (
         <EmptyState title={`ไม่มีสินค้าที่${current.label}`} />
       ) : (
-        <ul className={styles.rows}>
-          {list.rows.map((row) => (
-            <StockRowItem key={row.variantId} row={row} />
-          ))}
-        </ul>
+        <div className={styles.table}>
+          <div className={styles.head} aria-hidden="true">
+            <span className={styles.headName}>สินค้า</span>
+            <span className={styles.headReserved}>จองอยู่</span>
+            <span className={styles.headStock}>สต็อก</span>
+          </div>
+          <ul className={styles.rows} aria-label="สต็อกของแต่ละแบบย่อย">
+            {list.rows.map((row) => (
+              <StockRowItem
+                key={row.variantId}
+                row={row}
+                back={back}
+                outcome={flash?.variantId === row.variantId ? flash.outcome : null}
+              />
+            ))}
+          </ul>
+        </div>
       )}
       <Pager page={list.page} pageCount={list.pageCount} href={(page) => stockHref(filter, page)} />
     </>

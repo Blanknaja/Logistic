@@ -27,7 +27,7 @@
   gap: 0 var(--space-5);
 }
 
-.statusLine form {
+.statusLine > form {
   margin: 0;
 }
 

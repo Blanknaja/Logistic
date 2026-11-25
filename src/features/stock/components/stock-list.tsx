@@ -42,7 +42,7 @@ export function StockListView({
     return (
       <>
         <h1>สต็อก</h1>
-        <EmptyState title="ยังไม่มีสินค้า ลงสินค้าก่อนจึงจะจัดการสต็อกได้">
+        <EmptyState title="ยังไม่มีสินค้า" message="ลงสินค้าก่อนจึงจะจัดการสต็อกได้">
           <Link href="/seller/products/new" className="button">
             ลงสินค้า
           </Link>

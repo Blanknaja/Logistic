@@ -170,7 +170,7 @@ describe("INV-001 แสดงหน้าสต็อก", () => {
   test("INV-001 ร้านที่ยังไม่มีสินค้า เห็นข้อความและลิงก์ไปหน้าลงสินค้า", async () => {
     signInAsNewSeller("สมหญิงเบเกอรี่");
     const page = (await stockPage()).html;
-    expect(page).toContain("ยังไม่มีสินค้า ลงสินค้าก่อนจึงจะจัดการสต็อกได้");
+    expect(plain(page)).toContain("ยังไม่มีสินค้า ลงสินค้าก่อนจึงจะจัดการสต็อกได้");
     expect(page).toContain('href="/seller/products/new"');
   });
 

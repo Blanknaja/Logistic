@@ -195,7 +195,6 @@
 .soldOut {
   color: var(--color-danger);
   font-size: var(--text-label);
-  font-weight: 600;
 }
 
 .image,
@@ -476,6 +475,12 @@
   flex: 1;
   min-height: var(--control-main);
   font-size: var(--text-body);
+}
+
+.variants summary {
+  padding-block: var(--space-3);
+  font-size: var(--text-label);
+  cursor: pointer;
 }
 
 .variantList {

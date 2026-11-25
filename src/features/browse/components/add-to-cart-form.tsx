@@ -132,16 +132,19 @@ export function AddToCartForm({ product, signedIn, isOwnShop, loginHref, shippin
         </div>
 
         {product.options.length > 0 && (
-          <ul className={styles.variantList} aria-label="สต็อกของแต่ละแบบย่อย">
-            {product.variants.map((v) => (
-              <li key={v.id} className={v.stock > 0 ? undefined : styles.faded}>
-                <span>{v.label}</span>
-                <span>
-                  {formatBaht(v.price)} · {stockText(v.stock)}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <details className={styles.variants}>
+            <summary>สต็อกของแต่ละแบบย่อย</summary>
+            <ul className={styles.variantList} aria-label="สต็อกของแต่ละแบบย่อย">
+              {product.variants.map((v) => (
+                <li key={v.id} className={v.stock > 0 ? undefined : styles.faded}>
+                  <span>{v.label}</span>
+                  <span>
+                    {formatBaht(v.price)} · {stockText(v.stock)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </details>
         )}
       </div>
     </form>

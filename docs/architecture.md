@@ -129,7 +129,7 @@ export default async function CartPage() {
 - หน้าผิดพลาด ใช้ `<ErrorState />` ปุ่ม "ลองใหม่" โหลดข้อมูลหน้าเดิมใหม่โดยคงที่อยู่หน้าเว็บไว้
 - ไลบรารีที่ใช้ได้เฉพาะในเบราว์เซอร์ (อ่าน `window` `self` หรือ `customElements` ตอนโหลด) ให้โหลดด้วย `import()` ใน `useEffect` ของ client component ไม่ import ไว้บนสุดของไฟล์ เพราะ client component ยังถูกเรนเดอร์บนเซิร์ฟเวอร์ก่อน และไลบรารีจะถูกโหลดเมื่อ component นั้นแสดงเท่านั้น แบบอย่างคือ `ProductModel` ใน `src/features/browse/components/product-model.tsx` ชนิดของ custom element ที่ใช้ใน JSX ประกาศในไฟล์ `.d.ts` แบบ `model-viewer.d.ts` ข้างกัน ให้ประกาศทุก attribute ที่ใช้ รวมถึงชื่อที่มีขีดกลาง เพราะ TypeScript ไม่เตือนชื่อที่มีขีดกลางที่ไม่ได้ประกาศ
 - หน้าและ layout ฝั่งเซิร์ฟเวอร์ import ได้เฉพาะ component จากไฟล์ที่ขึ้นต้นด้วย `"use client"` ค่าอื่นเช่นข้อความหรือค่าคงที่ที่ import มาจะไม่มีค่าจริงฝั่งเซิร์ฟเวอร์ ให้ย้ายค่าไปไว้ในไฟล์ที่ไม่ใช่ client เช่น `server/`
-- สไตล์กลาง (`button` `button-secondary` `card` `field` `input` `field-error` `chips` `chip`) อยู่ใน `src/app/globals.css` สไตล์เฉพาะ feature ให้เขียน `*.module.css` ในโฟลเดอร์ feature ไม่แก้ globals.css
+- สไตล์กลาง (`button` `button-secondary` `card` `field` `input` `field-error` `chips` `chip`) อยู่ใน `src/app/globals.css` สไตล์เฉพาะ feature ให้เขียน `*.module.css` ในโฟลเดอร์ feature ไม่แก้ globals.css สี ขนาด ระยะ และกฎหน้าตาอยู่ใน `docs/design-system.md` อ่านก่อนเขียน CSS
 - ข้อความที่ผู้ใช้เห็นเป็นภาษาไทยตาม `GLOSSARY.md` ปุ่มสูงอย่างน้อย 44 จุด และหน้าต้องใช้ได้ที่จอกว้าง 360 จุด
 
 ## เพิ่มโมดูลกฎของธุรกิจ

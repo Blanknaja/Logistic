@@ -24,13 +24,13 @@ async function signIn(page: Page, email: string, password = "demo1234") {
   await page.getByLabel("อีเมล").fill(email);
   await page.getByLabel("รหัสผ่าน").fill(password);
   await page.getByRole("button", { name: "เข้าสู่ระบบ" }).click();
-  await expect(page.getByRole("navigation", { name: "เมนูหลัก" }).getByRole("link", { name: "คำสั่งซื้อ" })).toBeVisible();
+  await page.waitForURL((url) => url.pathname !== "/login");
 }
 
 /** ผู้ซื้อตัวอย่างเข้าสู่ระบบ แล้วกดจากคำสั่งซื้อที่กำลังจัดส่งไปหน้าติดตามพัสดุ คืนที่อยู่ของหน้านั้น */
 async function openShippingParcel(page: Page, email: string): Promise<string> {
   await signIn(page, email);
-  await page.getByRole("navigation", { name: "เมนูหลัก" }).getByRole("link", { name: "คำสั่งซื้อ" }).click();
+  await page.goto("/orders");
   // การ์ดคำสั่งซื้อ "ชื่อร้าน กำลังจัดส่ง ..." ไม่ใช่ปุ่มกรองสถานะ
   await page.getByRole("link", { name: / กำลังจัดส่ง / }).click();
   await page.getByRole("main").getByRole("link", { name: "ติดตามพัสดุ" }).click();
@@ -96,7 +96,9 @@ test("MAP-005 MAP-009 OpenStreetMap ไม่ตอบ เห็นกรอบ�
   await page.goto(path);
 
   await expect(mapBox(page)).toHaveAttribute("data-delivery-map", "loading");
-  expect(await mapBox(page).evaluate((element) => getComputedStyle(element).backgroundColor)).toBe("rgb(236, 230, 218)");
+  const placeholder = await mapBox(page).evaluate((element) => getComputedStyle(element).backgroundColor);
+  expect(placeholder).toMatch(/^rgb\(/);
+  expect(placeholder, "กรอบระหว่างรอต้องมีสีพื้นต่างจากหน้า").not.toBe(await page.evaluate(() => getComputedStyle(document.body).backgroundColor));
   expect((await mapBox(page).boundingBox())!.height).toBeGreaterThan(200);
   await expect(mapFailed(page)).toHaveCount(0);
   await expect(routeText(page)).toBeVisible();

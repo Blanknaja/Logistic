@@ -52,8 +52,13 @@ test.describe("จอกว้าง 390 จุด", () => {
 test("จอกว้าง 1440 จุด ตัวกรองอยู่ในแถวเดียวกับจำนวนผลลัพธ์โดยไม่ต้องกด และรูปสินค้าเริ่มในจอแรก", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
+  // หลัง load เนื้อหาที่ส่งตามมาอาจยังรอ React สลับเข้าที่ และฟอนต์ที่ยังไม่มาทำให้แถวหมวดหมู่ขึ้นบรรทัดต่างกัน จึงรอทั้งสองก่อนวัด
+  const resultCount = page.getByText(/^พบ [\d,]+ รายการ$/);
+  await expect(resultCount).toBeVisible();
+  await expect(firstProductImage(page)).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
   await expect(filterToggle(page)).toBeHidden();
-  const count = (await page.getByText(/^พบ [\d,]+ รายการ$/).boundingBox())!;
+  const count = (await resultCount.boundingBox())!;
   const sort = (await page.getByLabel("เรียงตาม").boundingBox())!;
   expect(Math.abs(count.y + count.height / 2 - (sort.y + sort.height / 2))).toBeLessThan(12);
   expect((await firstProductImage(page).boundingBox())!.y).toBeLessThan(900);

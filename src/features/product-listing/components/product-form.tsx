@@ -209,7 +209,7 @@ export function ProductForm({
       )}
       {!imagesReady && <p className={styles.hint}>รอรูปส่งเสร็จ หรือลบรูปที่ส่งไม่สำเร็จ ก่อนบันทึก</p>}
 
-      <div className={styles.actions}>
+      <div className={styles.saveBar}>
         {listed ? (
           // แก้สินค้าที่ลงขายแล้วต้องข้อมูลครบเหมือนเปิดขาย และสถานะคงเดิม
           <button type="button" className="button" disabled={pending || !filesReady} onClick={() => submit("publish")}>

@@ -20,10 +20,12 @@ export default async function EditProductPage({ params }: PageProps<"/seller/pro
 
   return (
     <>
-      <h1>แก้ไขสินค้า</h1>
-      <p className={styles.meta}>
-        <span className={styles.status}>{product.status}</span> แก้ล่าสุด {formatTimeOrDateTime(product.updatedAt)}
-      </p>
+      <header className={styles.intro}>
+        <h1>แก้ไขสินค้า</h1>
+        <p className={styles.meta}>
+          <span className={styles.status}>{product.status}</span> แก้ล่าสุด {formatTimeOrDateTime(product.updatedAt)}
+        </p>
+      </header>
       {/* key เปลี่ยนเมื่อสินค้าถูกแก้ กด "โหลดข้อมูลล่าสุด" แล้วฟอร์มจึงเริ่มใหม่จากข้อมูลล่าสุด */}
       <ProductForm
         key={product.updatedAt}

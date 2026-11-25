@@ -94,29 +94,30 @@ export function ProductList({
 
   return (
     <>
-      <nav aria-label="กรองตามสถานะ">
-        <ul className="chips">
-          {chips.map((chip) => (
-            <li key={chip.label}>
-              <Link
-                href={href({ status: chip.key, q })}
-                className={chip.key === statusKey ? `chip ${styles.chipActive}` : "chip"}
-                aria-current={chip.key === statusKey ? "page" : undefined}
-              >
-                {chip.label} {formatNumber(chip.count)}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      <form action={LIST_PATH} method="get" role="search" className={styles.search}>
-        {statusKey && <input type="hidden" name="status" value={statusKey} />}
-        <input type="search" name="q" defaultValue={q} className="input" placeholder="ค้นหาจากชื่อสินค้า" aria-label="ค้นหาจากชื่อสินค้า" />
-        <button type="submit" className="button button-secondary">
-          ค้นหา
-        </button>
-      </form>
+      <div className={styles.toolbar}>
+        <nav aria-label="กรองตามสถานะ">
+          <ul className="chips">
+            {chips.map((chip) => (
+              <li key={chip.label}>
+                <Link
+                  href={href({ status: chip.key, q })}
+                  className={chip.key === statusKey ? `chip ${styles.chipActive}` : "chip"}
+                  aria-current={chip.key === statusKey ? "page" : undefined}
+                >
+                  {chip.label} {formatNumber(chip.count)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <form action={LIST_PATH} method="get" role="search" className={styles.search}>
+          {statusKey && <input type="hidden" name="status" value={statusKey} />}
+          <input type="search" name="q" defaultValue={q} className="input" placeholder="ค้นหาจากชื่อสินค้า" aria-label="ค้นหาจากชื่อสินค้า" />
+          <button type="submit" className="button button-secondary">
+            ค้นหา
+          </button>
+        </form>
+      </div>
 
       {result.items.length === 0 ? (
         q ? (
@@ -131,20 +132,20 @@ export function ProductList({
       ) : (
         <ul className={styles.list}>
           {result.items.map((item) => (
-            <li key={item.id} className={`card ${styles.row}`}>
+            <li key={item.id} className={styles.row}>
               {item.coverUrl ? (
                 <img src={item.coverUrl} alt="" className={styles.thumb} loading="lazy" />
               ) : (
                 <div className={styles.noImage}>ไม่มีรูป</div>
               )}
-              <div>
+              <div className={styles.info}>
                 <p className={styles.rowName}>{item.name}</p>
                 <p className={styles.meta}>
-                  <span>{priceRange(item.minPrice, item.maxPrice)}</span>
-                  <span>สต็อก {formatNumber(item.totalStock)}</span>
+                  <span className={styles.num}>{priceRange(item.minPrice, item.maxPrice)}</span>
+                  <span className={styles.num}>สต็อก {formatNumber(item.totalStock)}</span>
                   <span className={styles.status}>{item.status}</span>
                 </p>
-                <p className={styles.meta}>แก้ล่าสุด {formatTimeOrDateTime(item.updatedAt)}</p>
+                <p className={`${styles.meta} ${styles.updated}`}>แก้ล่าสุด {formatTimeOrDateTime(item.updatedAt)}</p>
               </div>
               <div className={styles.rowActions}>
                 <Link href={`${LIST_PATH}/${item.id}`} className="button button-secondary">

@@ -12,7 +12,6 @@
 .banner {
   border-color: var(--color-warning);
   color: var(--color-warning);
-  font-weight: 600;
 }
 
 .menu {
@@ -20,11 +19,13 @@
   border-bottom: 1px solid var(--color-border);
 }
 
+/* โลโก้ ชื่อร้าน และข้อมูลร้านหนึ่งบรรทัด */
+
 .identity {
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-5);
 }
 
 .identity h1 {
@@ -36,107 +37,107 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   overflow: hidden;
   /* SHP-008 ให้โลโก้อยู่ในวงกลม จึงเป็นที่เดียวที่มุมไม่ใช่ --radius */
   border-radius: 50%;
   background: var(--color-surface);
   color: var(--color-text);
-  font-size: var(--text-title);
-  font-weight: 600;
+  font-size: var(--text-heading);
   line-height: 1;
   object-fit: cover;
 }
 
+.meta,
 .muted {
   margin: 0;
   color: var(--color-muted);
 }
 
-/* หลังบ้าน: ตัวเลขของร้านคั่นด้วยเส้นเข้มด้านบน ไม่มีกรอบ */
+/* ข้อมูลร้านแต่ละชิ้นไม่ขาดกลางบรรทัด คั่นด้วยระยะว่าง */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-4);
+  font-size: var(--text-label);
+}
+
+.meta > span {
+  white-space: nowrap;
+}
+
+/* หลังบ้าน: ตัวเลขที่ต้องทำต่อ แต่ละตัวกดไปรายการที่จัดการเรื่องนั้นได้ทั้งช่อง */
 
 .stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-5);
-  margin: 0 0 var(--space-6);
+  gap: var(--space-5) var(--space-4);
+  margin: 0 0 var(--space-5);
 }
 
 .stat {
+  position: relative;
   display: grid;
   align-content: start;
-  gap: var(--space-1);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-text);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
 }
 
 .stat dt {
-  color: var(--color-muted);
   font-size: var(--text-label);
 }
 
+.statLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--color-text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.statLink::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+@media (hover: hover) {
+  .stat:hover .statLink {
+    text-decoration-thickness: 2px;
+  }
+}
+
 .stat dd {
+  display: grid;
   margin: 0;
   font-size: var(--text-title);
-  font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.3;
 }
 
 .statError {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
   color: var(--color-danger);
   font-size: var(--text-label);
 }
 
-/* หน้าร้าน: คำอธิบายร้าน ข้อมูลร้าน แล้วรายการสินค้า */
+/* หน้าร้าน: คำอธิบายร้านแล้วสินค้าเลย */
 
 .about {
   display: grid;
-  gap: var(--space-4);
-  margin-bottom: var(--space-6);
-  padding-block: var(--space-5);
-  border-top: 1px solid var(--color-text);
-  border-bottom: 1px solid var(--color-border);
+  justify-items: start;
+  gap: var(--space-1);
+  max-width: var(--measure);
+  margin-bottom: var(--section-gap);
+}
+
+.about p {
+  margin: 0;
 }
 
 .description {
-  max-width: var(--measure);
-  margin: 0;
-  line-height: 1.8;
   white-space: pre-line;
-}
-
-.facts {
-  display: grid;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: var(--text-label);
-}
-
-.facts li {
-  padding: var(--space-2) 0;
-}
-
-.facts li + li {
-  border-top: 1px solid var(--color-border);
-}
-
-/* บรรทัดแรกและบรรทัดสุดท้ายตรงกับขอบของส่วน */
-.facts li:first-child {
-  padding-top: 0;
-}
-
-.facts li:last-child {
-  padding-bottom: 0;
-}
-
-.about .actions {
-  margin: 0;
 }
 
 /* หน้าเปิดร้านและตั้งค่าร้าน */
@@ -185,33 +186,40 @@
   clear: both;
 }
 
+.fieldset :global(.field-error) {
+  margin: 0;
+}
+
+/* ช่องกว้างตามข้อมูล: ชื่อไม่เกิน 30 ถึง 50 ตัวอักษร รหัสไปรษณีย์ 5 หลัก */
+.medium :global(.input) {
+  max-width: 36ch;
+}
+
+.short :global(.input) {
+  max-width: 10ch;
+}
+
+.pair {
+  display: grid;
+  column-gap: var(--space-4);
+}
+
 .logoPicker {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
-  min-width: 0;
+  gap: var(--space-3) var(--space-4);
 }
 
-.logoPicker > :global(.input) {
-  flex: 1 1 14em;
-  width: auto;
-  min-width: 0;
+.logoPicker:has(input:focus-visible) .pick {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
-/* ปุ่มเลือกไฟล์ของเบราว์เซอร์ให้หน้าตาเหมือนปุ่มรอง */
-.logoPicker input::file-selector-button {
-  margin-inline-end: var(--space-3);
-  padding: var(--space-1) var(--space-3);
-  border: 0;
-  border-radius: var(--radius);
-  background: transparent;
-  box-shadow: inset 0 0 0 1px var(--color-text);
-  color: var(--color-text);
-  font: inherit;
-  font-size: var(--text-label);
-  font-weight: 600;
-  cursor: pointer;
+.fieldset:disabled .pick {
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+  color: var(--color-muted);
+  cursor: not-allowed;
 }
 
 .actions {
@@ -222,12 +230,16 @@
   margin-bottom: var(--space-4);
 }
 
-/* แถบปุ่มบันทึก เส้นเข้มด้านบนเปิดส่วนที่สำคัญที่สุดของฟอร์ม */
+/* ปุ่มบันทึกติดขอบล่างจอทุกขนาด กดได้ในจอแรกโดยไม่ต้องเลื่อนผ่านทุกช่อง */
 .submitBar {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
   display: grid;
   gap: var(--space-3);
-  padding-top: var(--space-5);
+  padding: var(--space-3) 0 calc(var(--space-3) + env(safe-area-inset-bottom));
   border-top: 1px solid var(--color-text);
+  background: var(--color-bg);
 }
 
 .submitBar .actions {
@@ -255,8 +267,6 @@
   justify-items: center;
   gap: var(--space-2);
   margin-top: var(--space-7);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--color-border);
 }
 
 .more p {
@@ -285,41 +295,33 @@
   margin: 0;
 }
 
-/* จอแคบ ปุ่มบันทึกติดขอบล่างจอ กดได้โดยไม่ต้องเลื่อนผ่านทุกช่อง */
 @media (max-width: 899px) {
   .submitBar {
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
     margin-inline: calc(-1 * var(--gutter));
-    padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
-    background: var(--color-bg);
+    padding-inline: var(--gutter);
+  }
+}
+
+@media (min-width: 600px) {
+  .pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 900px) {
   .logo {
-    width: 96px;
-    height: 96px;
+    width: 72px;
+    height: 72px;
+    font-size: var(--text-title);
   }
 
   .stats {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  .about,
   .formPage {
     grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
     column-gap: var(--space-7);
-  }
-
-  .about > * {
-    grid-column: 1;
-  }
-
-  .about > .description {
-    grid-column: 2;
-    grid-row: 1 / span 2;
   }
 
   .formPage > form {

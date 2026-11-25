@@ -306,6 +306,9 @@ describe("SHP-006 หน้าแรกของหลังบ้าน", () =>
     expect(home).toContain("สินค้าที่ขายอยู่ 3");
     expect(home).toContain("คำสั่งซื้อที่รอร้านจัดของ 2");
     expect(home).not.toContain("ร้านของคุณยังไม่มีสินค้า");
+    const html = (await open(sellerHome())).html ?? "";
+    expect(html).toMatch(/href="\/seller\/orders\?status=paid"[^>]*>คำสั่งซื้อที่รอร้านจัดของ</);
+    expect(html).toMatch(/href="\/seller\/products"[^>]*>สินค้าที่ขายอยู่</);
     expect(menu).toContain('href="/seller/settings"');
     expect(menu).toContain(`href="/shops/${shopId}"`);
     expect(menu).toContain("เนื้อหาของหน้า");
@@ -321,15 +324,32 @@ describe("SHP-006 หน้าแรกของหลังบ้าน", () =>
     expect(html).toMatch(/<a class="button" href="\/seller\/products\/new">ลงสินค้าชิ้นแรก<\/a>/);
   });
 
+  test("SHP-006 ตัวเลขสต็อกใกล้หมดและหมดขึ้นก่อนจำนวนสินค้า และพาไปหน้าสต็อกที่กรองไว้แล้ว", async () => {
+    const { shopId } = await somchaiOpensShop();
+    for (const stock of [0, 3, 5, 6, 40]) addProduct(db, { shopId, price: 100, stock });
+
+    const html = (await open(sellerHome())).html ?? "";
+    const home = text(html);
+
+    expect(home).toContain("สต็อกใกล้หมด 2");
+    expect(home).toContain("สต็อกหมด 1");
+    expect(html).toMatch(/href="\/seller\/stock\?filter=low"[^>]*>สต็อกใกล้หมด</);
+    expect(html).toMatch(/href="\/seller\/stock\?filter=out"[^>]*>สต็อกหมด</);
+    expect(home.indexOf("คำสั่งซื้อที่รอร้านจัดของ")).toBeLessThan(home.indexOf("สต็อกใกล้หมด"));
+    expect(home.indexOf("สต็อกหมด")).toBeLessThan(home.indexOf("สินค้าที่ขายอยู่"));
+  });
+
   test("SHP-006 นับคำสั่งซื้อไม่สำเร็จ แสดง – โหลดไม่สำเร็จ และปุ่มลองใหม่ ส่วนอื่นยังแสดง", async () => {
     const { shopId } = await somchaiOpensShop();
     addProduct(db, { shopId, price: 100 });
     db.exec("ALTER TABLE orders RENAME TO orders_broken");
     vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const home = text((await open(sellerHome())).html);
+    const html = (await open(sellerHome())).html ?? "";
+    const home = text(html);
 
-    expect(home).toContain("คำสั่งซื้อที่รอร้านจัดของ – โหลดไม่สำเร็จ ลองใหม่");
+    expect(home).toContain("คำสั่งซื้อที่รอร้านจัดของ – โหลดไม่สำเร็จ");
+    expect(html.match(/>ลองใหม่<\/button>/g)).toHaveLength(1);
     expect(home).toContain("ร้านสมชายผ้าไทย");
     expect(home).toContain("สินค้าที่ขายอยู่ 1");
     expect((await open(layout())).html).toContain('href="/seller/settings"');
@@ -377,6 +397,20 @@ describe("SHP-008 โลโก้ร้าน", () => {
     });
     expect(response.headers.get("content-type")).toBe("image/png");
     expect((await response.arrayBuffer()).byteLength).toBe(Math.floor(1.2 * 1024 * 1024));
+  });
+
+  test("SHP-008 ช่องเลือกโลโก้เป็นป้ายภาษาไทยหน้าตาเป็นปุ่ม ซึ่งเปิดช่องเลือกไฟล์ได้เองโดยไม่ต้องมี JavaScript", async () => {
+    const { shopId } = await somchaiOpensShop();
+    const before = (await open(settings())).html ?? "";
+
+    expect(before).toMatch(/<input id="field-logo" type="file"[^>]*class="visually-hidden" name="logo"/);
+    expect(before).toMatch(/<label for="field-logo" class="button button-secondary [^"]*">เลือกรูป<\/label>/);
+    expect(before).not.toContain("ลบโลโก้");
+
+    await submit(saveShopSettingsAction(form({ ...somchaiForm, shopId: String(shopId) }, pngFile(1000))));
+    const after = (await open(settings())).html ?? "";
+    expect(after).toMatch(/<label for="field-logo"[^>]*>เปลี่ยนรูป<\/label>/);
+    expect(after).toMatch(/<button type="button" class="link-action">ลบโลโก้<\/button>/);
   });
 
   test("SHP-008 กด ลบโลโก้ แล้วบันทึก กลับไปใช้ตัวอักษร", async () => {
@@ -482,7 +516,8 @@ describe("SHP-011 หน้าร้าน", () => {
     expect(text(html)).toContain("ร้านสมชายผ้าไทย");
     expect(html).toContain("ร้านนี้ยังไม่มีคำอธิบาย");
     expect(html).toContain("กรุงเทพมหานคร");
-    expect(html).toContain(`เปิดร้านเมื่อ ${formatThaiDate("2026-11-24T02:00:00.000Z")}`);
+    expect(text(html)).toContain(`เปิดร้านเมื่อ ${formatThaiDate("2026-11-24T02:00:00.000Z")}`);
+    expect(html).toContain('dateTime="2026-11-24T02:00:00.000Z"');
     expect(html).toContain("สินค้า 23 ชิ้น");
     expect(html.match(/href="\/products\/\d+"/g)).toHaveLength(20);
     expect(html.indexOf(`/products/${ids[22]}"`)).toBeLessThan(html.indexOf(`/products/${ids[21]}"`));
@@ -546,7 +581,9 @@ describe("SHP-012 หน้าร้านที่ไม่มีสินค�
       expect(html).toContain("ร้านนี้ยังไม่มีสินค้า");
     }
     expect(owner).toMatch(/href="\/seller\/products\/new">ลงสินค้าชิ้นแรก/);
+    expect(owner).not.toContain("ดูสินค้าจากร้านอื่น");
     expect(visitor).not.toContain("ลงสินค้าชิ้นแรก");
+    expect(visitor).toMatch(/<a class="button" href="\/">ดูสินค้าจากร้านอื่น<\/a>/);
   });
 
   test("SHP-012 ลิงก์ที่ไม่ตรงกับร้านใดเลย ได้หน้า ไม่พบร้านนี้ พร้อมปุ่มกลับหน้าแรก", async () => {
@@ -602,6 +639,7 @@ describe("SHP-014 ร้านที่ถูกระงับ", () => {
     expect(text(html)).toContain("ร้านสมชายผ้าไทย");
     expect(html).toContain('aria-label="โลโก้ร้าน ร้านสมชายผ้าไทย"');
     expect(html).toContain("ร้านนี้ถูกระงับ ซื้อสินค้าจากร้านนี้ไม่ได้ในขณะนี้");
+    expect(html).toMatch(/href="\/">ดูสินค้าจากร้านอื่น/);
     expect(html).not.toMatch(/href="\/products\//);
     expect(banner).toContain("ร้านของคุณถูกระงับโดยผู้ดูแลแพลตฟอร์ม");
     expect(owner).toContain(`สถานะร้าน ${SHOP_STATUS.suspended}`);
@@ -691,7 +729,7 @@ describe("SHP-Q04 ใช้บนมือถือ", () => {
     expect(fixed.filter((px) => px > 328)).toEqual([]);
   });
 
-  test("SHP-Q04 ทั้ง 4 หน้า ทุกช่องกรอกกว้างเต็มจอ และทุกปุ่มใช้สไตล์ปุ่มที่สูง 44 จุด", async () => {
+  test("SHP-Q04 ทั้ง 4 หน้า ทุกช่องกรอกใช้สไตล์ช่องกรอก และทุกปุ่มใช้สไตล์ที่สูง 44 จุด", async () => {
     const { shopId } = await somchaiOpensShop();
     for (let i = 0; i < 21; i++) addProduct(db, { shopId, price: 100 });
     const pages = [(await open(sellerHome())).html ?? "", (await open(settings())).html ?? "", (await open(storefront(shopId))).html ?? ""];
@@ -701,9 +739,12 @@ describe("SHP-Q04 ใช้บนมือถือ", () => {
     for (const html of pages) {
       expect(html).toBeTruthy();
       for (const input of html.match(/<(input|select|textarea) [^>]*>/g) ?? []) {
-        if (!input.includes('type="hidden"')) expect(input).toContain('class="input"');
+        if (input.includes('type="hidden"')) continue;
+        // ช่องเลือกไฟล์ซ่อนไว้ ป้ายที่หน้าตาเป็นปุ่มเปิดแทน
+        if (input.includes('type="file"')) expect(input).toContain('class="visually-hidden"');
+        else expect(input).toContain('class="input"');
       }
-      for (const button of html.match(/<button [^>]*>/g) ?? []) expect(button).toMatch(/class="button/);
+      for (const button of html.match(/<button [^>]*>/g) ?? []) expect(button).toMatch(/class="(button|link-action)/);
     }
   });
 });

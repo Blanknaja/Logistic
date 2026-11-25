@@ -1,11 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useTransition } from "react";
 import browse from "@/features/browse/components/browse.module.css";
-import { ProductImage } from "@/features/browse/components/product-image";
+import { ProductCard } from "@/features/browse/components/product-card";
 import type { StorefrontCursor, StorefrontPage } from "@/features/shop/server/storefront";
-import { formatBaht } from "@/shared/format";
 import { ACTION_TIMEOUT_MS, settle } from "@/shared/ui/timeout";
 import styles from "./shop.module.css";
 
@@ -36,14 +34,7 @@ export function StorefrontProducts({ first, loadMore }: { first: StorefrontPage;
       <ul className={browse.grid}>
         {shown.items.map((item) => (
           <li key={item.id}>
-            <Link href={`/products/${item.id}`} className={browse.card}>
-              <ProductImage src={item.coverUrl} alt="" />
-              <span className={browse.cardBody}>
-                <span className={browse.cardName}>{item.name}</span>
-                <span className={browse.priceText}>{formatBaht(item.price)}</span>
-                {item.soldOut && <span className={browse.soldOut}>สินค้าหมด</span>}
-              </span>
-            </Link>
+            <ProductCard item={item} />
           </li>
         ))}
       </ul>

@@ -61,13 +61,6 @@ export default async function SellerHomePage({ searchParams }: PageProps<"/selle
           <p className={styles.meta}>สถานะร้าน {shop.status}</p>
         </div>
       </header>
-      {products.listed === 0 && (
-        <EmptyState title="ร้านของคุณยังไม่มีสินค้า">
-          <Link href="/seller/products/new" className="button">
-            ลงสินค้าชิ้นแรก
-          </Link>
-        </EmptyState>
-      )}
       <dl className={styles.stats}>
         {numbers.map((number) => (
           <div key={number.label} className={styles.stat}>
@@ -89,6 +82,13 @@ export default async function SellerHomePage({ searchParams }: PageProps<"/selle
       </dl>
       {/* ปุ่มเดียวโหลดทุกตัวเลขใหม่ หน้าจึงมีปุ่มสีเน้นไม่เกินหนึ่งปุ่ม */}
       {numbers.some((number) => number.value === null) && <RetryButton />}
+      {products.listed === 0 && (
+        <EmptyState title="ร้านของคุณยังไม่มีสินค้า">
+          <Link href="/seller/products/new" className="button">
+            ลงสินค้าชิ้นแรก
+          </Link>
+        </EmptyState>
+      )}
     </>
   );
 }

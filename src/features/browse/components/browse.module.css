@@ -6,6 +6,10 @@
   margin: 0;
 }
 
+.categories + :global(.state) {
+  margin-top: var(--space-5);
+}
+
 .chipLink {
   color: var(--color-text);
   white-space: nowrap;

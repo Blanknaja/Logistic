@@ -68,12 +68,15 @@ function Results({ params, result }: Omit<Props, "categories">) {
           <p>
             พบ {formatNumber(result.total)} รายการ{params.q && ` สำหรับ "${params.q}"`}
           </p>
-          {filtered && result.total > 0 && (
+          {filtered && (active.length > 0 || result.total > 0) && (
             <p className={styles.active}>
               {active.length > 0 && <span>{active.join(" · ")}</span>}
-              <Link href={clearHref} className="link-action">
-                ล้างตัวกรอง
-              </Link>
+              {/* ไม่พบสินค้า ปุ่มล้างตัวกรองอยู่ในหน้าว่างแล้ว */}
+              {result.total > 0 && (
+                <Link href={clearHref} className="link-action">
+                  ล้างตัวกรอง
+                </Link>
+              )}
             </p>
           )}
         </div>

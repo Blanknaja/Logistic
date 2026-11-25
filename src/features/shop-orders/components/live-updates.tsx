@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { shopOrdersVersionAction } from "@/features/shop-orders/actions";
-import { formatDateTime } from "@/shared/format";
+import { formatTime } from "@/shared/format";
 import styles from "./shop-orders.module.css";
 
 /** ถามทุก 10 วินาที หน้าที่เปิดค้างจึงเห็นการเปลี่ยนแปลงภายใน 30 วินาที (ORD-Q02) */
@@ -21,7 +21,7 @@ export async function checkForUpdates(check: () => Promise<string>, version: str
 export function StaleNotice({ since }: { since: number }) {
   return (
     <p role="status" className={styles.notice}>
-      อัปเดตข้อมูลไม่ได้ ข้อมูลที่เห็นเป็นของเวลา {formatDateTime(new Date(since)).slice(-5)}
+      อัปเดตข้อมูลไม่ได้ ข้อมูลที่เห็นเป็นของเวลา {formatTime(new Date(since))}
     </p>
   );
 }

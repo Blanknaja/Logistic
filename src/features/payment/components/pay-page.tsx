@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { changeMethodAction, checkStatusAction, payByPromptPayAction } from "@/features/payment/actions";
 import { minutesLeftText, UNAVAILABLE_MESSAGE, type PaymentView, type PayPage } from "@/features/payment/server/payments";
 import type { SimulatorMode } from "@/features/payment/server/simulator";
-import { formatBaht, formatDateTime } from "@/shared/format";
+import { formatBaht, formatThaiDateTime } from "@/shared/format";
 import { PAYMENT_METHOD } from "@/shared/statuses";
 import { CardForm } from "./card-form";
 import { PayForm } from "./pay-form";
@@ -169,7 +169,7 @@ function Paid({ page, notice }: { page: PayPage; notice?: string }) {
       <section className={styles.section}>
         {paid && (
           <p className={styles.total}>
-            จ่ายแล้ว {formatBaht(paid.amount)} ด้วย{paidWith(paid)} เวลา {formatDateTime(paid.resolvedAt ?? paid.startedAt)}
+            จ่ายแล้ว {formatBaht(paid.amount)} ด้วย{paidWith(paid)} เวลา {formatThaiDateTime(paid.resolvedAt ?? paid.startedAt)}
           </p>
         )}
         <p>ไม่มียอดที่ต้องจ่าย</p>
@@ -236,7 +236,7 @@ export function PayPageView({ page, method, retry = false, notice, simulator }: 
             {page.history.map((payment) => (
               <li key={payment.id} className={styles.line}>
                 <span>
-                  {formatDateTime(payment.startedAt)} {payment.method} {formatBaht(payment.amount)}
+                  {formatThaiDateTime(payment.startedAt)} {payment.method} {formatBaht(payment.amount)}
                 </span>
                 <span>{payment.status}</span>
               </li>

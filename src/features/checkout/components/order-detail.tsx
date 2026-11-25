@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CANCEL_REFUSED, type BuyerOrderDetail, type CancelRefusal } from "@/features/checkout/server/buyer-orders";
-import { formatBaht, formatDateTime, formatNumber } from "@/shared/format";
+import { formatBaht, formatThaiDateTime, formatNumber } from "@/shared/format";
 import { ORDER_STATUS } from "@/shared/statuses";
 import { CancelOrderForm } from "./cancel-order-form";
 import { PayButton } from "./pay-button";
@@ -44,11 +44,11 @@ export function OrderDetail({
           <strong>{order.shopName}</strong>
           <span className={styles.status}>{order.status}</span>
         </div>
-        <p className={styles.muted}>สั่งเมื่อ {formatDateTime(order.orderedAt)}</p>
-        {order.status === ORDER_STATUS.awaitingPayment && <p>จ่ายภายใน {formatDateTime(order.paymentDeadline)}</p>}
+        <p className={styles.muted}>สั่งเมื่อ {formatThaiDateTime(order.orderedAt)}</p>
+        {order.status === ORDER_STATUS.awaitingPayment && <p>จ่ายภายใน {formatThaiDateTime(order.paymentDeadline)}</p>}
         {order.status === ORDER_STATUS.cancelled && order.cancelledAt && (
           <p>
-            ยกเลิกเมื่อ {formatDateTime(order.cancelledAt)} เหตุผล: {order.cancelReason}
+            ยกเลิกเมื่อ {formatThaiDateTime(order.cancelledAt)} เหตุผล: {order.cancelReason}
           </p>
         )}
 

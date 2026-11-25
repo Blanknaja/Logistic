@@ -21,6 +21,7 @@ import { createTestDb } from "@/shared/db/testing";
 import { sellerMenuLinks } from "@/shared/nav/registry";
 import { SESSION_COOKIE } from "@/shared/session";
 import { STOCK_CHANGE_REASON } from "@/shared/statuses";
+import { formatThaiDateTime } from "@/shared/format";
 
 const request = vi.hoisted(() => ({
   db: undefined as Db | undefined,
@@ -326,7 +327,7 @@ describe("INV-007 ผู้ขายตั้งสต็อกต่ำกว�
 
     expect((await stockPage()).html).toContain("จองอยู่ 0");
     const page = (await historyPage(variantId)).html;
-    for (const text of ["25/11/2026 17:30", "คืนจากคำสั่งซื้อ +3 เหลือ 3", `คำสั่งซื้อ ${order.orderNo}`]) {
+    for (const text of [formatThaiDateTime("2026-11-25T10:30:00.000Z"), "คืนจากคำสั่งซื้อ +3 เหลือ 3", `คำสั่งซื้อ ${order.orderNo}`]) {
       expect(page).toContain(text);
     }
   });
@@ -393,7 +394,7 @@ describe("INV-015 แสดงประวัติสต็อก", () => {
     ).run(variantId, STOCK_CHANGE_REASON.reserved, order.id, "2026-11-25T02:10:00.000Z");
 
     const page = (await historyPage(variantId)).html ?? "";
-    expect(page.indexOf("25/11/2026 09:10")).toBeLessThan(page.indexOf("25/11/2026 09:00"));
+    expect(page.indexOf(formatThaiDateTime("2026-11-25T02:10:00.000Z"))).toBeLessThan(page.indexOf(formatThaiDateTime("2026-11-25T02:00:00.000Z")));
     for (const text of ["จองจากคำสั่งซื้อ -2 เหลือ 8", "ผู้ขายแก้ +5 เหลือ 10", `คำสั่งซื้อ ${order.orderNo}`, "สต็อกปัจจุบัน"]) {
       expect(page).toContain(text);
     }

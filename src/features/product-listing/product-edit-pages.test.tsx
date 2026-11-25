@@ -145,7 +145,7 @@ describe("PRD-006 เปิดหน้าฟอร์มเพื่อแก�
     vi.useRealTimers();
 
     expect(text(html)).toContain("ขายอยู่ แก้ล่าสุด 10:15");
-    expect(nextDay).toContain("ขายอยู่ แก้ล่าสุด 25/11/2026 10:15");
+    expect(nextDay).toContain("ขายอยู่ แก้ล่าสุด 25 พ.ย. 10:15");
     expect(html).toContain('value="เสื้อยืดคอกลม"');
     expect(html).toContain("ผ้าฝ้าย 100%");
     expect(html).toContain('<option value="1" selected="">เสื้อผ้าและแฟชั่น</option>');

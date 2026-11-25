@@ -99,7 +99,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-/** เวลาประเทศไทยของวันที่ 24/11/2026 เช่น at("14:05") */
+/** เวลาประเทศไทยของวันที่ 24 พ.ย. 2026 เช่น at("14:05") */
 function at(time: string): Date {
   const [hour, minute, second = 0] = time.split(":").map(Number);
   return new Date(Date.UTC(2026, 10, 24, hour - 7, minute, second));
@@ -371,7 +371,7 @@ describe("PAY-005 จ่ายสำเร็จ", () => {
     await payCard(group.groupId, GOOD, "14:06");
     const html = await payPage(group.groupId);
 
-    expect(html).toMatch(/จ่ายแล้ว ฿450 ด้วยบัตรลงท้าย 4242 เวลา 24\/11\/2026 14:06/);
+    expect(html).toMatch(/จ่ายแล้ว ฿450 ด้วยบัตรลงท้าย 4242 เวลา 24 พ.ย. 14:06/);
     for (const orderNo of group.orderNos) expect(html).toContain(orderNo);
     expect(orderStatuses(group.groupId)).toEqual(["จ่ายแล้ว", "จ่ายแล้ว"]);
     expect(payments(group.groupId).map((p) => p.status)).toEqual(["สำเร็จ"]);
@@ -500,7 +500,7 @@ describe("PAY-008 เช็คสถานะการจ่ายเงิน",
     setNow("14:07");
 
     expect((await submit(checkStatusAction(form({ groupId: group.groupId })))).state).toEqual({
-      message: "ยังไม่ได้รับเงิน เช็คล่าสุด 24/11/2026 14:07",
+      message: "ยังไม่ได้รับเงิน เช็คล่าสุด 24 พ.ย. 14:07",
     });
     expect(await payPage(group.groupId)).toContain(payments(group.groupId)[0].qr_image_url?.slice(0, 30));
   });

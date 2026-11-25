@@ -37,7 +37,7 @@ src/
     db/                   เปิดฐานข้อมูล transaction migration และตัวช่วยของ test
     statuses.ts           คำสถานะทุกคำของชุด 1 ใช้จากไฟล์นี้ ห้ามพิมพ์เอง
     provinces.ts          77 จังหวัด ใช้ทั้งที่อยู่ของร้านและที่อยู่จัดส่ง
-    format.ts             formatBaht formatDate formatDateTime formatTimeOrDateTime formatNumber
+    format.ts             formatBaht formatNumber formatThaiDate formatThaiDateTime formatTime formatTimeOrDateTime
     session.ts            getCurrentAccount() requireAccount()
     rules.ts              กฎตรวจที่หลาย feature ใช้ร่วมกัน isPhone detectImageType
     paging.ts             PAGE_SIZE (20) และ pageCount() ของทุกรายการที่แบ่งหน้า
@@ -149,7 +149,7 @@ export function cancelExpiredOrders(db: Db, now: Date = new Date()): number {
 
 - เขียนหลายแถวที่ต้องสำเร็จพร้อมกัน ให้ห่อด้วย `transaction(db, fn)` ซ้อนกันได้ ถ้า `fn` โยน error จะย้อนทั้งหมด `fn` ห้ามเป็น async
 - `node:sqlite` ทำงานแบบ sync และแอปมีการเชื่อมต่อเดียว งานใน transaction เดียวจึงไม่มีคำขออื่นแทรก ใช้กันการแย่งสต็อกชิ้นสุดท้ายได้ และฐานข้อมูลมี `CHECK (stock >= 0)` กันไว้อีกชั้น
-- เวลาเก็บเป็นข้อความ ISO แบบ UTC จาก `date.toISOString()` แสดงผลด้วย `formatDate` หรือ `formatDateTime` ซึ่งใช้เวลาประเทศไทย
+- เวลาเก็บเป็นข้อความ ISO แบบ UTC จาก `date.toISOString()` แสดงผลด้วย `formatThaiDate` ("25 พ.ย.") หรือ `formatThaiDateTime` ("25 พ.ย. 13:07") ซึ่งใช้เวลาประเทศไทยและใส่ปี ค.ศ. เมื่อไม่ใช่ปีนี้ ฟังก์ชันที่รับ `now` ให้ส่ง `now` ต่อไปด้วย ส่วน `formatDateTime` แบบเดิม "25/11/2026 13:07" เหลือใช้แค่ใน `src/features/delivery`
 - เงินเก็บเป็นจำนวนเต็มบาท แสดงด้วย `formatBaht(1290)` ได้ `฿1,290`
 - สถานะใช้ค่าจาก `@/shared/statuses` ฐานข้อมูลมี CHECK ที่รับเฉพาะคำเหล่านี้
 - ตารางทั้งหมดอยู่ใน `src/shared/db/migrations/0001-initial-schema.sql` อ่านไฟล์นี้ก่อนเขียน SQL

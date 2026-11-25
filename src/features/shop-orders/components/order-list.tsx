@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { orderHref, ordersHref, type ListParams, type StatusKey } from "@/features/shop-orders/paths";
 import type { OrderList, StatusCounts } from "@/features/shop-orders/server/orders";
-import { formatBaht, formatDateTime, formatNumber } from "@/shared/format";
+import { formatBaht, formatThaiDateTime, formatNumber } from "@/shared/format";
 import { ORDER_STATUS } from "@/shared/statuses";
 import { EmptyState } from "@/shared/ui/states";
 import { LiveUpdates } from "./live-updates";
@@ -82,7 +82,7 @@ function Results({ params, list }: Pick<Props, "params" | "list">) {
                 <span className={styles.orderNo}>{row.orderNo}</span>
                 <span className={styles.status}>{row.status}</span>
               </span>
-              <span className={styles.muted}>สั่งซื้อเมื่อ {formatDateTime(row.orderedAt)}</span>
+              <span className={styles.muted}>สั่งซื้อเมื่อ {formatThaiDateTime(row.orderedAt)}</span>
               <span>ผู้รับ {row.recipientName}</span>
               <span className={styles.total}>
                 {formatNumber(row.itemCount)} ชิ้น · ยอดรวม {formatBaht(row.total)}

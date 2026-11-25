@@ -22,6 +22,7 @@ import { createTestDb } from "@/shared/db/testing";
 import { SellerMenu } from "@/shared/layout/seller-menu";
 import { SESSION_COOKIE } from "@/shared/session";
 import { ORDER_STATUS, PARCEL_STATUS, PAYMENT_METHOD, PAYMENT_STATUS, type OrderStatus } from "@/shared/statuses";
+import { formatThaiDateTime } from "@/shared/format";
 
 const request = vi.hoisted(() => ({
   db: undefined as Db | undefined,
@@ -164,7 +165,7 @@ describe("ORD-001 หน้ารายการคำสั่งซื้อ",
 
     expect(rowsIn(html)).toHaveLength(20);
     expect(rowsIn(html)[0]).toBe("2611240045");
-    expect(text(html)).toContain("สั่งซื้อเมื่อ 24/11/2026 08:52");
+    expect(text(html)).toContain(`สั่งซื้อเมื่อ ${formatThaiDateTime("2026-11-24T08:52+07:00")}`);
     expect(text(html)).toContain("ผู้รับ สมหญิง ใจดี");
     expect(text(html)).toContain("2 ชิ้น · ยอดรวม ฿540");
     expect(text(html)).toContain("หน้า 1 จาก 3");
@@ -317,9 +318,9 @@ describe("ORD-005 ถึง ORD-008 หน้ารายละเอียด",
 
     expect(html).toContain("เสื้อยืดคอกลม สีดำ ขนาด L ฿250 × 2 = ฿500");
     expect(html).toMatch(/ยอดรวมสินค้า<\/dt><dd>฿500.*ค่าส่ง<\/dt><dd>฿40.*ยอดรวมทั้งหมด<\/dt><dd[^>]*>฿540/);
-    expect(html).toContain("สั่งซื้อเมื่อ 24/11/2026 08:52");
+    expect(html).toContain(`สั่งซื้อเมื่อ ${formatThaiDateTime("2026-11-24T08:52+07:00")}`);
     expect(html).toContain("สมหญิง ใจดี<br/>081-234-5678<br/>99/1 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110");
-    expect(html).toContain("จ่ายแล้ว PromptPay 24/11/2026 08:55");
+    expect(html).toContain(`จ่ายแล้ว PromptPay ${formatThaiDateTime("2026-11-24T08:55+07:00")}`);
     expect(html).not.toContain("somying@example.com");
   });
 
@@ -362,7 +363,7 @@ describe("ORD-005 ถึง ORD-008 หน้ารายละเอียด",
 
     expect(html).toContain("BS0000001234");
     expect(html).toContain("อยู่ระหว่างขนส่ง");
-    expect(html).toContain("24/11/2026 07:30");
+    expect(html).toContain(formatThaiDateTime("2026-11-24T07:30+07:00"));
     expect(html).toContain("กำลังจัดส่ง");
   });
 

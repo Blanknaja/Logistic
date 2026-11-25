@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { StockHistory } from "@/features/stock/server/stock";
-import { formatDateTime, formatNumber } from "@/shared/format";
+import { formatThaiDateTime, formatNumber } from "@/shared/format";
 import { EmptyState } from "@/shared/ui/states";
 import { Pager } from "./pager";
 import styles from "./stock.module.css";
@@ -28,7 +28,7 @@ export function StockHistoryView({ history }: { history: StockHistory }) {
         <ol className={styles.history}>
           {history.entries.map((entry) => (
             <li key={entry.id} className={styles.entry}>
-              <time dateTime={entry.createdAt}>{formatDateTime(entry.createdAt)}</time>
+              <time dateTime={entry.createdAt}>{formatThaiDateTime(entry.createdAt)}</time>
               <span>{`${entry.reason} ${signed(entry.change)} เหลือ ${formatNumber(entry.stockAfter)}`}</span>
               {entry.orderNo && <span className={styles.orderNo}>{`คำสั่งซื้อ ${entry.orderNo}`}</span>}
             </li>

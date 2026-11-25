@@ -6,7 +6,7 @@ import { StatusChangeLinks } from "@/features/delivery/components/status-change-
 import styles from "@/features/delivery/components/status-change.module.css";
 import { getParcelForStatusChange } from "@/features/delivery/server/parcel-status";
 import { getDb } from "@/shared/db";
-import { formatDateTime } from "@/shared/format";
+import { formatThaiDateTime } from "@/shared/format";
 import { requireAccount } from "@/shared/session";
 import { ORDER_STATUS } from "@/shared/statuses";
 
@@ -39,7 +39,7 @@ export default async function ParcelStatusPage({ params, searchParams }: PagePro
         <dd>{parcel.orderStatus}</dd>
         <dt>รายการล่าสุด</dt>
         <dd>
-          {parcel.latest.status} {formatDateTime(parcel.latest.at)} {parcel.latest.location}
+          {parcel.latest.status} {formatThaiDateTime(parcel.latest.at)} {parcel.latest.location}
         </dd>
       </dl>
       {parcel.orderStatus === ORDER_STATUS.cancelled && <p className={styles.notice}>คำสั่งซื้อถูกยกเลิก</p>}

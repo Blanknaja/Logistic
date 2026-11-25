@@ -30,6 +30,7 @@ import { createTestDb } from "@/shared/db/testing";
 import { SiteHeader } from "@/shared/layout/site-header";
 import { SESSION_COOKIE } from "@/shared/session";
 import { ORDER_STATUS, SHOP_STATUS } from "@/shared/statuses";
+import { formatThaiDate } from "@/shared/format";
 
 const request = vi.hoisted(() => ({
   db: undefined as Db | undefined,
@@ -481,7 +482,7 @@ describe("SHP-011 หน้าร้าน", () => {
     expect(text(html)).toContain("ร้านสมชายผ้าไทย");
     expect(html).toContain("ร้านนี้ยังไม่มีคำอธิบาย");
     expect(html).toContain("กรุงเทพมหานคร");
-    expect(html).toContain("เปิดร้านเมื่อ 24/11/2026");
+    expect(html).toContain(`เปิดร้านเมื่อ ${formatThaiDate("2026-11-24T02:00:00.000Z")}`);
     expect(html).toContain("สินค้า 23 ชิ้น");
     expect(html.match(/href="\/products\/\d+"/g)).toHaveLength(20);
     expect(html.indexOf(`/products/${ids[22]}"`)).toBeLessThan(html.indexOf(`/products/${ids[21]}"`));

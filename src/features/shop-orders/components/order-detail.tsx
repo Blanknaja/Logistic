@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { OrderDetail, ParcelSummary } from "@/features/shop-orders/server/orders";
-import { formatBaht, formatDateTime, formatNumber } from "@/shared/format";
+import { formatBaht, formatThaiDateTime, formatNumber } from "@/shared/format";
 import { ORDER_STATUS } from "@/shared/statuses";
 import { ErrorState } from "@/shared/ui/states";
 import { LiveUpdates } from "./live-updates";
@@ -27,7 +27,7 @@ export function OrderDetailView({ order, parcel, backHref, version }: Props) {
       <section className={styles.section} aria-labelledby="order-summary">
         <h2 id="order-summary">สถานะคำสั่งซื้อ</h2>
         <p className={styles.status}>{order.status}</p>
-        <p className={styles.muted}>สั่งซื้อเมื่อ {formatDateTime(order.orderedAt)}</p>
+        <p className={styles.muted}>สั่งซื้อเมื่อ {formatThaiDateTime(order.orderedAt)}</p>
       </section>
 
       <section className={styles.section} aria-labelledby="order-items">
@@ -65,7 +65,7 @@ export function OrderDetailView({ order, parcel, backHref, version }: Props) {
 
       <section className={styles.section} aria-labelledby="order-payment">
         <h2 id="order-payment">การจ่ายเงิน</h2>
-        <p>{order.payment ? `จ่ายแล้ว ${order.payment.method} ${formatDateTime(order.payment.paidAt)}` : "ยังไม่จ่าย"}</p>
+        <p>{order.payment ? `จ่ายแล้ว ${order.payment.method} ${formatThaiDateTime(order.payment.paidAt)}` : "ยังไม่จ่าย"}</p>
       </section>
 
       <section className={styles.section} aria-labelledby="order-parcel">
@@ -97,7 +97,7 @@ function ParcelInfo({ parcel, cancelled }: { parcel: Props["parcel"]; cancelled:
       <dt>สถานะการจัดส่ง</dt>
       <dd>{parcel.status}</dd>
       <dt>เปลี่ยนเมื่อ</dt>
-      <dd>{formatDateTime(parcel.changedAt)}</dd>
+      <dd>{formatThaiDateTime(parcel.changedAt)}</dd>
     </dl>
   );
 }

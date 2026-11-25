@@ -16,7 +16,7 @@ import { listBuyerOrders } from "@/features/checkout/server/buyer-orders";
 import type { Db } from "@/shared/db";
 import { addAccount, addOrder, addParcel, addPayment, addProduct, addShop } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
-import { formatDateTime } from "@/shared/format";
+import { formatThaiDateTime } from "@/shared/format";
 import { headerLinks } from "@/shared/nav/registry";
 import { SESSION_COOKIE } from "@/shared/session";
 import { ORDER_STATUS, PAYMENT_STATUS } from "@/shared/statuses";
@@ -174,7 +174,7 @@ describe("CHK-009 หน้ารายการคำสั่งซื้อ�
     const { html } = await ordersPage({ status: ORDER_STATUS.awaitingPayment });
 
     expect(cards(html)).toBe(2);
-    expect(count(html, `จ่ายภายใน ${formatDateTime(deadline)}`) - 1).toBe(2);
+    expect(count(html, `จ่ายภายใน ${formatThaiDateTime(deadline)}`) - 1).toBe(2);
     expect(count(html, payButton(first.groupId)) - 1).toBe(2);
     expect(count(html, PAY_BUTTON) - 1).toBe(2);
     expect(html).toContain("ผ้าดี");
@@ -271,7 +271,7 @@ describe("CHK-010 หน้ารายละเอียดคำสั่ง�
 
     const { html } = await orderPage(first.orderNo);
 
-    expect(html).toContain(`ยกเลิกเมื่อ ${formatDateTime(cancelledAt)} เหตุผล: ส่งไม่สำเร็จ`);
+    expect(html).toContain(`ยกเลิกเมื่อ ${formatThaiDateTime(cancelledAt)} เหตุผล: ส่งไม่สำเร็จ`);
     expect(html).toContain(`href="/track/${parcel.trackingNo}"`);
     expect(html).not.toContain("จ่ายภายใน");
   });

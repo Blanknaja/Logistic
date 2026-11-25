@@ -34,7 +34,7 @@ describe("ACC-009 ขอลิงก์ตั้งรหัสผ่านใ�
 
     expect(message?.to).toBe("somchai@example.com");
     expect(message?.text).toContain(`${APP_URL}/reset-password?token=`);
-    expect(message?.text).toContain("24/11/2026 15:30");
+    expect(message?.text).toContain("24 พ.ย. 15:30");
     const token = requestLink("somchai@example.com", "15:00");
     expect(isResetLinkUsable(db, token, at("15:29"))).toBe(true);
     expect(isResetLinkUsable(db, token, at("15:30"))).toBe(false);

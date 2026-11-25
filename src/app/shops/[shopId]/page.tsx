@@ -6,7 +6,7 @@ import styles from "@/features/shop/components/shop.module.css";
 import { StorefrontProducts } from "@/features/shop/components/storefront-products";
 import { getStorefront, listStorefrontProducts } from "@/features/shop/server/storefront";
 import { getDb } from "@/shared/db";
-import { formatDate, formatNumber } from "@/shared/format";
+import { formatThaiDate, formatNumber } from "@/shared/format";
 import { getCurrentAccount } from "@/shared/session";
 import { SHOP_STATUS } from "@/shared/statuses";
 import { EmptyState } from "@/shared/ui/states";
@@ -44,7 +44,7 @@ export default async function StorefrontPage({ params }: PageProps<"/shops/[shop
         <p className={styles.description}>{shop.description || "ร้านนี้ยังไม่มีคำอธิบาย"}</p>
         <ul className={styles.facts}>
           <li>{shop.province}</li>
-          <li>เปิดร้านเมื่อ {formatDate(shop.openedAt)}</li>
+          <li>เปิดร้านเมื่อ {formatThaiDate(shop.openedAt)}</li>
           <li>สินค้า {formatNumber(shop.productCount)} ชิ้น</li>
         </ul>
         {isOwner && (

@@ -5,7 +5,7 @@ import { unstable_rethrow } from "next/navigation";
 import { useState, useTransition } from "react";
 import { loadMoreOrdersAction } from "@/features/checkout/buyer-order-actions";
 import type { BuyerOrderPage, BuyerOrderSummary, OrderCursor } from "@/features/checkout/server/buyer-orders";
-import { formatBaht, formatDateTime, formatNumber } from "@/shared/format";
+import { formatBaht, formatThaiDateTime, formatNumber } from "@/shared/format";
 import type { OrderStatus } from "@/shared/statuses";
 import styles from "./buyer-orders.module.css";
 import { PayButton } from "./pay-button";
@@ -74,13 +74,13 @@ function OrderCard({ order }: { order: BuyerOrderSummary }) {
           {order.firstItemName} · รวม {formatNumber(order.itemCount)} ชิ้น
         </span>
         <span className={styles.row}>
-          <span className={styles.muted}>สั่งเมื่อ {formatDateTime(order.orderedAt)}</span>
+          <span className={styles.muted}>สั่งเมื่อ {formatThaiDateTime(order.orderedAt)}</span>
           <strong>{formatBaht(order.total)}</strong>
         </span>
       </Link>
       {order.payable && (
         <div className={styles.payRow}>
-          <span>จ่ายภายใน {formatDateTime(order.paymentDeadline)}</span>
+          <span>จ่ายภายใน {formatThaiDateTime(order.paymentDeadline)}</span>
           {/* หน้ารายการมีได้หลายคำสั่งซื้อที่รอจ่าย ปุ่มจึงเป็นปุ่มรอง */}
           <PayButton orderNo={order.orderNo} groupId={order.groupId} secondary />
         </div>

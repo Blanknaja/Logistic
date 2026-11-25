@@ -685,7 +685,8 @@ describe("SHP-Q03 ใช้ง่าย", () => {
 describe("SHP-Q04 ใช้บนมือถือ", () => {
   test("SHP-Q04 สไตล์ของ feature นี้ไม่มีความกว้างตายตัวที่เกินจอ 360 จุด", () => {
     const css = readFileSync(join(process.cwd(), "src/features/shop/components/shop.module.css"), "utf8");
-    const fixed = [...css.matchAll(/(?<!max-)width:\s*(\d+)px/g)].map((match) => Number(match[1]));
+    // นับเฉพาะ width และ min-width ที่ตั้งให้กล่อง ไม่นับเงื่อนไขของ @media
+    const fixed = [...css.matchAll(/(?:^|[\s;{])(?:min-)?width:\s*(\d+)px/g)].map((match) => Number(match[1]));
     expect(fixed.filter((px) => px > 328)).toEqual([]);
   });
 

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import browse from "@/features/browse/components/browse.module.css";
 import { loadMoreShopProductsAction } from "@/features/shop/actions";
 import { ShopLogo } from "@/features/shop/components/shop-logo";
 import styles from "@/features/shop/components/shop.module.css";
@@ -41,19 +40,21 @@ export default async function StorefrontPage({ params }: PageProps<"/shops/[shop
   return (
     <>
       {identity}
-      <p className={browse.description}>{shop.description || "ร้านนี้ยังไม่มีคำอธิบาย"}</p>
-      <ul className="chips">
-        <li className="chip">{shop.province}</li>
-        <li className="chip">เปิดร้านเมื่อ {formatDate(shop.openedAt)}</li>
-        <li className="chip">สินค้า {formatNumber(shop.productCount)} ชิ้น</li>
-      </ul>
-      {isOwner && (
-        <div className={styles.actions}>
-          <Link href="/seller/settings" className="button button-secondary">
-            แก้ไขร้าน
-          </Link>
-        </div>
-      )}
+      <div className={styles.about}>
+        <p className={styles.description}>{shop.description || "ร้านนี้ยังไม่มีคำอธิบาย"}</p>
+        <ul className={styles.facts}>
+          <li>{shop.province}</li>
+          <li>เปิดร้านเมื่อ {formatDate(shop.openedAt)}</li>
+          <li>สินค้า {formatNumber(shop.productCount)} ชิ้น</li>
+        </ul>
+        {isOwner && (
+          <div className={styles.actions}>
+            <Link href="/seller/settings" className="button button-secondary">
+              แก้ไขร้าน
+            </Link>
+          </div>
+        )}
+      </div>
       {first.items.length === 0 ? (
         <EmptyState title="ร้านนี้ยังไม่มีสินค้า">
           {isOwner && (

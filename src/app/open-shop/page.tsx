@@ -16,8 +16,10 @@ export default async function OpenShopPage() {
 
   return (
     <div className={styles.formPage}>
-      <h1>เปิดร้าน</h1>
-      <p className={styles.muted}>กรอกชื่อร้านและที่อยู่ต้นทางที่ใช้ส่งพัสดุ เปิดร้านได้ทันทีไม่ต้องรออนุมัติ</p>
+      <header className={styles.formIntro}>
+        <h1>เปิดร้าน</h1>
+        <p className={styles.muted}>กรอกชื่อร้านและที่อยู่ต้นทางที่ใช้ส่งพัสดุ เปิดร้านได้ทันทีไม่ต้องรออนุมัติ</p>
+      </header>
       <ShopForm mode="open" action={openShopAction} cancelHref="/" />
     </div>
   );

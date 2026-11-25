@@ -120,10 +120,32 @@ describe("CHK-004 หน้าสั่งซื้อผ่านหน้า�
     const { html } = await open(CheckoutPage(props()));
 
     expect(html).toContain("สมชาย ใจดี");
-    expect(html).toMatch(/type="radio" name="addressId" checked="" value="\d+"/);
+    expect(html).toMatch(/type="radio"[^>]* name="addressId" checked="" value="\d+"/);
     expect(html).toContain("ที่อยู่หลัก");
     for (const text of ["ผ้าดี", "บ้านแก้ว", "ค่าส่ง", "฿40", "฿440", "฿190", "ยอดรวมที่ต้องจ่าย", "฿630"]) expect(html).toContain(text);
     expect(html).toContain(enabledOrderButton);
+  });
+
+  test("CHK-004 ยอดรวมที่ต้องจ่ายมีที่มาอยู่ข้างกัน และหัวเรื่องไม่ใช่คำเดียวกับปุ่ม", async () => {
+    somchai();
+    const { html = "" } = await open(CheckoutPage(props()));
+
+    expect(html).toContain("ค่าสินค้า 3 ชิ้น</dt><dd>฿550");
+    expect(html).toContain("ค่าส่ง 2 ร้าน</dt><dd>฿80");
+    expect(html).toContain("ยอดรวมที่ต้องจ่าย</dt><dd>฿630");
+    expect(html.match(/<h1>([^<]*)<\/h1>/)?.[1]).not.toBe("สั่งซื้อ");
+  });
+
+  test("CHK-004 ร้านเดียว ยอดของร้านไม่พูดซ้ำกับยอดรวม และของชิ้นเดียวไม่บอกราคาต่อชิ้นซ้ำ", async () => {
+    const buyer = addAccount(db);
+    addAddress(db, { accountId: buyer.id, isDefault: true });
+    addCartItem(db, { accountId: buyer.id, variantId: addProduct(db, { price: 150 }).variantIds[0] });
+    signInAs(buyer.id);
+    const { html = "" } = await open(CheckoutPage(props()));
+
+    expect(html).not.toContain("รวมร้านนี้");
+    expect(html).not.toContain("× 1");
+    expect(html.match(/฿190/g)).toHaveLength(1);
   });
 
   test("CHK-004 ยังไม่มีที่อยู่ เห็น ยังไม่มีที่อยู่จัดส่ง ปุ่มเพิ่มที่อยู่ และกดสั่งซื้อไม่ได้", async () => {

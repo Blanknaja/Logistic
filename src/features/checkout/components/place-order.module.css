@@ -1,64 +1,70 @@
-/* หน้าสั่งซื้อ จอกว้างแบ่งเนื้อหา 8 กับยอดรวม 4 จอแคบยอดรวมกับปุ่มสั่งซื้อติดขอบล่างจอ */
+/* หน้าสั่งซื้อ จอกว้างเนื้อหาซ้าย 7 สรุปยอดขวา 5 จอแคบยอดรวมกับปุ่มสั่งซื้อติดขอบล่างจอ */
 
-.section {
-  padding-block: var(--space-4) var(--space-6);
-  border-top: 1px solid var(--color-border);
+.section + .section {
+  margin-top: var(--space-6);
 }
 
 .section h2 {
-  margin: 0 0 var(--space-4);
+  margin: 0 0 var(--space-3);
+}
+
+.section > p {
+  margin: 0 0 var(--space-3);
 }
 
 .addresses {
   display: grid;
   gap: var(--space-2);
-  margin: 0 0 var(--space-4);
+  margin: 0 0 var(--space-1);
   padding: 0;
   border: 0;
 }
 
+/* การ์ดตัวเลือก ที่เลือกอยู่ได้ขอบสีเน้น radio ถูกซ่อนไว้ให้โปรแกรมอ่านจอ */
 .address {
-  display: flex;
-  gap: var(--space-3);
-  align-items: flex-start;
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
   min-height: var(--tap);
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius);
   box-shadow: inset 0 0 0 1px var(--color-border-strong);
-  line-height: 1.6;
+  line-height: 1.4;
   cursor: pointer;
   transition: box-shadow var(--duration) var(--ease);
 }
 
 .address:has(input:checked) {
-  box-shadow: inset 0 0 0 2px var(--color-text);
+  box-shadow: var(--selected-ring);
 }
 
-.address input {
-  flex: none;
-  width: 20px;
-  height: 20px;
-  margin: var(--space-1) 0 0;
-  accent-color: var(--color-text);
-  cursor: pointer;
+.address:has(input:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
 .badge {
-  display: inline-block;
   margin-left: var(--space-2);
-  padding: 0 var(--space-2);
-  border-radius: var(--radius);
-  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+  color: var(--color-muted);
   font-size: var(--text-label);
-  font-weight: 600;
 }
 
-.hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
+.muted {
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.shop + .shop {
+  margin-top: var(--space-5);
+}
+
+.shopName {
+  margin: 0;
+  padding-block: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: var(--text-label);
+  font-weight: 400;
 }
 
 .lines {
@@ -68,82 +74,99 @@
 }
 
 .line {
-  display: flex;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
   gap: var(--space-3);
-  padding-block: var(--space-3);
-  border-top: 1px solid var(--color-border);
+  align-items: start;
+  padding-block: var(--space-2);
+  line-height: 1.4;
 }
 
 .line > div {
   display: grid;
   gap: var(--space-1);
   min-width: 0;
-  line-height: 1.4;
 }
 
-.line > div > div:first-child {
-  font-weight: 600;
-}
-
-.line :global(.field-error) {
+.line p {
   margin: 0;
 }
 
 .image {
-  flex: none;
   width: 64px;
   height: 64px;
+  background: var(--color-bg);
+  object-fit: contain;
+}
+
+span.image {
   background: var(--color-surface);
-  object-fit: cover;
 }
 
-.muted {
-  color: var(--color-muted);
-  font-size: var(--text-label);
-}
-
-.totals {
+.shopTotals {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--space-1) var(--space-4);
-  margin: 0;
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border);
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
   font-size: var(--text-label);
 }
 
+.shopTotals > div,
+.part {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0 var(--space-1);
+}
+
+.shopTotals dd,
 .totals dd {
   margin: 0;
-  text-align: right;
 }
 
-.totals dt:last-of-type,
-.totals dd:last-of-type {
-  font-size: var(--text-body);
-  font-weight: 600;
+.shopTotals > div:first-child {
+  color: var(--color-muted);
 }
 
+/* สรุปยอด จอแคบติดขอบล่างจอ ยอดรวมกับปุ่มอยู่แถวบน ค่าสินค้ากับค่าส่งอยู่แถวล่าง */
 .summary {
   position: sticky;
   bottom: 0;
   z-index: 1;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "notes notes"
+    "grand action"
+    "items ship";
   align-items: center;
-  gap: var(--space-2) var(--space-3);
-  margin-inline: calc(-1 * var(--gutter));
+  gap: var(--space-1) var(--space-3);
+  margin: var(--space-6) calc(-1 * var(--gutter)) 0;
   padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--color-text);
+  border-top: 1px solid var(--color-border);
   background: var(--color-bg);
 }
 
-.summary > :global(.field-error) {
-  flex-basis: 100%;
-  margin: 0;
+.totals {
+  display: contents;
+}
+
+.part {
+  justify-content: flex-start;
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.part:first-child {
+  grid-area: items;
+}
+
+.part + .part {
+  grid-area: ship;
+  justify-self: end;
 }
 
 .grand {
-  margin: 0 auto 0 0;
+  grid-area: grand;
   line-height: 1.3;
 }
 
@@ -153,35 +176,39 @@
 }
 
 .grand dd {
-  margin: 0;
-}
-
-.grandTotal {
   font-size: var(--text-heading);
   font-weight: 600;
 }
 
-.actions {
+.notes {
+  grid-area: notes;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  align-items: center;
+  gap: 0 var(--space-3);
 }
 
-.actions > :global(.button:first-child) {
+.notes > p {
+  margin: 0;
+}
+
+.summary > :global(.button) {
+  grid-area: action;
   min-height: var(--control-main);
+  padding-inline: var(--space-5);
   font-size: var(--text-body);
 }
 
 @media (hover: hover) {
-  .address:hover {
-    box-shadow: inset 0 0 0 2px var(--color-text);
+  .address:hover:not(:has(input:checked)) {
+    box-shadow: inset 0 0 0 1px var(--color-text);
   }
 }
 
 @media (min-width: 900px) {
   .layout {
     display: grid;
-    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
     column-gap: var(--space-7);
     align-items: start;
   }
@@ -189,23 +216,43 @@
   .summary {
     top: var(--space-5);
     bottom: auto;
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-4);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "items"
+      "ship"
+      "grand"
+      "notes"
+      "action";
+    gap: var(--space-2);
     margin: 0;
-    padding: var(--space-4) 0 0;
+    padding: var(--space-5);
+    border-top: 0;
+    background: var(--color-surface);
+  }
+
+  .part {
+    justify-content: space-between;
+    color: var(--color-text);
+    font-size: var(--text-body);
+  }
+
+  .part + .part {
+    justify-self: stretch;
   }
 
   .grand {
-    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0 var(--space-3);
+    margin-bottom: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border);
   }
 
-  .grandTotal {
-    font-size: var(--text-heading);
-    line-height: 1.1;
-  }
-
-  .actions {
-    flex-direction: column;
+  .grand dt {
+    color: var(--color-text);
+    font-size: var(--text-body);
   }
 }

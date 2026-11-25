@@ -31,8 +31,8 @@ async function signIn(page: Page, email: string, password = "demo1234") {
 async function openShippingParcel(page: Page, email: string): Promise<string> {
   await signIn(page, email);
   await page.goto("/orders");
-  // การ์ดคำสั่งซื้อ "ชื่อร้าน กำลังจัดส่ง ..." ไม่ใช่ปุ่มกรองสถานะ
-  await page.getByRole("link", { name: / กำลังจัดส่ง / }).click();
+  // การ์ดคำสั่งซื้อ "กำลังจัดส่ง ชื่อร้าน ..." ไม่ใช่ปุ่มกรองสถานะ
+  await page.getByRole("link", { name: /^กำลังจัดส่ง / }).click();
   await page.getByRole("main").getByRole("link", { name: "ติดตามพัสดุ" }).click();
   await expect(page.getByRole("heading", { name: "ติดตามพัสดุ" })).toBeVisible();
   return new URL(page.url()).pathname;

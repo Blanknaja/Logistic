@@ -7,7 +7,7 @@ export function PayButton({ orderNo, groupId, secondary }: { orderNo: string; gr
     <form action={goToPaymentAction}>
       <input type="hidden" name="orderNo" value={orderNo} />
       <input type="hidden" name="groupId" value={groupId} />
-      <PendingButton label="จ่ายเงิน" pendingLabel="กำลังเปิดหน้าจ่ายเงิน..." secondary={secondary} />
+      <PendingButton label="จ่ายเงิน" pendingLabel="กำลังเปิดหน้าจ่ายเงิน..." variant={secondary ? "secondary" : "primary"} />
     </form>
   );
 }

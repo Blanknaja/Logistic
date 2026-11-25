@@ -27,8 +27,11 @@ export type BuyerOrderSummary = {
   orderedAt: string;
   paymentDeadline: string;
   firstItemName: string;
+  /** รูปปกของสินค้าชิ้นแรกตามตอนที่สั่ง */
+  firstItemCover: string | null;
   /** จำนวนชิ้นรวมทุกรายการ */
   itemCount: number;
+  trackingNo: string | null;
   /** ยังกด "จ่ายเงิน" และ "ยกเลิกคำสั่งซื้อ" ได้ */
   payable: boolean;
 };
@@ -48,7 +51,9 @@ type SummaryRow = {
   ordered_at: string;
   payment_deadline: string;
   first_item_name: string;
+  first_item_cover: string | null;
   item_count: number;
+  tracking_no: string | null;
 };
 
 export function listBuyerOrders(
@@ -65,7 +70,9 @@ export function listBuyerOrders(
     .prepare(
       `SELECT o.id, o.order_no, o.group_id, s.name AS shop_name, o.status, o.total, o.ordered_at, g.payment_deadline,
               (SELECT product_name FROM order_items WHERE order_id = o.id ORDER BY id LIMIT 1) AS first_item_name,
-              (SELECT sum(quantity) FROM order_items WHERE order_id = o.id) AS item_count
+              (SELECT cover_image_url FROM order_items WHERE order_id = o.id ORDER BY id LIMIT 1) AS first_item_cover,
+              (SELECT sum(quantity) FROM order_items WHERE order_id = o.id) AS item_count,
+              (SELECT tracking_no FROM parcels WHERE order_id = o.id) AS tracking_no
        FROM orders o
        JOIN shops s ON s.id = o.shop_id
        JOIN order_groups g ON g.id = o.group_id
@@ -95,7 +102,9 @@ export function listBuyerOrders(
     orderedAt: row.ordered_at,
     paymentDeadline: row.payment_deadline,
     firstItemName: row.first_item_name,
+    firstItemCover: row.first_item_cover,
     itemCount: row.item_count,
+    trackingNo: row.tracking_no,
     payable: isPayable(row.status, row.payment_deadline, now),
   }));
   const last = orders.at(-1);

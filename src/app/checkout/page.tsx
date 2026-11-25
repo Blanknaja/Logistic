@@ -28,7 +28,7 @@ export default async function CheckoutPage({ searchParams }: PageProps<"/checkou
 
   return (
     <>
-      <h1>สั่งซื้อ</h1>
+      <h1>ตรวจที่อยู่และยอดที่ต้องจ่าย</h1>
       <CheckoutForm checkout={checkout} selectedAddressId={chosen?.id ?? checkout.addresses[0]?.id} action={placeOrderAction} />
     </>
   );

@@ -32,7 +32,7 @@ export function SimulatorPanel({
         <li>บัตรถูกปฏิเสธ: 4111 1111 1111 0014</li>
       </ul>
       {canSwitchMode ? (
-        <form action={setSimulatorModeAction} className={styles.row}>
+        <form action={setSimulatorModeAction} className={styles.simulatorRow}>
           <input type="hidden" name="groupId" value={groupId} />
           {MODES.map((option) => (
             <button
@@ -53,7 +53,7 @@ export function SimulatorPanel({
         </p>
       )}
       {waiting.map((payment) => (
-        <form key={payment.id} action={markSimulatorChargeAction} className={styles.row}>
+        <form key={payment.id} action={markSimulatorChargeAction} className={styles.simulatorRow}>
           <input type="hidden" name="groupId" value={groupId} />
           <input type="hidden" name="chargeId" value={payment.chargeId ?? ""} />
           <span>

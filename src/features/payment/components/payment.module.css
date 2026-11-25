@@ -1,58 +1,118 @@
-/* หน้าจ่ายเงิน จอกว้างเนื้อหาอยู่ซ้าย 8 ยอดที่ต้องจ่ายอยู่ขวา 4 ใช้ได้ที่จอกว้าง 360 จุด (PAY-Q07) */
+/* หน้าจ่ายเงิน คอลัมน์เดียวกว้างไม่เกินย่อหน้ายาว ใช้ได้ที่จอกว้าง 360 จุด (PAY-Q07) */
 
-/* ต้องเห็นโดยไม่เลื่อนจอบนมือถือกว้าง 360 จุด (PAY-Q07) */
-.testMode {
-  margin: 0 0 var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border-left: 2px solid var(--color-warning);
-  background: var(--color-surface);
-  color: var(--color-warning);
-  font-size: var(--text-label);
-  font-weight: 600;
+/* หัวเรื่องยาวได้เต็มหน้า เนื้อหาอื่นกว้างไม่เกินย่อหน้ายาว */
+.page > :not(h1) {
+  max-width: var(--measure);
 }
 
-.simulatorNote {
-  margin: 0 0 var(--space-5);
+.page > h1 {
+  margin-bottom: var(--space-2);
+}
+
+/* ต้องเห็นโดยไม่เลื่อนจอบนมือถือกว้าง 360 จุด (PAY-Q07) แต่เป็นบรรทัดเดียว ไม่ดันเนื้อหาจริงลง */
+.testMode {
+  margin: 0 0 var(--space-4);
+  color: var(--color-warning);
+  font-size: var(--text-label);
+}
+
+.deadline {
+  margin: 0 0 var(--space-2);
+  color: var(--color-warning);
+}
+
+.muted {
+  margin: 0;
   color: var(--color-muted);
   font-size: var(--text-label);
 }
 
-.summary {
-  margin-bottom: var(--space-6);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-text);
+/* ลูกศรของ summary อยู่ต่อเมื่อเป็น list-item ระยะบนล่างทำให้กดได้สูงถึง 44 จุด */
+.orders summary,
+.history summary {
+  display: list-item;
+  padding-block: var(--space-3);
+  color: var(--color-muted);
+  font-size: var(--text-label);
+  cursor: pointer;
 }
 
 .section {
-  margin-bottom: var(--space-6);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-5);
 }
 
-.section > p,
-.section > form > p {
-  margin: 0 0 var(--space-4);
+.section > h2 {
+  margin: 0 0 var(--space-3);
 }
 
-.columns > div > h2:first-child {
-  margin-top: 0;
+.methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.methods > :global(.chip) {
+  text-decoration: none;
 }
 
 .total {
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-1);
   font-size: var(--text-heading);
   font-weight: 600;
   line-height: 1.3;
 }
 
-.deadline {
-  margin: var(--space-3) 0 0;
-  color: var(--color-warning);
-  font-weight: 600;
+.result {
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-heading);
+  line-height: 1.3;
+}
+
+.reason {
+  margin: 0 0 var(--space-2);
+  color: var(--color-danger);
+}
+
+.closed {
+  margin: 0 0 var(--space-5);
+}
+
+.hint {
+  margin: 0 0 var(--space-4);
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+/* ข้อความผิดพลาดชิดใต้ช่องที่ผิด */
+.page :global(.field-error) {
+  margin: 0;
+}
+
+/* ข้อความใต้ช่องกรอกที่อยู่ชิดช่องนั้น */
+.fieldHint {
+  margin: calc(-1 * var(--space-3)) 0 var(--space-4);
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+/* ช่องกว้างตามจำนวนตัวที่กรอก: เลขบัตร 19 ตัวรวมช่องว่าง เดือนปี 5 ตัว รหัสหลังบัตร 3 ถึง 4 ตัว */
+.cardNumber {
+  max-width: 24ch;
+}
+
+.pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-4);
+}
+
+.short {
+  max-width: 10ch;
 }
 
 .plainList {
-  margin: 0 0 var(--space-2);
+  margin: 0 0 var(--space-4);
   padding: 0;
   list-style: none;
 }
@@ -66,44 +126,12 @@
   border-top: 1px solid var(--color-border);
 }
 
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-5);
-}
-
-/* วิธีจ่ายที่เลือกอยู่กับโหมดตัวจำลองที่ใช้อยู่ ใช้เส้นขอบเข้มแบบของที่เลือกอยู่ทั้งแอป */
-.row > [aria-current="true"],
-.row > [aria-pressed="true"] {
-  box-shadow: inset 0 0 0 2px var(--color-text);
-}
-
-.hint {
-  color: var(--color-muted);
-  font-size: var(--text-label);
-}
-
-/* ข้อความใต้ช่องกรอกที่อยู่ชิดช่องนั้น */
-.fieldHint {
-  margin: calc(-1 * var(--space-3)) 0 var(--space-4);
-  color: var(--color-muted);
-  font-size: var(--text-label);
-}
-
 .notice {
-  margin: 0 0 var(--space-5);
-  padding: var(--space-3) var(--space-4);
-  border-left: 2px solid var(--color-text);
-  background: var(--color-surface);
+  margin: 0 0 var(--space-4);
 }
 
 .alert {
-  margin: 0 0 var(--space-5);
-  padding: var(--space-3) var(--space-4);
-  border-left: 2px solid var(--color-danger);
-  background: var(--color-surface);
+  margin: 0 0 var(--space-4);
   color: var(--color-danger);
 }
 
@@ -118,97 +146,110 @@
 .qr {
   width: 240px;
   max-width: 100%;
-  margin: 0 0 var(--space-4);
+  margin: var(--space-2) 0 var(--space-4);
 }
 
 .submit {
   display: flex;
+  align-items: center;
 }
 
-.confirm {
-  margin-top: var(--space-3);
+/* ยอดที่ต้องจ่ายอยู่ข้างปุ่มจ่ายเงิน */
+.payBar {
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.due {
+  margin: 0;
+  font-size: var(--text-heading);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.payBar > :global(.button) {
+  min-height: var(--control-main);
+  padding-inline: var(--space-6);
+  font-size: var(--text-body);
+}
+
+.quietActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0 var(--space-5);
 }
 
 .confirm summary {
   list-style: none;
 }
 
+.confirm summary::-webkit-details-marker {
+  display: none;
+}
+
 .confirm form {
-  margin-top: var(--space-4);
+  margin-top: var(--space-2);
 }
 
-.simulatorPanel {
-  margin-top: var(--space-7);
-  padding-top: var(--space-4);
-  border-top: 2px dashed var(--color-warning);
-}
-
-.simulatorPanel h2 {
-  margin-top: 0;
-}
-
-.simulatorPanel > p,
-.simulatorPanel li {
-  font-size: var(--text-label);
+.confirm form p {
+  margin: 0 0 var(--space-3);
 }
 
 .page > :global(.button) {
   margin-bottom: var(--space-6);
 }
 
-.page > details summary {
-  padding-block: var(--space-2);
-  cursor: pointer;
+.history {
+  margin-top: var(--space-6);
 }
 
-/* จอแคบ ปุ่มจ่ายเงินของแบบกรอกบัตรติดขอบล่างจอ กดได้โดยไม่ต้องเลื่อนผ่านช่องกรอก */
+.simulatorPanel {
+  margin-top: var(--section-gap);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+}
+
+.simulatorPanel p,
+.simulatorPanel li,
+.simulatorRow > span {
+  font-size: var(--text-label);
+}
+
+.simulatorPanel h2 {
+  margin-top: 0;
+  font-size: var(--text-body);
+}
+
+.simulatorPanel p {
+  margin: 0 0 var(--space-2);
+}
+
+.simulatorRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+/* โหมดตัวจำลองที่ใช้อยู่ ใช้ขอบของตัวเลือกที่เลือกอยู่ */
+.simulatorRow > [aria-pressed="true"] {
+  box-shadow: var(--selected-ring);
+}
+
+/* จอแคบ แถวยอดที่ต้องจ่ายกับปุ่มติดขอบล่างจอ กดได้โดยไม่ต้องเลื่อนผ่านช่องกรอก */
 @media (max-width: 899px) {
-  .cardSection .submit {
+  .payBar {
     position: sticky;
     bottom: 0;
     z-index: 1;
     margin-inline: calc(-1 * var(--gutter));
     padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
-    border-top: 1px solid var(--color-text);
     background: var(--color-bg);
-  }
-
-  .cardSection .submit > :global(.button) {
-    flex: 1;
-    min-height: var(--control-main);
-    font-size: var(--text-body);
-  }
-}
-
-@media (min-width: 900px) {
-  .columns {
-    display: grid;
-    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
-    column-gap: var(--space-7);
-    align-items: start;
-  }
-
-  .columns > .summary {
-    position: sticky;
-    top: var(--space-5);
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .columns > div {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .page > .alert,
-  .page > .section,
-  .page > details,
-  .page > .simulatorPanel {
-    max-width: calc((100% - var(--space-7)) * 8 / 12);
-  }
-
-  .submit > :global(.button:not(.button-secondary)) {
-    min-height: var(--control-main);
-    font-size: var(--text-body);
   }
 }

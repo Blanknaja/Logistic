@@ -11,7 +11,7 @@ import {
   selectItemsAction,
   type CartActionResult,
 } from "@/features/cart/actions";
-import type { Cart, CartItem } from "@/features/cart/server/cart";
+import type { Cart, CartItem, CartShop } from "@/features/cart/server/cart";
 import { formatBaht, formatNumber } from "@/shared/format";
 import { LoadingTimeout } from "@/shared/ui/loading-timeout";
 import styles from "./cart.module.css";
@@ -21,9 +21,10 @@ type Message = { itemId: number | null; text: string };
 const allItems = (cart: Cart) => cart.shops.flatMap((shop) => shop.items);
 const buyable = (items: CartItem[]) => items.filter((item) => !item.unavailable);
 const allSelected = (items: CartItem[]) => buyable(items).length > 0 && buyable(items).every((item) => item.selected);
+const hasSelection = (shop: CartShop) => shop.items.some((item) => item.selected);
 
 /** หน้าตะกร้าที่มีรายการ ทุกการเปลี่ยนส่งไปบันทึกแล้วหน้าโหลดตะกร้าล่าสุดจากเซิร์ฟเวอร์ */
-export function CartView({ cart }: { cart: Cart }) {
+export function CartView({ cart, shippingFee }: { cart: Cart; shippingFee: number }) {
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<Message | null>(null);
   const [retry, setRetry] = useState<(() => void) | null>(null);
@@ -54,6 +55,11 @@ export function CartView({ cart }: { cart: Cart }) {
       ),
     );
 
+  // ช่องเลือกทั้งหมดและเลือกทั้งร้านแสดงเฉพาะตอนที่ไม่ซ้ำกับช่องเลือกของรายการ
+  const items = allItems(cart);
+  const shopsToBuy = cart.shops.filter((shop) => buyable(shop.items).length > 0).length;
+  const shopsSelected = cart.shops.filter(hasSelection).length;
+
   return (
     <>
       <div className={styles.layout}>
@@ -63,20 +69,35 @@ export function CartView({ cart }: { cart: Cart }) {
               {message.text}
             </p>
           )}
+          {buyable(items).length > 1 && (
+            <div className={styles.selectAll}>
+              <Check
+                label="เลือกทั้งหมด"
+                checked={allSelected(items)}
+                disabled={pending}
+                onChange={(selected) => select(items, selected)}
+              >
+                เลือกทั้งหมด
+              </Check>
+            </div>
+          )}
           {cart.shops.map((shop) => (
             <section key={shop.id} className={styles.shop} aria-label={shop.name}>
               <header className={styles.shopHeader}>
-                <label className={styles.check}>
-                  <input
-                    type="checkbox"
-                    aria-label={`เลือกทั้งร้าน ${shop.name}`}
+                {shopsToBuy > 1 && buyable(shop.items).length > 1 && (
+                  <Check
+                    label={`เลือกทั้งร้าน ${shop.name}`}
                     checked={allSelected(shop.items)}
-                    disabled={pending || buyable(shop.items).length === 0}
-                    onChange={(event) => select(shop.items, event.target.checked)}
+                    disabled={pending}
+                    onChange={(selected) => select(shop.items, selected)}
                   />
-                </label>
-                <Link href={`/shops/${shop.id}`}>{shop.name}</Link>
-                <span className={styles.shopTotal}>ยอดของร้าน {pending ? "กำลังคิด…" : formatBaht(shop.total)}</span>
+                )}
+                <h2 className={styles.shopName}>
+                  <Link href={`/shops/${shop.id}`}>{shop.name}</Link>
+                </h2>
+                {shopsSelected > 1 && shop.items.filter((item) => item.selected).length > 1 && (
+                  <span className={styles.shopTotal}>ยอดของร้าน {pending ? "กำลังคิด…" : formatBaht(shop.total)}</span>
+                )}
               </header>
               <ul className={styles.items}>
                 {shop.items.map((item) => (
@@ -94,14 +115,7 @@ export function CartView({ cart }: { cart: Cart }) {
             </section>
           ))}
         </div>
-        <CartSummary
-          cart={cart}
-          pending={pending}
-          allSelected={allSelected(allItems(cart))}
-          onSelectAll={(selected) => select(allItems(cart), selected)}
-          onCheckout={checkout}
-          onRetry={retry}
-        />
+        <CartSummary cart={cart} shippingFee={shippingFee} pending={pending} onCheckout={checkout} onRetry={retry} />
       </div>
       {removing !== null && (
         <ConfirmRemove
@@ -114,6 +128,35 @@ export function CartView({ cart }: { cart: Cart }) {
         />
       )}
     </>
+  );
+}
+
+/** ช่องเลือกที่เบากว่าของเบราว์เซอร์: กรอบบาง เลือกแล้วได้ขอบสีเน้นกับเครื่องหมายถูก */
+function Check({
+  label,
+  checked,
+  disabled,
+  onChange,
+  children,
+}: {
+  label: string;
+  checked: boolean;
+  disabled: boolean;
+  onChange: (checked: boolean) => void;
+  children?: string;
+}) {
+  return (
+    <label className={styles.check}>
+      <input
+        type="checkbox"
+        aria-label={children ? undefined : label}
+        checked={checked}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span className={styles.box} aria-hidden="true" />
+      {children}
+    </label>
   );
 }
 
@@ -140,15 +183,7 @@ export function CartLine({
 
   return (
     <li className={item.unavailable ? `${styles.item} ${styles.faded}` : styles.item}>
-      <label className={styles.check}>
-        <input
-          type="checkbox"
-          aria-label={`เลือก ${item.name}`}
-          checked={item.selected}
-          disabled={locked}
-          onChange={(event) => onSelect(event.target.checked)}
-        />
-      </label>
+      <Check label={`เลือก ${item.name}`} checked={item.selected} disabled={locked} onChange={onSelect} />
       {item.imageUrl ? (
         <img src={item.imageUrl} alt="" className={styles.thumb} loading="lazy" />
       ) : (
@@ -159,7 +194,8 @@ export function CartLine({
           <Link href={`/products/${item.productId}`}>{item.name}</Link>
         </p>
         {item.variantLabel && <p className={styles.muted}>{item.variantLabel}</p>}
-        <p className={styles.muted}>{formatBaht(item.price)} ต่อชิ้น</p>
+        {/* ชิ้นเดียว ราคาต่อชิ้นเท่ากับราคารวมของรายการ จึงบอกครั้งเดียว */}
+        {item.quantity > 1 && <p className={styles.muted}>{formatBaht(item.price)} ต่อชิ้น</p>}
         {item.priceChangedFrom !== null && (
           <p className={styles.warning}>
             ราคาเปลี่ยนจาก {formatBaht(item.priceChangedFrom)} เป็น {formatBaht(item.price)}
@@ -198,10 +234,10 @@ export function CartLine({
             +
           </button>
         </div>
-        <span className={styles.lineTotal}>{item.unavailable ? null : formatBaht(item.lineTotal)}</span>
-        <button type="button" className={styles.remove} disabled={pending} onClick={onRemove}>
+        <button type="button" className={`link-action ${styles.remove}`} disabled={pending} onClick={onRemove}>
           ลบ
         </button>
+        <span className={styles.lineTotal}>{item.unavailable ? null : formatBaht(item.lineTotal)}</span>
       </div>
       {message && (
         <p role="alert" className={`field-error ${styles.message}`}>
@@ -212,47 +248,54 @@ export function CartLine({
   );
 }
 
-/** ยอดรวมกับปุ่มสั่งซื้อ จอแคบติดขอบล่างจอ จอกว้างติดอยู่คอลัมน์ขวา ระหว่างรอผลไม่แสดงยอดเก่าและกดสั่งซื้อไม่ได้ (CRT-012 CRT-Q02) */
+/**
+ * ค่าสินค้า ค่าส่ง ยอดรวมที่ต้องจ่าย และปุ่มสั่งซื้อ จอแคบติดขอบล่างจอ จอกว้างติดอยู่คอลัมน์ขวา
+ * ค่าส่งคิดร้านละ shippingFee เฉพาะร้านที่มีรายการเลือกไว้ เพราะหน้าสั่งซื้อสร้างหนึ่งคำสั่งซื้อต่อร้าน (CHK-004)
+ * ระหว่างรอผลไม่แสดงยอดเก่าและกดสั่งซื้อไม่ได้ (CRT-012 CRT-Q02)
+ */
 export function CartSummary({
   cart,
+  shippingFee,
   pending,
-  allSelected,
-  onSelectAll,
   onCheckout,
   onRetry,
 }: {
   cart: Cart;
+  shippingFee: number;
   pending: boolean;
-  allSelected: boolean;
-  onSelectAll: (selected: boolean) => void;
   onCheckout: () => void;
   onRetry: (() => void) | null;
 }) {
+  const shops = cart.shops.filter(hasSelection).length;
+  const fee = shops * shippingFee;
   return (
     <div className={styles.summary}>
       {onRetry && (
-        <div role="alert">
+        <div role="alert" className={styles.retry}>
           <span className="field-error">{ACTION_FAILED}</span>
           <button type="button" className="button button-secondary" disabled={pending} onClick={onRetry}>
             ลองใหม่
           </button>
         </div>
       )}
-      <label className={styles.check}>
-        <input
-          type="checkbox"
-          checked={allSelected}
-          disabled={pending}
-          onChange={(event) => onSelectAll(event.target.checked)}
-        />
-        เลือกทั้งหมด
-      </label>
-      <div className={styles.totals} aria-live="polite">
-        <div className={styles.grandTotal}>{pending ? "กำลังคิด…" : formatBaht(cart.total)}</div>
-        <div className={styles.muted}>
-          {pending ? "" : `${formatNumber(cart.pieces)} ชิ้น · `}ยังไม่รวมค่าส่ง
+      <dl className={styles.totals} aria-live="polite">
+        {!pending && cart.pieces > 0 && (
+          <>
+            <div className={styles.part}>
+              <dt>ค่าสินค้า {formatNumber(cart.pieces)} ชิ้น</dt>
+              <dd>{formatBaht(cart.total)}</dd>
+            </div>
+            <div className={styles.part}>
+              <dt>ค่าส่ง {formatNumber(shops)} ร้าน</dt>
+              <dd>{formatBaht(fee)}</dd>
+            </div>
+          </>
+        )}
+        <div className={styles.grand}>
+          <dt>ยอดรวมที่ต้องจ่าย</dt>
+          <dd>{pending ? "กำลังคิด…" : formatBaht(cart.total + fee)}</dd>
         </div>
-      </div>
+      </dl>
       <button type="button" className="button" disabled={pending || cart.pieces === 0} onClick={onCheckout}>
         สั่งซื้อ
       </button>

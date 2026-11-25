@@ -209,6 +209,30 @@ describe("CHK-009 หน้ารายการคำสั่งซื้อ�
     expect(cards(html)).toBe(20);
   });
 
+  test("CHK-009 แต่ละแถวขึ้นต้นด้วยสถานะ มีรูปสินค้าชิ้นแรก และแถวที่กำลังจัดส่งมีลิงก์ติดตามพัสดุ", async () => {
+    const { first, second } = somchaiOrdersTwoShops();
+    db.prepare("UPDATE orders SET status = ? WHERE id = ?").run(ORDER_STATUS.shipping, first.id);
+    db.prepare("UPDATE orders SET status = ? WHERE id = ?").run(ORDER_STATUS.paid, second.id);
+    db.prepare("UPDATE order_items SET cover_image_url = '/sample-images/shirt.svg' WHERE order_id = ?").run(first.id);
+    const shipping = addParcel(db, { orderId: first.id });
+    const paid = addParcel(db, { orderId: second.id });
+
+    const { html = "" } = await ordersPage();
+
+    const row = html.split('<li class="_order_').find((part) => part.includes("ผ้าดี")) ?? "";
+    expect(row).toMatch(/<img src="\/sample-images\/shirt.svg"[^>]*>(<span[^>]*>){2}กำลังจัดส่ง<\/span>/);
+    expect(html).toContain(`<a class="link-action" href="/track/${shipping.trackingNo}">ติดตามพัสดุ</a>`);
+    expect(html).not.toContain(`/track/${paid.trackingNo}`);
+  });
+
+  test("CHK-009 ตัวกรองเป็นแถวเดียวเหนือรายการ ตัวที่เลือกอยู่ได้ขอบของตัวเลือกที่เลือกอยู่", async () => {
+    somchaiOrdersTwoShops();
+    const { html = "" } = await ordersPage({ status: ORDER_STATUS.awaitingPayment });
+
+    expect(html.indexOf('aria-label="กรองตามสถานะ"')).toBeLessThan(html.indexOf('<li class="_order_'));
+    expect(html).toMatch(/class="chip _chipLink_\w+" aria-current="page"[^>]*>รอจ่ายเงิน</);
+  });
+
   test("CHK-009 ยังไม่เข้าสู่ระบบ ถูกพาไปหน้าเข้าสู่ระบบ", async () => {
     expect((await ordersPage()).redirect).toBe("/login?next=%2Forders");
   });
@@ -244,6 +268,15 @@ describe("CHK-010 หน้ารายละเอียดคำสั่ง�
     expect(html).toContain("ติดตามพัสดุ");
     expect(html).not.toContain("ยกเลิกคำสั่งซื้อ");
     expect(html).not.toContain(PAY_BUTTON);
+  });
+
+  test("CHK-010 หัวเรื่องคือสถานะ เลขคำสั่งซื้อเป็นข้อมูลรองใต้หัวเรื่อง", async () => {
+    const { first } = somchaiOrdersTwoShops();
+    db.prepare("UPDATE orders SET status = ? WHERE id = ?").run(ORDER_STATUS.shipping, first.id);
+
+    const { html = "" } = await orderPage(first.orderNo);
+
+    expect(html).toMatch(new RegExp(`<h1>กำลังจัดส่ง</h1><p class="_meta_\\w+">คำสั่งซื้อ ${first.orderNo} · ผ้าดี · สั่งเมื่อ `));
   });
 
   test("CHK-010 รอจ่ายเงิน เห็นเวลาหมดเขต ปุ่มจ่ายเงิน ปุ่มยกเลิก และเลขคำสั่งซื้ออื่นในกลุ่ม", async () => {

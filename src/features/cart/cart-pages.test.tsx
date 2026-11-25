@@ -198,7 +198,7 @@ describe("CRT-007 หน้าตะกร้าว่าง", () => {
 
     const { html } = await page();
     const summary = renderToStaticMarkup(
-      <CartSummary cart={getCart(db, buyer)} pending={false} allSelected onSelectAll={noop} onCheckout={noop} onRetry={noop} />,
+      <CartSummary cart={getCart(db, buyer)} shippingFee={40} pending={false} onCheckout={noop} onRetry={noop} />,
     );
 
     expect(html).toContain("แก้วเซรามิก");
@@ -231,7 +231,7 @@ describe("CRT-009 โหลดหรือบันทึกตะกร้า�
     addCartItem(db, { accountId: buyer, variantId: addProduct(db, { price: 250 }).variantIds[0], quantity: 2 });
     const cart = getCart(db, buyer);
     const html = renderToStaticMarkup(
-      <CartSummary cart={cart} pending={false} allSelected onSelectAll={noop} onCheckout={noop} onRetry={noop} />,
+      <CartSummary cart={cart} shippingFee={40} pending={false} onCheckout={noop} onRetry={noop} />,
     );
     expect(html).toContain("ทำรายการไม่สำเร็จ กรุณาลองใหม่");
     expect(html).toContain(">ลองใหม่</button>");
@@ -306,15 +306,27 @@ describe("CRT-011 ลบรายการ", () => {
 });
 
 describe("CRT-012 เลือกรายการและดูยอดรวม", () => {
-  test("CRT-012 แสดงยอดรวม จำนวนชิ้น และข้อความยังไม่รวมค่าส่ง", async () => {
+  test("CRT-012 แสดงค่าสินค้าพร้อมจำนวนชิ้น ค่าส่งร้านละ 40 บาท และยอดรวมที่ต้องจ่าย", async () => {
     const buyer = signIn();
     addCartItem(db, { accountId: buyer, variantId: addProduct(db, { price: 250 }).variantIds[0], quantity: 2 });
     addCartItem(db, { accountId: buyer, variantId: addProduct(db, { price: 120 }).variantIds[0] });
 
     const { html } = await page();
-    expect(html).toContain("฿620");
-    expect(html).toContain("3 ชิ้น · ยังไม่รวมค่าส่ง");
+    expect(html).toContain("ค่าสินค้า 3 ชิ้น</dt><dd>฿620");
+    expect(html).toContain("ค่าส่ง 2 ร้าน</dt><dd>฿80");
+    expect(html).toContain("ยอดรวมที่ต้องจ่าย</dt><dd>฿700");
     expect(html).toMatch(/<button type="button" class="button">สั่งซื้อ<\/button>/);
+  });
+
+  test("CRT-012 ค่าส่งนับเฉพาะร้านที่มีรายการเลือกไว้", async () => {
+    const buyer = signIn();
+    const shirt = addCartItem(db, { accountId: buyer, variantId: addProduct(db, { price: 250 }).variantIds[0], quantity: 2 });
+    addCartItem(db, { accountId: buyer, variantId: addProduct(db, { price: 120 }).variantIds[0] });
+    await attempt(selectItemsAction([shirt.id], false));
+
+    const { html } = await page();
+    expect(html).toContain("ค่าส่ง 1 ร้าน</dt><dd>฿40");
+    expect(html).toContain("ยอดรวมที่ต้องจ่าย</dt><dd>฿160");
   });
 
   test("CRT-012 เลิกเลือกทุกรายการ ยอดรวม 0 บาท และปุ่มสั่งซื้อกดไม่ได้", async () => {
@@ -355,7 +367,7 @@ describe("CRT-014 รายการที่ซื้อไม่ได้", ()
     expect(html).toContain("สินค้าหมด");
     expect(html).toContain('aria-label="เลือก รองเท้าผ้าใบ" disabled=""');
     expect(html).toContain('aria-label="เพิ่มจำนวน" disabled=""');
-    expect(html).toMatch(/<button type="button" class="_remove_\w+">ลบ<\/button>/);
+    expect(html).toMatch(/<button type="button" class="link-action _remove_\w+">ลบ<\/button>/);
   });
 
   test("CRT-014 สต็อกลดลงต่ำกว่าจำนวนในตะกร้า เห็นข้อความปรับจำนวน", async () => {
@@ -394,7 +406,7 @@ describe("CRT-Q02 ยอดรวมระหว่างรอผล", () => {
     const buyer = signIn();
     addCartItem(db, { accountId: buyer, variantId: addProduct(db, { price: 250 }).variantIds[0] });
     return renderToStaticMarkup(
-      <CartSummary cart={getCart(db, buyer)} pending={pending} allSelected onSelectAll={noop} onCheckout={noop} onRetry={null} />,
+      <CartSummary cart={getCart(db, buyer)} shippingFee={40} pending={pending} onCheckout={noop} onRetry={null} />,
     );
   };
 
@@ -409,6 +421,59 @@ describe("CRT-Q02 ยอดรวมระหว่างรอผล", () => {
     expect(html).toContain("กำลังคิด…");
     expect(html).not.toContain("฿250");
     expect(html).toMatch(/<button type="button" class="button" disabled="">สั่งซื้อ<\/button>/);
+  });
+});
+
+describe("หัวเรื่องบอกคำตอบ เลขไม่พูดซ้ำ และช่องเลือกไม่ซ้ำกัน", () => {
+  test("หัวเรื่องบอกจำนวนรายการ ตะกร้าว่างหัวเรื่องคือคำว่าตะกร้ายังว่าง", async () => {
+    const buyer = signIn();
+    expect((await page()).html).toContain("<h1>ตะกร้ายังว่าง</h1>");
+    addCartItem(db, { accountId: buyer, variantId: addProduct(db).variantIds[0] });
+    addCartItem(db, { accountId: buyer, variantId: addProduct(db).variantIds[0] });
+    expect((await page()).html).toContain("<h1>ตะกร้ามี 2 รายการ</h1>");
+  });
+
+  test("ชิ้นเดียวไม่บอกราคาต่อชิ้น และร้านที่มีรายการเดียวไม่บอกยอดของร้าน", async () => {
+    const buyer = signIn();
+    addCartItem(db, { accountId: buyer, variantId: addProduct(db, { price: 250 }).variantIds[0] });
+    addCartItem(db, { accountId: buyer, variantId: addProduct(db, { price: 120 }).variantIds[0] });
+
+    const { html } = await page();
+    expect(html).not.toContain("ต่อชิ้น");
+    expect(html).not.toContain("ยอดของร้าน");
+  });
+
+  test("ร้านที่เลือกไว้หลายรายการ เมื่อตะกร้ามีหลายร้าน บอกยอดของร้าน", async () => {
+    const buyer = signIn();
+    const shop = addShop(db).id;
+    addCartItem(db, { accountId: buyer, variantId: addProduct(db, { shopId: shop, price: 250 }).variantIds[0] });
+    addCartItem(db, { accountId: buyer, variantId: addProduct(db, { shopId: shop, price: 100 }).variantIds[0] });
+    addCartItem(db, { accountId: buyer, variantId: addProduct(db, { price: 120 }).variantIds[0] });
+
+    expect((await page()).html).toContain("ยอดของร้าน ฿350");
+  });
+
+  test("ของ 2 ชิ้นจาก 2 ร้านมีช่องเลือก 3 ช่อง ช่องเลือกทั้งร้านขึ้นเฉพาะร้านที่มีหลายรายการ", async () => {
+    const buyer = signIn();
+    addCartItem(db, { accountId: buyer, variantId: addProduct(db).variantIds[0] });
+    addCartItem(db, { accountId: buyer, variantId: addProduct(db).variantIds[0] });
+    const twoShops = (await page()).html;
+    expect(twoShops.match(/type="checkbox"/g)).toHaveLength(3);
+    expect(twoShops).toContain("เลือกทั้งหมด");
+    expect(twoShops).not.toContain("เลือกทั้งร้าน");
+
+    const shop = addShop(db).id;
+    addCartItem(db, { accountId: buyer, variantId: addProduct(db, { shopId: shop }).variantIds[0] });
+    addCartItem(db, { accountId: buyer, variantId: addProduct(db, { shopId: shop }).variantIds[0] });
+    expect((await page()).html.match(/เลือกทั้งร้าน/g)).toHaveLength(1);
+  });
+
+  test("ตะกร้าที่มีรายการเดียวไม่มีช่องเลือกทั้งหมด", async () => {
+    const buyer = signIn();
+    addCartItem(db, { accountId: buyer, variantId: addProduct(db).variantIds[0] });
+    const { html } = await page();
+    expect(html.match(/type="checkbox"/g)).toHaveLength(1);
+    expect(html).not.toContain("เลือกทั้งหมด");
   });
 });
 

@@ -14,14 +14,15 @@ export function LoginForm({ next }: { next: string }) {
     >
       {(state) => (
         <>
+          <input type="hidden" name="next" value={next} />
+          <Field label="อีเมล" name="email" type="email" autoComplete="username" />
+          <Field label="รหัสผ่าน" name="password" type="password" autoComplete="current-password" />
+          {/* ผิดได้ทั้งอีเมลและรหัสผ่าน หรือถูกพักการเข้าสู่ระบบ จึงอยู่ใต้ช่องสุดท้าย ไม่ผูกกับช่องใดช่องหนึ่ง */}
           {"error" in state && state.error && (
             <p role="alert" className="field-error">
               {state.error}
             </p>
           )}
-          <input type="hidden" name="next" value={next} />
-          <Field label="อีเมล" name="email" type="email" autoComplete="username" />
-          <Field label="รหัสผ่าน" name="password" type="password" autoComplete="current-password" />
         </>
       )}
     </ActionForm>

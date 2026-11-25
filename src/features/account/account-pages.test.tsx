@@ -304,7 +304,9 @@ describe("ACC-011 ดูโปรไฟล์", () => {
     const { html } = await open(ProfilePage(props({ id: String(other.id), accountId: String(other.id) })));
 
     expect(html).toContain("ยังไม่ได้ใส่เบอร์โทร");
-    expect(html).toContain("เพิ่มเบอร์โทร");
+    // การกระทำในแถวเป็นลิงก์ข้อความ ปุ่มสีเน้นมีแค่ แก้ไข
+    expect(html).toMatch(/<a [^>]*class="link-action"[^>]*>เพิ่มเบอร์โทร<\/a>/);
+    expect(html?.match(/class="button"/g)).toHaveLength(1);
     expect(html).toContain("somchai@example.com");
     expect(html).not.toContain("other@example.com");
   });
@@ -406,7 +408,8 @@ describe("ACC-010 ตั้งรหัสผ่านใหม่ผ่าน�
 
     for (const searchParams of [{ token: late }, { token: used }, {}] as Record<string, string>[]) {
       const { html } = await open(ResetPasswordPage(props(searchParams)));
-      expect(html).toContain("ลิงก์นี้ใช้ไม่ได้แล้ว");
+      // หัวเรื่องบอกเหตุที่ใช้ไม่ได้เลย ไม่ใช่ชื่อหน้า
+      expect(html).toContain("<h1>ลิงก์นี้ใช้ไม่ได้แล้ว</h1>");
       expect(html).toMatch(/<a [^>]*href="\/forgot-password"[^>]*>ขอลิงก์ใหม่<\/a>/);
       expect(html).not.toContain("<input");
     }

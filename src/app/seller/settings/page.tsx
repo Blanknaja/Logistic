@@ -20,12 +20,14 @@ export default async function ShopSettingsPage({ searchParams }: PageProps<"/sel
 
   return (
     <div className={styles.formPage}>
-      <h1>ตั้งค่าร้าน</h1>
-      {saved && !suspended && (
-        <p role="status" className={styles.notice}>
-          บันทึกแล้ว
-        </p>
-      )}
+      <header className={styles.formIntro}>
+        <h1>ตั้งค่าร้าน</h1>
+        {saved && !suspended && (
+          <p role="status" className={styles.notice}>
+            บันทึกแล้ว
+          </p>
+        )}
+      </header>
       {/* key เปลี่ยนเมื่อบันทึกแล้ว ฟอร์มจึงเริ่มใหม่จากค่าที่บันทึก */}
       <ShopForm
         key={shop.updatedAt}

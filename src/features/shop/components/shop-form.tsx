@@ -207,20 +207,22 @@ export function ShopForm({ mode, action, shop, readOnly = false, cancelHref }: P
         />
       </fieldset>
 
-      {message && (
-        <div role="alert" className={styles.failed}>
-          <p>{message}</p>
-        </div>
-      )}
-      <div className={styles.actions}>
-        {!readOnly && (
-          <button type="submit" className="button" disabled={pending || !hydrated}>
-            {pending ? "กำลังบันทึก" : mode === "open" ? "เปิดร้าน" : "บันทึก"}
-          </button>
+      <div className={styles.submitBar}>
+        {message && (
+          <div role="alert" className={styles.failed}>
+            <p>{message}</p>
+          </div>
         )}
-        <Link href={cancelHref} className="button button-secondary">
-          {readOnly ? "กลับ" : "ยกเลิก"}
-        </Link>
+        <div className={styles.actions}>
+          {!readOnly && (
+            <button type="submit" className="button" disabled={pending || !hydrated}>
+              {pending ? "กำลังบันทึก" : mode === "open" ? "เปิดร้าน" : "บันทึก"}
+            </button>
+          )}
+          <Link href={cancelHref} className="button button-secondary">
+            {readOnly ? "กลับ" : "ยกเลิก"}
+          </Link>
+        </div>
       </div>
       <LeaveGuard when={dirty && !readOnly} />
     </form>

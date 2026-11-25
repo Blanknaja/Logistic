@@ -47,11 +47,11 @@ export default async function SellerHomePage({ searchParams }: PageProps<"/selle
         </div>
       </div>
       <dl className={styles.stats}>
-        <div className={`card ${styles.stat}`}>
+        <div className={styles.stat}>
           <dt>สินค้าที่ขายอยู่</dt>
           <dd>{formatNumber(products.onSale)}</dd>
         </div>
-        <div className={`card ${styles.stat}`}>
+        <div className={styles.stat}>
           <dt>คำสั่งซื้อที่รอร้านจัดของ</dt>
           <dd>{awaitingPacking === null ? UNCOUNTED : formatNumber(awaitingPacking)}</dd>
           {awaitingPacking === null && (

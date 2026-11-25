@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useEffect, useRef, type ReactNode } from "react";
+import { formatBaht } from "@/shared/format";
 import { withTimeout } from "@/shared/ui/timeout";
 import type { PayFormState } from "@/features/payment/actions";
 import styles from "./payment.module.css";
@@ -11,6 +12,7 @@ export const CLIENT_TIMEOUT_MS = 11_000;
 /**
  * ฟอร์มของหน้าจ่ายเงิน ระหว่างรอผลกดซ้ำไม่ได้ (PAY-009)
  * ช่องที่กรอกไว้อยู่ครบเมื่อมีข้อความผิดพลาด ไม่ล้างเหมือน form action ปกติของ React (PAY-003)
+ * ส่ง amount มา ยอดที่ต้องจ่ายจะอยู่ข้างปุ่ม และจอแคบแถวนี้ติดขอบล่างจอ
  */
 export function PayForm({
   action,
@@ -18,7 +20,8 @@ export function PayForm({
   label,
   pendingLabel,
   failedMessage,
-  secondary = false,
+  amount,
+  quiet = false,
   children,
 }: {
   action: (formData: FormData) => Promise<PayFormState>;
@@ -27,7 +30,9 @@ export function PayForm({
   pendingLabel: string;
   /** ข้อความเมื่อเน็ตหลุดหรือเซิร์ฟเวอร์ไม่ตอบ */
   failedMessage: string;
-  secondary?: boolean;
+  amount?: number;
+  /** ปุ่มเป็นลิงก์ข้อความ สำหรับการกระทำรอง */
+  quiet?: boolean;
   children?: (state: PayFormState) => ReactNode;
 }) {
   const [state, dispatch, pending] = useActionState(withTimeout(action, CLIENT_TIMEOUT_MS), {});
@@ -67,8 +72,9 @@ export function PayForm({
           )}
         </div>
       )}
-      <div className={styles.submit}>
-        <button type="submit" className={secondary ? "button button-secondary" : "button"} disabled={pending}>
+      <div className={amount === undefined ? styles.submit : `${styles.submit} ${styles.payBar}`}>
+        {amount !== undefined && <p className={styles.due}>ยอดที่ต้องจ่าย {formatBaht(amount)}</p>}
+        <button type="submit" className={quiet ? "link-action" : "button"} disabled={pending}>
           {pending ? pendingLabel : label}
         </button>
       </div>

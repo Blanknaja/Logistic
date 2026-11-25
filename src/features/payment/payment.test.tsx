@@ -224,15 +224,15 @@ describe("PAY-001 หน้าจ่ายเงิน", () => {
     expect(renderToStaticMarkup(<PayLoading />)).toContain("กำลังโหลด");
   });
 
-  test("PAY-001 หน้าว่าง: จ่ายแล้วตั้งแต่ 14:06 เปิดเวลา 14:20 เห็นไม่มียอดที่ต้องจ่าย ผลการจ่าย 450 บาท และไม่มีปุ่มจ่ายเงิน", async () => {
+  test("PAY-001 หน้าว่าง: จ่ายแล้วตั้งแต่ 14:06 เปิดเวลา 14:20 เห็นผลการจ่าย 450 บาท และไม่มีปุ่มจ่ายเงิน", async () => {
     const group = addGroup("14:00");
     signInAs(group.buyerId);
     await payCard(group.groupId, GOOD, "14:06");
     setNow("14:20");
     const html = await payPage(group.groupId);
 
-    expect(html).toContain("ไม่มียอดที่ต้องจ่าย");
     expect(html).toContain("จ่ายแล้ว ฿450");
+    expect(html).not.toContain("ยอดที่ต้องจ่าย");
     expect(html).not.toMatch(PAY_BUTTON);
     expect(html).not.toContain("เลือกวิธีจ่าย");
   });
@@ -255,6 +255,31 @@ describe("PAY-001 หน้าจ่ายเงิน", () => {
     expect(html).not.toContain("จ่ายเงิน<");
     expect(orderStatuses(group.groupId)).toEqual(["รอจ่ายเงิน", "รอจ่ายเงิน"]);
     expect(stock(group.variantIds)).toEqual(before);
+  });
+});
+
+describe("หน้าจ่ายเงินให้ข้อมูลที่ผู้ซื้อมาหาตั้งแต่จอแรก", () => {
+  test("ยังไม่เลือกวิธีจ่าย เปิดแบบกรอกบัตรไว้ก่อน และยอดที่ต้องจ่ายอยู่ข้างปุ่มจ่ายเงิน", async () => {
+    const group = addGroup("14:00");
+    signInAs(group.buyerId);
+    setNow("14:05");
+    const html = await payPage(group.groupId);
+
+    expect(html).toMatch(/class="chip" aria-current="true"[^>]*>บัตร</);
+    expect(html.match(/<input [^>]*name="(number|name|expiry|securityCode)"/g)).toHaveLength(4);
+    expect(html).toMatch(/<p class="_due_\w+">ยอดที่ต้องจ่าย ฿450<\/p><button type="submit" class="button">จ่ายเงิน<\/button>/);
+    expect(html.match(/฿450/g)).toHaveLength(1);
+  });
+
+  test("ช่องเดือนปีหมดอายุกับรหัสหลังบัตรอยู่แถวเดียวกันและกว้างไม่เกิน 12 ตัวอักษร", async () => {
+    const group = addGroup("14:00");
+    signInAs(group.buyerId);
+    setNow("14:05");
+    const html = await payPage(group.groupId, { method: "card" });
+    const css = readFileSync(join(process.cwd(), "src/features/payment/components/payment.module.css"), "utf8");
+
+    expect(html).toMatch(/<div class="_pair_\w+">.*class="input _short_\w+"[^>]*name="expiry".*class="input _short_\w+"[^>]*name="securityCode"/);
+    expect(Number(css.match(/\.short \{\s*max-width: (\d+)ch/)?.[1])).toBeLessThanOrEqual(12);
   });
 });
 
@@ -325,7 +350,7 @@ describe("PAY-004 จ่ายด้วย PromptPay และหน้ารอ
     const html = await payPage(group.groupId);
 
     expect(html).toMatch(/<img [^>]*src="data:image\/svg\+xml/);
-    for (const text of ["฿450", "กำลังรอผลการจ่ายเงิน เหลือเวลา 25 นาที", "หน้าจัดการของ Omise", "เช็คสถานะการจ่ายเงิน", "เปลี่ยนวิธีจ่าย"]) {
+    for (const text of ["฿450", "กำลังรอผลการจ่ายเงิน เหลือเวลาจ่าย 25 นาที", "หน้าจัดการของ Omise", "เช็คสถานะการจ่ายเงิน", "เปลี่ยนวิธีจ่าย"]) {
       expect(html).toContain(text);
     }
     expect(getPayPage(db, group.buyerId, group.groupId)?.poll).toBe(true);
@@ -794,7 +819,7 @@ describe("PAY-012 เลิกรอและเปลี่ยนวิธี�
 
     expect(payments(group.groupId).map((p) => p.status)).toEqual(["สำเร็จ"]);
     expect(orderStatuses(group.groupId)).toEqual(["จ่ายแล้ว", "จ่ายแล้ว"]);
-    expect(await payPage(group.groupId)).toContain("จ่ายแล้ว ฿450 ด้วยPromptPay");
+    expect(await payPage(group.groupId)).toContain("จ่ายแล้ว ฿450 ด้วย PromptPay");
   });
 });
 

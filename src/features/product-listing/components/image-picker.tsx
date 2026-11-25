@@ -4,43 +4,13 @@ import { useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { LIMITS, MESSAGES } from "@/features/product-listing/server/product-rules";
 import { moveItem, screenFiles, UPLOAD_TIMEOUT_MS, type ImageItem } from "./form-state";
 import styles from "./product-listing.module.css";
+import { uploadFile } from "./upload-file";
 
 let nextId = 0;
 const newId = () => `image-${++nextId}`;
 
 /** รูปที่มีที่อยู่แล้ว เช่นรูปเดิมของสินค้าที่เปิดมาแก้ */
 export const savedImage = (url: string): ImageItem => ({ id: newId(), preview: url, url, file: null, status: "done", progress: 100 });
-
-/**
- * ส่งไฟล์ไปที่ path ได้ที่อยู่ของไฟล์กลับมา ไม่สำเร็จได้ข้อความจากเซิร์ฟเวอร์ หรือ failed เมื่อหลุดหรือเกิน timeoutMs
- * fetch บอกความคืบหน้าตอนส่งไม่ได้ จึงใช้ XMLHttpRequest
- */
-export function uploadFile(
-  path: string,
-  file: File,
-  timeoutMs: number,
-  failed: string,
-  onProgress: (percent: number) => void,
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open("POST", path);
-    const timer = setTimeout(() => request.abort(), timeoutMs);
-    request.onloadend = () => clearTimeout(timer);
-    request.responseType = "json";
-    request.setRequestHeader("Content-Type", file.type);
-    request.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
-    };
-    request.onload = () => {
-      const body = request.response as { url?: string; error?: string } | null;
-      if (request.status === 200 && body?.url) resolve(body.url);
-      else reject(new Error(body?.error ?? failed));
-    };
-    request.onerror = request.onabort = () => reject(new Error(failed));
-    request.send(file);
-  });
-}
 
 /** เพิ่ม เรียง และลบรูปสินค้า รูปส่งขึ้นเซิร์ฟเวอร์ทันทีที่เลือก (PRD-003) */
 export function ImagePicker({

@@ -3,7 +3,7 @@ import type { Db } from "@/shared/db";
 import { addProduct, addShop } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
 import { PRODUCT_STATUS, type ProductStatus } from "@/shared/statuses";
-import { UNUSED_IMAGE_KEEP_MS } from "./image-files";
+import { UNUSED_UPLOAD_KEEP_MS } from "./image-files";
 import { getModelFile, isShopModelUpload, modelFileInfo, saveModelFile } from "./model-files";
 import { CHAIR_GLB_BYTES, fakeGlb } from "./testing";
 
@@ -82,7 +82,7 @@ describe("P3D-002 ไฟล์ที่ไม่มีสินค้าใช�
     const product = addProduct(db, { shopId: shop.id });
     db.prepare("UPDATE products SET model_url = ? WHERE id = ?").run(used, product.id);
 
-    const fresh = save(shop.id, new Date(day0.getTime() + UNUSED_IMAGE_KEEP_MS + 1));
+    const fresh = save(shop.id, new Date(day0.getTime() + UNUSED_UPLOAD_KEEP_MS + 1));
 
     const kept = (url: string) => getModelFile(db, keyOf(url)) !== null;
     expect([used, otherUnused, fresh].map(kept)).toEqual([true, true, true]);
@@ -92,7 +92,7 @@ describe("P3D-002 ไฟล์ที่ไม่มีสินค้าใช�
   test("ไฟล์ที่มีแต่สินค้า ลบแล้ว ใช้ ถือว่าไม่มีสินค้าใช้ ถูกลบเมื่อเกิน 1 วัน ส่วนไฟล์ที่ยังไม่ครบ 1 วันหรือสินค้าที่ยังไม่ลบใช้อยู่ไม่ถูกลบ", () => {
     const shop = addShop(db);
     const day0 = new Date("2026-11-24T03:00:00.000Z");
-    const later = new Date(day0.getTime() + UNUSED_IMAGE_KEEP_MS + 1);
+    const later = new Date(day0.getTime() + UNUSED_UPLOAD_KEEP_MS + 1);
     const save = (at: Date) => {
       const saved = saveModelFile(db, shop.id, "chair.glb", fakeGlb(), at);
       if (!saved.ok) throw new Error(saved.error);

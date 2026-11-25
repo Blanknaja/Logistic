@@ -30,16 +30,16 @@ export function ProductModel({ src, cover, alt }: { src: string; cover: string |
   useEffect(() => {
     const element = viewer.current;
     if (!element) return;
-    let settled = false;
-    const settle = (next: "ready" | "failed") => {
-      if (settled) return;
-      settled = true;
+    let finished = false;
+    const finish = (next: "ready" | "failed") => {
+      if (finished) return;
+      finished = true;
       clearTimeout(timer);
       if (next === "failed") failures.set(src, (failures.get(src) ?? 0) + 1);
       setState(next);
     };
-    const onLoad = () => settle("ready");
-    const onError = () => settle("failed");
+    const onLoad = () => finish("ready");
+    const onError = () => finish("failed");
     const timer = setTimeout(onError, MODEL_LOAD_TIMEOUT_MS);
     element.addEventListener("load", onLoad);
     element.addEventListener("error", onError);

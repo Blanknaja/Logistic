@@ -3,8 +3,8 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { MESSAGES, modelFileError } from "@/features/product-listing/server/product-rules";
 import { formatFileSize, MODEL_UPLOAD_TIMEOUT_MS, type ModelItem } from "./form-state";
-import { uploadFile } from "./image-picker";
 import styles from "./product-listing.module.css";
+import { uploadFile } from "./upload-file";
 
 /** ไฟล์ 3 มิติที่บันทึกไว้แล้วของสินค้าที่เปิดมาแก้ */
 export const savedModel = (url: string, saved: { name: string; size: number }): ModelItem => ({

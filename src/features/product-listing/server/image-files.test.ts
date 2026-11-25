@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import type { Db } from "@/shared/db";
 import { addAccount, addCartItem, addOrder, addProduct, addShop } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
-import { getImageFile, isShopUpload, saveImageFile, UNUSED_IMAGE_KEEP_MS } from "./image-files";
+import { getImageFile, isShopUpload, saveImageFile, UNUSED_UPLOAD_KEEP_MS } from "./image-files";
 
 let db: Db;
 beforeEach(() => {
@@ -91,14 +91,14 @@ describe("PRD-014 รูปที่ส่งขึ้นมาแต่ไม�
     db.prepare("UPDATE order_items SET cover_image_url = ? WHERE order_id = ?").run(inOrder.ok ? inOrder.url : "", order.id);
     const cartItem = addCartItem(db, { accountId: buyer.id, variantId: product.variantIds[0] });
     db.prepare("UPDATE cart_items SET last_seen_image_url = ? WHERE id = ?").run(inCart.ok ? inCart.url : "", cartItem.id);
-    const recent = saveImageFile(db, shop.id, fakeJpg(), new Date(day0.getTime() + UNUSED_IMAGE_KEEP_MS - 60_000));
+    const recent = saveImageFile(db, shop.id, fakeJpg(), new Date(day0.getTime() + UNUSED_UPLOAD_KEEP_MS - 60_000));
 
-    const later = new Date(day0.getTime() + UNUSED_IMAGE_KEEP_MS + 1);
+    const later = new Date(day0.getTime() + UNUSED_UPLOAD_KEEP_MS + 1);
     const fresh = saveImageFile(db, shop.id, fakePng(), later);
 
     expect([inProduct, inOrder, inCart, recent, fresh].map((result) => kept(keyOf(result)))).toEqual([true, true, true, true, true]);
     expect(kept(keyOf(unused))).toBe(false);
     expect(kept(keyOf(otherUnused))).toBe(true);
-    expect(UNUSED_IMAGE_KEEP_MS).toBe(24 * 60 * 60 * 1000);
+    expect(UNUSED_UPLOAD_KEEP_MS).toBe(24 * 60 * 60 * 1000);
   });
 });

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Db } from "@/shared/db";
 import { PRODUCT_STATUS } from "@/shared/statuses";
-import { UNUSED_IMAGE_KEEP_MS } from "./image-files";
+import { UNUSED_UPLOAD_KEEP_MS } from "./image-files";
 import { MESSAGES, modelFileError } from "./product-rules";
 
 /** ที่อยู่ไฟล์ 3 มิติที่ส่งขึ้นมา เปิดดูได้ที่ src/app/product-models/[key] */
@@ -10,14 +10,14 @@ export const MODEL_URL_PREFIX = "/product-models/";
 const NAME_MAX = 255;
 
 /**
- * ลบไฟล์ของร้านที่เก่ากว่า UNUSED_IMAGE_KEEP_MS และไม่มีสินค้าใดใช้ เหมือนรูปที่ไม่ได้ใช้ (PRD-014)
+ * ลบไฟล์ของร้านที่เก่ากว่า UNUSED_UPLOAD_KEEP_MS และไม่มีสินค้าใดใช้ เหมือนรูปที่ไม่ได้ใช้ (PRD-014)
  * สินค้าที่ลบแล้วไม่นับว่าใช้ เพราะไม่แสดงไฟล์นี้ที่ไหนอีก ต่างจากรูปที่ประวัติคำสั่งซื้อยังแสดง
  */
 function deleteUnusedModelFiles(db: Db, shopId: number, now: Date): void {
   db.prepare(
     `DELETE FROM product_model_files AS f WHERE f.shop_id = ? AND f.created_at < ?
        AND NOT EXISTS (SELECT 1 FROM products WHERE model_url = ? || f.key AND status != ?)`,
-  ).run(shopId, new Date(now.getTime() - UNUSED_IMAGE_KEEP_MS).toISOString(), MODEL_URL_PREFIX, PRODUCT_STATUS.deleted);
+  ).run(shopId, new Date(now.getTime() - UNUSED_UPLOAD_KEEP_MS).toISOString(), MODEL_URL_PREFIX, PRODUCT_STATUS.deleted);
 }
 
 /** เก็บไฟล์ 3 มิติหนึ่งไฟล์ของร้าน (P3D-001) คืนที่อยู่ไฟล์ หรือเหตุที่ไม่รับ */

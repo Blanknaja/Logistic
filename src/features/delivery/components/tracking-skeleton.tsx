@@ -20,7 +20,7 @@ export function TrackingSkeleton() {
       </div>
       <section className={styles.history}>
         <h2>ประวัติการจัดส่ง</h2>
-        <LoadingState />
+        <LoadingState level={2} />
       </section>
     </div>
   );

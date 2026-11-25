@@ -98,6 +98,7 @@ export function DeliveryMap({ route }: { route: DeliveryRoute }) {
       <div ref={canvas} className={styles.canvas} hidden={state === "failed"} />
       {state === "failed" && (
         <ErrorState
+          level={2}
           title="แสดงแผนที่ไม่ได้ ลองใหม่อีกครั้ง"
           action={
             <button type="button" className="button button-secondary" onClick={retry}>

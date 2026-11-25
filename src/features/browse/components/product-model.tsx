@@ -59,7 +59,7 @@ export function ProductModel({ src, cover, alt }: { src: string; cover: string |
     };
     return (
       <div className={styles.stage}>
-        <ErrorState title="แสดงภาพ 3 มิติไม่ได้ ลองใหม่อีกครั้ง" action={<RetryButton onRetry={retry} />} />
+        <ErrorState level={2} title="แสดงภาพ 3 มิติไม่ได้ ลองใหม่อีกครั้ง" action={<RetryButton onRetry={retry} />} />
       </div>
     );
   }

@@ -547,6 +547,7 @@ label.field {
 
 .state-title {
   margin: 0;
+  font-size: var(--text-heading);
 }
 
 .state-message {

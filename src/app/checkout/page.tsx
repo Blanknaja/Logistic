@@ -18,7 +18,7 @@ export default async function CheckoutPage({ searchParams }: PageProps<"/checkou
 
   if (checkout.shops.length === 0) {
     return (
-      <EmptyState title="ยังไม่ได้เลือกสินค้า">
+      <EmptyState level={1} title="ยังไม่ได้เลือกสินค้า">
         <Link href="/cart" className="button">
           กลับไปตะกร้า
         </Link>

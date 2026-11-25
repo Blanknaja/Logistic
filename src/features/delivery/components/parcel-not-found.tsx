@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PARCEL_NOT_FOUND } from "@/features/delivery/server/tracking";
-import { EmptyState } from "@/shared/ui/states";
+import { NotFoundState } from "@/shared/ui/states";
 
 /**
  * ไม่มีพัสดุเลขนี้ และไม่มีสิทธิ์ดูหรือเปลี่ยนสถานะ แสดงหน้าเดียวกันโดยไม่บอกเหตุผล (DLV-002 DLV-010)
@@ -8,10 +8,10 @@ import { EmptyState } from "@/shared/ui/states";
  */
 export function ParcelNotFound() {
   return (
-    <EmptyState title={PARCEL_NOT_FOUND} message="ตรวจเลขติดตามพัสดุอีกครั้ง">
+    <NotFoundState title={PARCEL_NOT_FOUND} message="ตรวจเลขติดตามพัสดุอีกครั้ง">
       <Link href="/track" className="button">
         ค้นหาพัสดุอื่น
       </Link>
-    </EmptyState>
+    </NotFoundState>
   );
 }

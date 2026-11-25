@@ -108,7 +108,7 @@ export function OrderDetailView({ order, parcel, backHref, version }: Props) {
 }
 
 function ParcelInfo({ parcel, cancelled }: { parcel: Props["parcel"]; cancelled: boolean }) {
-  if (parcel === "unavailable") return <ErrorState title="โหลดข้อมูลการจัดส่งไม่ได้" />;
+  if (parcel === "unavailable") return <ErrorState level={2} title="โหลดข้อมูลการจัดส่งไม่ได้" />;
   if (!parcel) return <p>{cancelled ? "ไม่มีพัสดุ" : "ยังไม่มีพัสดุ จะมีเมื่อผู้ซื้อจ่ายเงินแล้ว"}</p>;
   return (
     <dl className={styles.facts}>

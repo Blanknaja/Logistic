@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import type { Db } from "@/shared/db";
 import { addProduct, addShop } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
+import { PRODUCT_STATUS, type ProductStatus } from "@/shared/statuses";
 import { UNUSED_IMAGE_KEEP_MS } from "./image-files";
 import { getModelFile, isShopModelUpload, modelFileInfo, saveModelFile } from "./model-files";
 import { fakeGlb } from "./testing";
@@ -86,5 +87,30 @@ describe("P3D-002 ไฟล์ที่ไม่มีสินค้าใช�
     const kept = (url: string) => getModelFile(db, keyOf(url)) !== null;
     expect([used, otherUnused, fresh].map(kept)).toEqual([true, true, true]);
     expect(kept(unused)).toBe(false);
+  });
+
+  test("ไฟล์ที่มีแต่สินค้า ลบแล้ว ใช้ ถือว่าไม่มีสินค้าใช้ ถูกลบเมื่อเกิน 1 วัน ส่วนไฟล์ที่ยังไม่ครบ 1 วันหรือสินค้าที่ยังไม่ลบใช้อยู่ไม่ถูกลบ", () => {
+    const shop = addShop(db);
+    const day0 = new Date("2026-11-24T03:00:00.000Z");
+    const later = new Date(day0.getTime() + UNUSED_IMAGE_KEEP_MS + 1);
+    const save = (at: Date) => {
+      const saved = saveModelFile(db, shop.id, "chair.glb", fakeGlb(), at);
+      if (!saved.ok) throw new Error(saved.error);
+      return saved.url;
+    };
+    const useIn = (url: string, status: ProductStatus) =>
+      db.prepare("UPDATE products SET model_url = ? WHERE id = ?").run(url, addProduct(db, { shopId: shop.id, status }).id);
+    const ofDeleted = save(day0);
+    const recentOfDeleted = save(new Date(later.getTime() - 60_000));
+    const ofDeletedAndHidden = save(day0);
+    useIn(ofDeleted, PRODUCT_STATUS.deleted);
+    useIn(recentOfDeleted, PRODUCT_STATUS.deleted);
+    useIn(ofDeletedAndHidden, PRODUCT_STATUS.deleted);
+    useIn(ofDeletedAndHidden, PRODUCT_STATUS.hidden);
+
+    save(later);
+
+    const kept = (url: string) => getModelFile(db, keyOf(url)) !== null;
+    expect([ofDeleted, recentOfDeleted, ofDeletedAndHidden].map(kept)).toEqual([false, true, true]);
   });
 });

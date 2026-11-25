@@ -26,12 +26,14 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         </p>
       )}
       <LoginForm next={nextPath} />
-      <p>
-        <Link href="/forgot-password">ลืมรหัสผ่าน</Link>
-      </p>
-      <p>
-        ยังไม่มีบัญชี <Link href="/signup">สมัครบัญชี</Link>
-      </p>
+      <div className={styles.more}>
+        <p>
+          <Link href="/forgot-password">ลืมรหัสผ่าน</Link>
+        </p>
+        <p>
+          ยังไม่มีบัญชี <Link href="/signup">สมัครบัญชี</Link>
+        </p>
+      </div>
     </div>
   );
 }

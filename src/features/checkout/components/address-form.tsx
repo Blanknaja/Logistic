@@ -5,6 +5,7 @@ import { ActionForm, Field } from "@/shared/ui/action-form";
 import { saveAddressAction } from "@/features/checkout/address-actions";
 import type { ShippingAddress } from "@/features/checkout/server/addresses";
 import { PROVINCES } from "@/shared/provinces";
+import styles from "./addresses.module.css";
 
 /** CHK-002 แบบกรอกที่อยู่ใหม่ หรือแก้ที่อยู่เดิมเมื่อส่ง address มา หลังบันทึกกลับไปที่ next ถ้ามี */
 export function AddressForm({ address, next }: { address?: ShippingAddress; next: string | null }) {
@@ -45,6 +46,7 @@ export function AddressForm({ address, next }: { address?: ShippingAddress; next
               inputMode="numeric"
               autoComplete="tel"
               placeholder="เช่น 0812345678"
+              className={`input ${styles.phone}`}
               defaultValue={address?.phone}
               error={errors.phone}
             />
@@ -62,7 +64,7 @@ export function AddressForm({ address, next }: { address?: ShippingAddress; next
               <select
                 id="field-province"
                 name="province"
-                className="input"
+                className={`input ${styles.province}`}
                 defaultValue={address?.province ?? ""}
                 aria-invalid={errors.province ? true : undefined}
                 aria-describedby={errors.province ? "field-province-error" : undefined}
@@ -86,6 +88,7 @@ export function AddressForm({ address, next }: { address?: ShippingAddress; next
               inputMode="numeric"
               autoComplete="postal-code"
               placeholder="เช่น 50200"
+              className={`input ${styles.postcode}`}
               defaultValue={address?.postcode}
               error={errors.postcode}
             />

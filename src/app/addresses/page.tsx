@@ -46,11 +46,10 @@ export default async function AddressesPage({ searchParams }: PageProps<"/addres
             {addresses.map((address) => (
               <li key={address.id} className={styles.item}>
                 <p>
-                  <strong>{address.recipientName}</strong>
+                  {address.recipientName} {address.phone}
                   {address.isDefault && <span className={styles.badge}>ที่อยู่หลัก</span>}
                 </p>
-                <p>{address.phone}</p>
-                <p>{fullAddress(address)}</p>
+                <p className={styles.muted}>{fullAddress(address)}</p>
                 {String(address.id) === confirming ? (
                   <div className={styles.actions}>
                     <p>ลบที่อยู่นี้ใช่ไหม</p>
@@ -64,16 +63,16 @@ export default async function AddressesPage({ searchParams }: PageProps<"/addres
                   </div>
                 ) : (
                   <div className={styles.actions}>
-                    <Link href={`/addresses/${address.id}`} className="button button-secondary">
+                    <Link href={`/addresses/${address.id}`} className="link-action">
                       แก้ไข
                     </Link>
-                    <Link href={`/addresses?delete=${address.id}`} scroll={false} className="button button-secondary">
+                    <Link href={`/addresses?delete=${address.id}`} scroll={false} className="link-action">
                       ลบ
                     </Link>
                     {!address.isDefault && (
                       <form action={setDefaultAddressAction}>
                         <input type="hidden" name="addressId" value={address.id} />
-                        <PendingButton label="ตั้งเป็นที่อยู่หลัก" pendingLabel="กำลังตั้ง..." secondary />
+                        <PendingButton label="ตั้งเป็นที่อยู่หลัก" pendingLabel="กำลังตั้ง..." variant="link" />
                       </form>
                     )}
                   </div>

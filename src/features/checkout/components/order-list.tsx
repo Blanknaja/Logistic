@@ -6,7 +6,7 @@ import { useState, useTransition } from "react";
 import { loadMoreOrdersAction } from "@/features/checkout/buyer-order-actions";
 import type { BuyerOrderPage, BuyerOrderSummary, OrderCursor } from "@/features/checkout/server/buyer-orders";
 import { formatBaht, formatThaiDateTime, formatNumber } from "@/shared/format";
-import type { OrderStatus } from "@/shared/statuses";
+import { ORDER_STATUS, type OrderStatus } from "@/shared/statuses";
 import styles from "./buyer-orders.module.css";
 import { PayButton } from "./pay-button";
 
@@ -62,27 +62,37 @@ export function OrderList({ initial, status }: { initial: OrderListState; status
   );
 }
 
+/** สถานะคือสิ่งที่ผู้ซื้อมาหา จึงเป็นบรรทัดแรกที่ใหญ่ที่สุดของแถว */
 function OrderCard({ order }: { order: BuyerOrderSummary }) {
   return (
     <li className={styles.order}>
       <Link href={`/orders/${order.orderNo}`} className={styles.cardLink}>
-        <span className={styles.row}>
-          <strong>{order.shopName}</strong>
+        {order.firstItemCover ? (
+          <img src={order.firstItemCover} alt="" className={styles.thumb} loading="lazy" />
+        ) : (
+          <span className={styles.thumb} />
+        )}
+        <span className={styles.cardText}>
           <span className={styles.status}>{order.status}</span>
-        </span>
-        <span>
-          {order.firstItemName} · รวม {formatNumber(order.itemCount)} ชิ้น
-        </span>
-        <span className={styles.row}>
+          <span className={styles.muted}>
+            {order.shopName} · {order.firstItemName} · รวม {formatNumber(order.itemCount)} ชิ้น
+          </span>
           <span className={styles.muted}>สั่งเมื่อ {formatThaiDateTime(order.orderedAt)}</span>
-          <strong>{formatBaht(order.total)}</strong>
         </span>
+        <span className={styles.total}>{formatBaht(order.total)}</span>
       </Link>
       {order.payable && (
-        <div className={styles.payRow}>
-          <span>จ่ายภายใน {formatThaiDateTime(order.paymentDeadline)}</span>
+        <div className={styles.rowAction}>
+          <span className={styles.deadline}>จ่ายภายใน {formatThaiDateTime(order.paymentDeadline)}</span>
           {/* หน้ารายการมีได้หลายคำสั่งซื้อที่รอจ่าย ปุ่มจึงเป็นปุ่มรอง */}
           <PayButton orderNo={order.orderNo} groupId={order.groupId} secondary />
+        </div>
+      )}
+      {order.status === ORDER_STATUS.shipping && order.trackingNo && (
+        <div className={styles.rowAction}>
+          <Link href={`/track/${order.trackingNo}`} className="link-action">
+            ติดตามพัสดุ
+          </Link>
         </div>
       )}
     </li>

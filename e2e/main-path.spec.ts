@@ -230,7 +230,9 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
     await expect(page.getByRole("link", { name: new RegExp(shopName) })).toBeVisible();
     await shot(page, "buyer-orders", { mobile: true });
     await page.getByRole("link", { name: new RegExp(shopName) }).click();
-    await expect(page.getByRole("heading", { name: /^คำสั่งซื้อ \d{10}$/ })).toBeVisible();
+    // หัวเรื่องของหน้าคำสั่งซื้อคือสถานะ เลขคำสั่งซื้อเป็นข้อมูลรองใต้หัวเรื่อง
+    await expect(page.getByRole("heading", { level: 1, name: "กำลังจัดส่ง" })).toBeVisible();
+    await expect(page.getByText(/^คำสั่งซื้อ \d{10} · /)).toBeVisible();
     await shot(page, "buyer-order", { mobile: true });
     await page.getByRole("main").getByRole("link", { name: "ติดตามพัสดุ" }).click();
     await expect(page.getByText("ส่งสำเร็จ").first()).toBeVisible();
@@ -242,7 +244,7 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
     await expect(page.getByRole("button", { name: "ได้รับสินค้าแล้ว" })).toBeHidden();
     await shot(page, "received", { mobile: true });
     await menu(page).getByRole("link", { name: "คำสั่งซื้อ" }).click();
-    await expect(page.getByRole("link", { name: new RegExp(`${shopName} สำเร็จ`) })).toBeVisible();
+    await expect(page.getByRole("link", { name: new RegExp(`^สำเร็จ.*${shopName}`) })).toBeVisible();
   });
 
   // เครื่องกดเร็วกว่าคนมาก ถ้าใช้เกิน 1 ใน 5 ของเวลาที่ให้คน แปลว่ามีหน้าที่ช้าผิดปกติ

@@ -76,7 +76,7 @@ function Results({ params, list }: Pick<Props, "params" | "list">) {
     <section aria-label="รายการคำสั่งซื้อ">
       <ul className={styles.list}>
         {list.items.map((row) => (
-          <li key={row.orderNo} className={`card ${styles.row}`}>
+          <li key={row.orderNo} className={styles.row}>
             <Link href={orderHref(row.orderNo, current)} className={styles.rowLink}>
               <span className={styles.rowTop}>
                 <span className={styles.orderNo}>{row.orderNo}</span>
@@ -84,11 +84,11 @@ function Results({ params, list }: Pick<Props, "params" | "list">) {
               </span>
               <span className={styles.muted}>สั่งซื้อเมื่อ {formatDateTime(row.orderedAt)}</span>
               <span>ผู้รับ {row.recipientName}</span>
-              <span>
+              <span className={styles.total}>
                 {formatNumber(row.itemCount)} ชิ้น · ยอดรวม {formatBaht(row.total)}
               </span>
             </Link>
-            <ShippingActions orderNo={row.orderNo} status={row.status} trackingNo={row.trackingNo} />
+            <ShippingActions orderNo={row.orderNo} status={row.status} trackingNo={row.trackingNo} secondary />
           </li>
         ))}
       </ul>

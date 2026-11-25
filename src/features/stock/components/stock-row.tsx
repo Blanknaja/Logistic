@@ -61,7 +61,7 @@ export function StockRowItem({ row }: { row: StockRow }) {
   const errorId = `${inputId}-error`;
 
   return (
-    <li className={`card ${styles.row}`}>
+    <li className={styles.row}>
       <div className={styles.rowHead}>
         <p className={styles.name}>
           {row.productName}
@@ -104,7 +104,7 @@ export function StockRowItem({ row }: { row: StockRow }) {
             aria-invalid={outcome === "invalid" ? true : undefined}
             aria-describedby={outcome === "invalid" ? errorId : undefined}
           />
-          <button type="submit" className="button" disabled={pending}>
+          <button type="submit" className="button button-secondary" disabled={pending}>
             {pending ? "กำลังบันทึก..." : "บันทึก"}
           </button>
           <button

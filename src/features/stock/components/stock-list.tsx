@@ -39,7 +39,7 @@ export function StockListView({ list, filter }: { list: StockList; filter: Stock
   return (
     <>
       <h1>สต็อก</h1>
-      <nav aria-label="ตัวกรองสต็อก">
+      <nav aria-label="ตัวกรองสต็อก" className={styles.filters}>
         <ul className="chips">
           {FILTERS.map((item) => (
             <li key={item.value}>

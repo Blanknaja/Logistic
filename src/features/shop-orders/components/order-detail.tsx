@@ -24,13 +24,13 @@ export function OrderDetailView({ order, parcel, backHref, version }: Props) {
       <LiveUpdates version={version} />
       {cancelled && <p className={styles.notice}>คำสั่งซื้อนี้ถูกยกเลิกแล้ว</p>}
 
-      <section className={`card ${styles.section}`} aria-labelledby="order-summary">
+      <section className={styles.section} aria-labelledby="order-summary">
         <h2 id="order-summary">สถานะคำสั่งซื้อ</h2>
         <p className={styles.status}>{order.status}</p>
         <p className={styles.muted}>สั่งซื้อเมื่อ {formatDateTime(order.orderedAt)}</p>
       </section>
 
-      <section className={`card ${styles.section}`} aria-labelledby="order-items">
+      <section className={styles.section} aria-labelledby="order-items">
         <h2 id="order-items">สินค้า</h2>
         <ul className={styles.items}>
           {order.items.map((item, index) => (
@@ -52,7 +52,7 @@ export function OrderDetailView({ order, parcel, backHref, version }: Props) {
         </dl>
       </section>
 
-      <section className={`card ${styles.section}`} aria-labelledby="order-recipient">
+      <section className={styles.section} aria-labelledby="order-recipient">
         <h2 id="order-recipient">ที่อยู่จัดส่ง</h2>
         <p>
           {order.recipient.name}
@@ -63,17 +63,17 @@ export function OrderDetailView({ order, parcel, backHref, version }: Props) {
         </p>
       </section>
 
-      <section className={`card ${styles.section}`} aria-labelledby="order-payment">
+      <section className={styles.section} aria-labelledby="order-payment">
         <h2 id="order-payment">การจ่ายเงิน</h2>
         <p>{order.payment ? `จ่ายแล้ว ${order.payment.method} ${formatDateTime(order.payment.paidAt)}` : "ยังไม่จ่าย"}</p>
       </section>
 
-      <section className={`card ${styles.section}`} aria-labelledby="order-parcel">
+      <section className={styles.section} aria-labelledby="order-parcel">
         <h2 id="order-parcel">การจัดส่ง</h2>
         <ParcelInfo parcel={parcel} cancelled={cancelled} />
       </section>
 
-      <div className={styles.actions}>
+      <div className={styles.bar}>
         <ShippingActions
           orderNo={order.orderNo}
           status={order.status}

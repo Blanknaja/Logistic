@@ -106,7 +106,7 @@ test("P3D-003 P3D-004 P3D-005 P3D-Q01 ผู้ซื้อกด ดูแบ�
   await expect(page.getByRole("img", { name: chair })).toHaveAttribute("src", second!);
 });
 
-test("P3D-004 อินเทอร์เน็ตหลุดตอนกด ดูแบบ 3 มิติ เห็นข้อความกับปุ่ม ลองใหม่ รูปย่อและกล่องซื้อยังใช้ได้ แล้วลองใหม่สำเร็จ", async ({ page }) => {
+test("P3D-004 อินเทอร์เน็ตหลุดตอนกด ดูแบบ 3 มิติ เห็นข้อความกับปุ่ม ลองใหม่ รูปย่อและกล่องซื้อยังใช้ได้ ลองใหม่สำเร็จ และกลับมาดูแบบ 3 มิติได้อีก", async ({ page }) => {
   await openProduct(page, chair);
   await page.route(isModelFile, (route) => route.abort("internetdisconnected"));
 
@@ -121,6 +121,22 @@ test("P3D-004 อินเทอร์เน็ตหลุดตอนกด �
 
   await page.getByRole("button", { name: "ดูรูปที่ 3" }).click();
   await expect(viewer(page)).toHaveCount(0);
+
+  // กลับมาดูแบบ 3 มิติอีกครั้ง ต้องไม่ได้ผลที่โหลดไม่สำเร็จครั้งแรกกลับมา
+  await page.getByRole("button", { name: "ดูแบบ 3 มิติ" }).click();
+  await waitForModel(page);
+});
+
+test("P3D-004 โหลดไม่สำเร็จแล้วไปดูรูปย่อ พออินเทอร์เน็ตกลับมา กด ดูแบบ 3 มิติ อีกครั้งก็เห็นภาพ", async ({ page }) => {
+  await openProduct(page, chair);
+  await page.route(isModelFile, (route) => route.abort("internetdisconnected"));
+  await page.getByRole("button", { name: "ดูแบบ 3 มิติ" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "แสดงภาพ 3 มิติไม่ได้ ลองใหม่อีกครั้ง" })).toBeVisible();
+
+  await page.getByRole("button", { name: "ดูรูปที่ 2" }).click();
+  await page.unroute(isModelFile);
+  await page.getByRole("button", { name: "ดูแบบ 3 มิติ" }).click();
+  await waitForModel(page);
 });
 
 test.describe("P3D-005 บนมือถือ Android ที่วางของในห้องได้", () => {

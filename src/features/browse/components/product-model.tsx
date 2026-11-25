@@ -10,6 +10,14 @@ import styles from "./product-model.module.css";
 /** โหลดเกินเวลานี้ถือว่าแสดงไม่ได้ (P3D-Q02) */
 export const MODEL_LOAD_TIMEOUT_MS = 30_000;
 
+// ตัวแสดงจำผลที่โหลดไม่สำเร็จไว้ตามที่อยู่ไฟล์จนกว่าจะปิดหน้า จึงต้องนับครั้งที่พังนอก component
+// เพื่อให้ทั้งปุ่มลองใหม่และการกลับมาดูแบบ 3 มิติอีกครั้งใช้ที่อยู่ที่ยังไม่เคยพัง
+const failures = new Map<string, number>();
+const untriedUrl = (src: string) => {
+  const failed = failures.get(src) ?? 0;
+  return failed === 0 ? src : `${src}?retry=${failed}`;
+};
+
 /**
  * สินค้าแบบ 3 มิติที่หมุนด้วยการลาก ปุ่มลูกศร และซูมได้ (P3D-004) แสดงรูปปกกับสัญลักษณ์กำลังโหลดระหว่างรอ
  * ปุ่ม "ดูในห้องของคุณ" ตัวแสดงซ่อนเองบนอุปกรณ์ที่วางของในห้องไม่ได้ (P3D-005)
@@ -27,6 +35,7 @@ export function ProductModel({ src, cover, alt }: { src: string; cover: string |
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      if (next === "failed") failures.set(src, (failures.get(src) ?? 0) + 1);
       setState(next);
     };
     const onLoad = () => settle("ready");
@@ -41,7 +50,7 @@ export function ProductModel({ src, cover, alt }: { src: string; cover: string |
       element.removeEventListener("load", onLoad);
       element.removeEventListener("error", onError);
     };
-  }, [attempt]);
+  }, [attempt, src]);
 
   if (state === "failed") {
     const retry = () => {
@@ -61,8 +70,7 @@ export function ProductModel({ src, cover, alt }: { src: string; cover: string |
         key={attempt}
         ref={viewer}
         className={styles.viewer}
-        // ตัวแสดงจำผลที่โหลดไม่สำเร็จไว้ตามที่อยู่ไฟล์ ลองใหม่จึงต้องใช้ที่อยู่ที่ไม่ซ้ำเดิม
-        src={attempt === 0 ? src : `${src}?retry=${attempt}`}
+        src={untriedUrl(src)}
         alt={alt}
         loading="eager"
         camera-controls

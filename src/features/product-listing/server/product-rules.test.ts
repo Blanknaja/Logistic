@@ -9,6 +9,7 @@ import {
   variantCombos,
   type ProductValues,
 } from "./product-rules";
+import { CHAIR_GLB_BYTES } from "./testing";
 
 const tshirt = (overrides: Partial<ProductValues> = {}): ProductValues => ({
   name: "เสื้อยืดคอกลม",
@@ -193,8 +194,8 @@ function glb(size: number, { version = 2, declared = size } = {}): Uint8Array {
 }
 
 describe("P3D-001 ตรวจไฟล์ 3 มิติจากเนื้อไฟล์", () => {
-  test("P3D-001 ไฟล์ GLB 4.1 MB และ 10 MB พอดีถูกรับ", () => {
-    const chair = glb(Math.round(4.1 * MB));
+  test("P3D-001 ไฟล์ GLB 3.9 MB และ 10 MB พอดีถูกรับ", () => {
+    const chair = glb(CHAIR_GLB_BYTES);
     expect(modelFileError(chair, chair.byteLength)).toBeUndefined();
     expect(modelFileError(glb(10 * MB), 10 * MB)).toBeUndefined();
   });

@@ -1,5 +1,8 @@
 // ตัวช่วยของ test ใน feature นี้ โค้ดของแอปไม่ใช้
 
+/** ขนาดของ SheenChair.glb ไฟล์เก้าอี้ในข้อมูลตัวอย่าง แสดงเป็น 3.9 MB */
+export const CHAIR_GLB_BYTES = 4_125_648;
+
 /** ไฟล์ที่ส่วนหัวเป็น GLB รุ่น 2 ขนาดตามที่ต้องการ (P3D-001) */
 export function fakeGlb(size = 100): Uint8Array<ArrayBuffer> {
   const bytes = new Uint8Array(size);

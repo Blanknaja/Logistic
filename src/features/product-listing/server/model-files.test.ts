@@ -5,7 +5,7 @@ import { createTestDb } from "@/shared/db/testing";
 import { PRODUCT_STATUS, type ProductStatus } from "@/shared/statuses";
 import { UNUSED_IMAGE_KEEP_MS } from "./image-files";
 import { getModelFile, isShopModelUpload, modelFileInfo, saveModelFile } from "./model-files";
-import { fakeGlb } from "./testing";
+import { CHAIR_GLB_BYTES, fakeGlb } from "./testing";
 
 let db: Db;
 beforeEach(() => {
@@ -18,9 +18,9 @@ const count = () => Number(db.prepare("SELECT count(*) AS n FROM product_model_f
 const keyOf = (url: string) => url.slice("/product-models/".length);
 
 describe("P3D-001 รับไฟล์ 3 มิติ", () => {
-  test("P3D-001 ไฟล์ chair.glb 4.1 MB ถูกรับ ได้ที่อยู่ไฟล์ และเปิดได้พร้อมชื่อและขนาดเดิม", () => {
+  test("P3D-001 ไฟล์ chair.glb 3.9 MB ถูกรับ ได้ที่อยู่ไฟล์ และเปิดได้พร้อมชื่อและขนาดเดิม", () => {
     const shop = addShop(db);
-    const size = Math.round(4.1 * MB);
+    const size = CHAIR_GLB_BYTES;
     const saved = saveModelFile(db, shop.id, "chair.glb", fakeGlb(size));
 
     expect(saved.ok).toBe(true);

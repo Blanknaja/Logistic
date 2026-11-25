@@ -6,7 +6,7 @@ import { createTestDb } from "@/shared/db/testing";
 import { saveModelFile } from "./model-files";
 import { MESSAGES } from "./product-rules";
 import { createProduct, getProductForEdit, setProductHidden, updateProduct } from "./products";
-import { fakeGlb } from "./testing";
+import { CHAIR_GLB_BYTES, fakeGlb } from "./testing";
 
 let db: Db;
 let shopId: number;
@@ -15,8 +15,7 @@ beforeEach(() => {
   shopId = addShop(db, { name: "ร้านสมชาย" }).id;
 });
 
-const MB = 1024 * 1024;
-const at = (time: string) => new Date(`2026-11-25T${time}:00+07:00`);
+const at =(time: string) => new Date(`2026-11-25T${time}:00+07:00`);
 
 function uploadModel(name = "chair.glb", size = 100, forShop = shopId): string {
   const saved = saveModelFile(db, forShop, name, fakeGlb(size));
@@ -45,12 +44,12 @@ function save(productId: number, model: string | null, time: string) {
 }
 
 describe("P3D-001 ผู้ขายเพิ่มไฟล์ 3 มิติ", () => {
-  test("P3D-001 ใส่ chair.glb 4.1 MB แล้วบันทึก หน้าฟอร์มเห็นชื่อและขนาดไฟล์ และหน้าสินค้ามีไฟล์ 3 มิติ", () => {
+  test("P3D-001 ใส่ chair.glb 3.9 MB แล้วบันทึก หน้าฟอร์มเห็นชื่อและขนาดไฟล์ และหน้าสินค้ามีไฟล์ 3 มิติ", () => {
     const id = chair();
-    const url = uploadModel("chair.glb", Math.round(4.1 * MB));
+    const url = uploadModel("chair.glb", CHAIR_GLB_BYTES);
 
     expect(save(id, url, "10:01")?.ok).toBe(true);
-    expect(opened(id)).toMatchObject({ values: { model: url }, modelFile: { name: "chair.glb", size: Math.round(4.1 * MB) } });
+    expect(opened(id)).toMatchObject({ values: { model: url }, modelFile: { name: "chair.glb", size: CHAIR_GLB_BYTES } });
     expect(getProductDetail(db, id)?.model).toBe(url);
   });
 

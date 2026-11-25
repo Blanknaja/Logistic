@@ -10,7 +10,7 @@ import { createSession } from "@/features/account/server/sessions";
 import { updateProductAction } from "@/features/product-listing/actions";
 import { saveModelFile } from "@/features/product-listing/server/model-files";
 import { getProductForEdit } from "@/features/product-listing/server/products";
-import { fakeGlb, streamedBody } from "@/features/product-listing/server/testing";
+import { CHAIR_GLB_BYTES, fakeGlb, streamedBody } from "@/features/product-listing/server/testing";
 import type { Db } from "@/shared/db";
 import { addAccount, addProduct, addShop } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
@@ -175,12 +175,12 @@ describe("P3D-001 ช่องไฟล์ 3 มิติในหน้าฟ�
   test("P3D-001 สินค้าที่มีไฟล์แล้ว หน้าฟอร์มแสดงชื่อและขนาดไฟล์ พร้อมปุ่ม เอาออก", async () => {
     const shopId = signInSomchai();
     const product = addProduct(db, { shopId, name: "เก้าอี้ผ้ากำมะหยี่" });
-    const saved = saveModelFile(db, shopId, "chair.glb", fakeGlb(Math.round(4.1 * MB)));
+    const saved = saveModelFile(db, shopId, "chair.glb", fakeGlb(CHAIR_GLB_BYTES));
     if (!saved.ok) throw new Error(saved.error);
     db.prepare("UPDATE products SET model_url = ? WHERE id = ?").run(saved.url, product.id);
 
     const page = text((await open(editPage(product.id))).html);
-    expect(page).toContain("chair.glb 4.1 MB");
+    expect(page).toContain("chair.glb 3.9 MB");
     expect(page).toContain("เอาออก");
     expect(page).toContain("เปลี่ยนไฟล์ 3 มิติ");
   });

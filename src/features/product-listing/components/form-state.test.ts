@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { EMPTY_PRODUCT, type ProductValues } from "@/features/product-listing/server/product-rules";
+import { CHAIR_GLB_BYTES } from "@/features/product-listing/server/testing";
 import {
   canSaveImages,
   canSaveModel,
@@ -66,15 +67,15 @@ describe("P3D-001 ไฟล์ 3 มิติในหน้าฟอร์ม",
   const chair = (patch: Partial<ModelItem> = {}): ModelItem => ({
     url: "/product-models/a",
     name: "chair.glb",
-    size: Math.round(4.1 * MB),
+    size: CHAIR_GLB_BYTES,
     file: null,
     status: "done",
     progress: 100,
     ...patch,
   });
 
-  test("P3D-001 ไฟล์ที่ส่งเสร็จแสดงชื่อและขนาด chair.glb 4.1 MB", () => {
-    expect(`${chair().name} ${formatFileSize(chair().size)}`).toBe("chair.glb 4.1 MB");
+  test("P3D-001 ไฟล์ที่ส่งเสร็จแสดงชื่อและขนาด chair.glb 3.9 MB", () => {
+    expect(`${chair().name} ${formatFileSize(chair().size)}`).toBe("chair.glb 3.9 MB");
     expect(formatFileSize(10 * MB)).toBe("10.0 MB");
   });
 

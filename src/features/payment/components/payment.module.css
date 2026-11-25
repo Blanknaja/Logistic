@@ -212,6 +212,11 @@
   padding-top: var(--space-4);
   border-top: 1px solid var(--color-border);
   color: var(--color-muted);
+}
+
+.simulatorPanel p,
+.simulatorPanel li,
+.simulatorRow > span {
   font-size: var(--text-label);
 }
 

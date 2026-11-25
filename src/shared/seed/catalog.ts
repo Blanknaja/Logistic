@@ -18,6 +18,66 @@ export const LOCATIONS: Omit<Address, "name" | "phone" | "address">[] = [
   { subdistrict: "บางปลาสร้อย", district: "เมืองชลบุรี", province: "ชลบุรี", postcode: "20000" },
 ];
 
+/**
+ * รูปถ่ายของสินค้าตัวอย่าง ตามคำนามในชื่อสินค้าหรือชื่อเต็มของสินค้าที่มีไฟล์ 3 มิติ ไฟล์อยู่ใน photos/
+ * ที่มาและสัญญาอนุญาตอยู่ใน photos/SOURCES.txt ชื่อที่ไม่มีในนี้ใช้รูป SVG
+ */
+export const SAMPLE_PHOTOS: Partial<Record<string, string[]>> = {
+  เสื้อยืด: ["t-shirt.jpg"],
+  เสื้อเชิ้ต: ["dress-shirt.jpg"],
+  กระโปรง: ["skirt.jpg", "skirt-2.jpg"],
+  ชุดเดรส: ["dress.jpg", "dress-2.jpg"],
+  กระเป๋าสะพาย: ["shoulder-bag.jpg", "shoulder-bag-2.jpg"],
+  กระเป๋าเป้: ["backpack.jpg"],
+  รองเท้าผ้าใบ: ["sneakers.jpg"],
+  รองเท้าแตะ: ["sandals.jpg"],
+  กระเป๋าสตางค์: ["wallet.jpg"],
+  รองเท้าหนัง: ["leather-shoes.jpg"],
+  โฟมล้างหน้า: ["face-wash.jpg"],
+  ลิปสติก: ["lipstick.jpg"],
+  น้ำหอม: ["perfume.jpg", "perfume-2.jpg"],
+  สายชาร์จ: ["charging-cable.jpg"],
+  เคสมือถือ: ["phone-case.jpg"],
+  พาวเวอร์แบงก์: ["power-bank.jpg"],
+  ที่ตั้งมือถือ: ["phone-stand.jpg"],
+  เมาส์ไร้สาย: ["mouse.jpg"],
+  คีย์บอร์ด: ["keyboard.jpg"],
+  พัดลมตั้งโต๊ะ: ["desk-fan.jpg"],
+  หม้อหุงข้าว: ["rice-cooker.jpg"],
+  กาต้มน้ำไฟฟ้า: ["kettle.jpg"],
+  หมอนหนุน: ["pillow.jpg"],
+  ผ้าปูที่นอน: ["bed-sheet.jpg"],
+  กล่องเก็บของ: ["storage-box.jpg"],
+  ไม้แขวนเสื้อ: ["hanger.jpg", "hanger-2.jpg"],
+  แก้วน้ำ: ["glass.jpg"],
+  จานเซรามิก: ["plate.jpg"],
+  กาแฟคั่วบด: ["coffee.jpg"],
+  ชาเขียว: ["green-tea.jpg", "green-tea-2.jpg"],
+  ข้าวหอมมะลิ: ["jasmine-rice.jpg", "jasmine-rice-2.jpg"],
+  น้ำพริกเผา: ["chili-paste.jpg"],
+  ขนมเปี๊ยะ: ["pia.jpg", "pia-2.jpg"],
+  น้ำผึ้งป่า: ["honey.jpg", "honey-2.jpg"],
+  ผ้าอ้อม: ["diaper.jpg"],
+  ตุ๊กตาผ้า: ["plush-doll.jpg", "plush-doll-2.jpg"],
+  ชุดเด็กอ่อน: ["baby-clothes.jpg"],
+  ผ้าห่มเด็ก: ["baby-blanket.jpg"],
+  ของเล่นไม้: ["wooden-toy.jpg"],
+  ลูกฟุตบอล: ["football.jpg"],
+  ดัมเบล: ["dumbbell.jpg"],
+  ขวดน้ำกีฬา: ["water-bottle.jpg"],
+  เต็นท์: ["tent.jpg"],
+  นิยายแปล: ["novel.jpg"],
+  หนังสือสอนทำอาหาร: ["cookbook.jpg"],
+  ดินสอสี: ["colored-pencils.jpg"],
+  แฟ้มเอกสาร: ["folder.jpg"],
+  อาหารแมว: ["cat-food.jpg"],
+  ต้นไม้ในกระถาง: ["potted-plant.jpg", "potted-plant-2.jpg"],
+  ร่มพับ: ["umbrella.jpg"],
+  เทียนหอม: ["candle.jpg"],
+  กรอบรูป: ["picture-frame.jpg"],
+  พวงกุญแจ: ["keychain.jpg", "keychain-2.jpg"],
+};
+
 export type CategoryCatalog = {
   /** ตรงกับ id ใน migration 0001 */
   categoryId: number;

@@ -25,7 +25,8 @@ export function uploadFile(
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open("POST", path);
-    request.timeout = timeoutMs;
+    const timer = setTimeout(() => request.abort(), timeoutMs);
+    request.onloadend = () => clearTimeout(timer);
     request.responseType = "json";
     request.setRequestHeader("Content-Type", file.type);
     request.upload.onprogress = (event) => {
@@ -36,7 +37,7 @@ export function uploadFile(
       if (request.status === 200 && body?.url) resolve(body.url);
       else reject(new Error(body?.error ?? failed));
     };
-    request.onerror = request.ontimeout = request.onabort = () => reject(new Error(failed));
+    request.onerror = request.onabort = () => reject(new Error(failed));
     request.send(file);
   });
 }

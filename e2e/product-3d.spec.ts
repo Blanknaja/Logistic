@@ -139,6 +139,29 @@ test("P3D-004 โหลดไม่สำเร็จแล้วไปดูร
   await waitForModel(page);
 });
 
+/** หยุดเวลาของหน้า หลังจากนี้เวลาเดินเฉพาะตอน test เลื่อนเอง ต้องเรียก page.clock.install() ก่อนเปิดหน้า */
+const pauseClock = async (page: Page) => page.clock.pauseAt((await page.evaluate(() => Date.now())) + 1000);
+
+test("P3D-Q02 ไฟล์ 3 มิติโหลดเกิน 30 วินาที เห็นข้อความกับปุ่ม ลองใหม่ แทนสัญลักษณ์กำลังโหลด", async ({ page }) => {
+  await page.clock.install();
+  await openProduct(page, chair);
+  // ไฟล์ไม่มาเลย คำขอค้างไว้จนจบ test
+  const requested = new Promise<void>((resolve) => void page.route(isModelFile, () => resolve()));
+  await pauseClock(page);
+
+  await page.getByRole("button", { name: "ดูแบบ 3 มิติ" }).click();
+  await requested;
+  const loading = page.getByRole("status").filter({ hasText: "กำลังโหลด" });
+  const failed = page.getByRole("alert").filter({ hasText: "แสดงภาพ 3 มิติไม่ได้ ลองใหม่อีกครั้ง" });
+  await page.clock.fastForward(29_000);
+  await expect(loading).toBeVisible();
+  await expect(failed).toHaveCount(0);
+
+  await page.clock.fastForward(1_000);
+  await expect(failed.getByRole("button", { name: "ลองใหม่" })).toBeVisible();
+  await expect(loading).toHaveCount(0);
+});
+
 test.describe("P3D-005 บนมือถือ Android ที่วางของในห้องได้", () => {
   const { userAgent, viewport, deviceScaleFactor, isMobile, hasTouch } = devices["Pixel 7"];
   test.use({ userAgent, viewport, deviceScaleFactor, isMobile, hasTouch });
@@ -152,22 +175,30 @@ test.describe("P3D-005 บนมือถือ Android ที่วางขอ
   });
 });
 
-test("P3D-001 P3D-002 ผู้ขายเพิ่ม เปลี่ยน และเอาไฟล์ 3 มิติออกจากสินค้าของร้าน", async ({ page }) => {
+/** เข้าสู่ระบบเป็นผู้ขายของร้านแรกในข้อมูลตัวอย่าง แล้วเปิดหน้ารายการสินค้าของร้าน คืนแถวของสินค้าชิ้นแรก */
+async function openSellerProducts(page: Page) {
   await page.goto("/login");
   await page.getByLabel("อีเมล").fill("seller01@example.com");
   await page.getByLabel("รหัสผ่าน").fill("demo1234");
   await page.getByRole("button", { name: "เข้าสู่ระบบ" }).click();
   await expect(page.getByRole("navigation", { name: "เมนูหลัก" }).getByRole("link", { name: "ร้านของฉัน" })).toBeVisible();
   await page.goto("/seller/products");
+  return page.getByRole("listitem").filter({ has: page.getByRole("link", { name: "แก้ไข" }) }).first();
+}
 
-  const row = page.getByRole("listitem").filter({ has: page.getByRole("link", { name: "แก้ไข" }) }).first();
+const modelInput = (page: Page) => page.getByLabel(/^(เลือก|เปลี่ยน)ไฟล์ 3 มิติ$/);
+const saveButton = (page: Page) => page.getByRole("button", { name: "บันทึก", exact: true });
+const chairGlb = () => ({ name: "chair.glb", mimeType: "model/gltf-binary", buffer: readFileSync("src/shared/seed/models/SheenChair.glb") });
+
+test("P3D-001 P3D-002 ผู้ขายเพิ่ม เปลี่ยน และเอาไฟล์ 3 มิติออกจากสินค้าของร้าน", async ({ page }) => {
+  const row = await openSellerProducts(page);
   const name = (await row.locator("p").first().textContent())!;
   const startedAt = Date.now();
   await row.getByRole("link", { name: "แก้ไข" }).click();
   await expect(page.getByRole("heading", { name: "แก้ไขสินค้า" })).toBeVisible();
   const productId = page.url().match(/\/seller\/products\/(\d+)/)![1];
-  const fileInput = () => page.getByLabel(/^(เลือก|เปลี่ยน)ไฟล์ 3 มิติ$/);
-  const save = page.getByRole("button", { name: "บันทึก", exact: true });
+  const fileInput = () => modelInput(page);
+  const save = saveButton(page);
   await expect(page.getByText("ไฟล์ .glb ไม่เกิน 10 MB ของในไฟล์ต้องมีขนาดจริง หน่วยเป็นเมตร")).toBeVisible();
 
   // P3D-001 ไฟล์ที่ไม่ผ่านเงื่อนไขไม่ถูกรับ และข้อมูลอื่นยังอยู่ครบ
@@ -185,9 +216,8 @@ test("P3D-001 P3D-002 ผู้ขายเพิ่ม เปลี่ยน �
   await expect(page.getByLabel("ชื่อสินค้า")).toHaveValue(name);
 
   // P3D-001 ส่งไฟล์ไม่สำเร็จ เห็นข้อความ ปุ่มลองใหม่ ปุ่มเอาออก และบันทึกไม่ได้จนกว่าจะส่งสำเร็จ
-  const glb = { name: "chair.glb", mimeType: "model/gltf-binary", buffer: readFileSync("src/shared/seed/models/SheenChair.glb") };
   await page.route(isModelUpload, (route) => route.abort("internetdisconnected"));
-  await fileInput().setInputFiles(glb);
+  await fileInput().setInputFiles(chairGlb());
   await expect(page.getByRole("alert").filter({ hasText: "ส่งไฟล์ไม่สำเร็จ" })).toBeVisible();
   await expect(page.getByRole("button", { name: "เอาออก" })).toBeVisible();
   await expect(save).toBeDisabled();
@@ -231,6 +261,31 @@ test("P3D-001 P3D-002 ผู้ขายเพิ่ม เปลี่ยน �
   await page.goto(`/products/${productId}`);
   await expect(page.getByRole("img", { name })).toBeVisible();
   await expect(page.getByRole("button", { name: "ดูแบบ 3 มิติ" })).toHaveCount(0);
+});
+
+test("P3D-001 ไฟล์ที่ส่งไม่เสร็จใน 60 วินาที เห็น ส่งไฟล์ไม่สำเร็จ พร้อมปุ่ม ลองใหม่ และ เอาออก ข้อมูลอื่นยังอยู่ และบันทึกไม่ได้", async ({ page }) => {
+  await page.clock.install();
+  const row = await openSellerProducts(page);
+  const name = (await row.locator("p").first().textContent())!;
+  await row.getByRole("link", { name: "แก้ไข" }).click();
+  await expect(page.getByRole("heading", { name: "แก้ไขสินค้า" })).toBeVisible();
+  // สัญญาณช้าจนไฟล์ส่งไม่เสร็จ คำขอค้างไว้จนจบ test
+  const sending = new Promise<void>((resolve) => void page.route(isModelUpload, () => resolve()));
+  await pauseClock(page);
+
+  await modelInput(page).setInputFiles(chairGlb());
+  await sending;
+  const failed = page.getByRole("alert").filter({ hasText: "ส่งไฟล์ไม่สำเร็จ" });
+  await page.clock.fastForward(59_000);
+  await expect(page.getByRole("progressbar", { name: "กำลังส่งไฟล์ 3 มิติ" })).toBeVisible();
+  await expect(failed).toHaveCount(0);
+
+  await page.clock.fastForward(1_000);
+  await expect(failed).toBeVisible();
+  await expect(page.getByRole("button", { name: "ลองใหม่" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "เอาออก" })).toBeVisible();
+  await expect(saveButton(page)).toBeDisabled();
+  await expect(page.getByLabel("ชื่อสินค้า")).toHaveValue(name);
 });
 
 const percentile = (values: number[], p: number) => [...values].sort((a, b) => a - b)[Math.ceil((p / 100) * values.length) - 1];

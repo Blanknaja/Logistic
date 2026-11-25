@@ -14,7 +14,7 @@ type Props = { params: BrowseParams; result: SearchResult; categories: Category[
 export function BrowseResults({ params, result, categories }: Props) {
   return (
     <>
-      <section aria-labelledby="categories-title">
+      <section aria-labelledby="categories-title" className={styles.categories}>
         <h2 id="categories-title">หมวดหมู่</h2>
         <ul className="chips">
           {categories.map((category) => {
@@ -69,7 +69,7 @@ function Results({ params, result }: Omit<Props, "categories">) {
           <Link href={clearHref} className="button button-secondary">
             ล้างตัวกรอง
           </Link>
-          <Link href="/" className="button">
+          <Link href="/" className="button button-secondary">
             กลับหน้าแรก
           </Link>
         </EmptyState>

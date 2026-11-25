@@ -2,52 +2,109 @@
 
 .search {
   display: flex;
-  gap: 8px;
-  margin-bottom: var(--space-4);
+  gap: var(--space-2);
 }
 
-.search input {
+/* ช่องค้นหาคืองานหลักของหน้าแรก จึงสูงเท่าปุ่มหลักของหน้า */
+.search :global(.input) {
   flex: 1;
   min-width: 0;
+  min-height: var(--control-main);
+}
+
+.search > :global(.button) {
+  min-height: var(--control-main);
+  font-size: var(--text-body);
+}
+
+.title {
+  text-wrap: balance;
+}
+
+.categories {
+  margin-top: var(--space-6);
+}
+
+.categories h2 {
+  margin: 0 0 var(--space-3);
+}
+
+.categories :global(.chips) {
+  margin: 0;
 }
 
 .chipLink {
   color: var(--color-text);
+  white-space: nowrap;
   text-decoration: none;
 }
 
 .chipActive {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  font-weight: 600;
+  box-shadow: inset 0 0 0 2px var(--color-text);
+  font-weight: 700;
+}
+
+@media (hover: hover) {
+  .chipLink:hover {
+    box-shadow: inset 0 0 0 2px var(--color-text);
+  }
+}
+
+/* จอแคบ หมวดหมู่เป็นแถวเดียวที่เลื่อนซ้ายขวา สินค้าจึงขึ้นเร็วขึ้น */
+@media (max-width: 599px) {
+  .categories :global(.chips) {
+    flex-wrap: nowrap;
+    margin-inline: calc(-1 * var(--gutter));
+    padding: var(--space-2) var(--gutter);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .categories :global(.chips) > li {
+    flex: none;
+  }
 }
 
 .filters {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 8px var(--space-4);
-  margin-bottom: var(--space-4);
+  gap: var(--space-4) var(--space-5);
+  margin-top: var(--space-5);
+  padding-block: var(--space-4);
+  border-block: 1px solid var(--color-border);
 }
 
 .price {
   display: flex;
+  flex: 1 1 100%;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
+  min-width: 0;
   margin: 0;
   padding: 0;
   border: 0;
 }
 
+.price legend,
+.sort {
+  font-size: var(--text-label);
+  font-weight: 700;
+}
+
 .price legend {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
   padding: 0;
 }
 
-.price .input {
-  width: 7.5em;
+.price :global(.input) {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.price > :global(.button) {
+  align-self: stretch;
 }
 
 .price .priceError {
@@ -57,7 +114,26 @@
 
 .sort {
   display: grid;
-  gap: 4px;
+  flex: 1 1 100%;
+  gap: var(--space-1);
+}
+
+@media (min-width: 600px) {
+  .price,
+  .sort {
+    flex: 0 1 auto;
+  }
+
+  .price :global(.input) {
+    flex: none;
+    width: 7.5em;
+  }
+}
+
+@media (min-width: 900px) {
+  .sort {
+    margin-inline-start: auto;
+  }
 }
 
 .summary {
@@ -65,39 +141,41 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--space-2) var(--space-4);
+  margin-block: var(--space-5);
 }
 
 .summary p {
   margin: 0;
+  font-weight: 700;
 }
 
+/* การ์ดสินค้าไม่มีกรอบ แยกกันด้วยช่องว่าง ราคาเด่นกว่าชื่อร้าน */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6) var(--space-4);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .card {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
   color: inherit;
   text-decoration: none;
+  transition: transform var(--duration) var(--ease);
+}
+
+.card:active {
+  transform: scale(0.98);
 }
 
 .cardBody {
   display: grid;
-  gap: 2px;
-  padding: 8px 12px 12px;
+  gap: var(--space-1);
 }
 
 .cardName {
@@ -105,11 +183,25 @@
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-height: 1.5;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--duration) var(--ease);
+}
+
+@media (hover: hover) {
+  .card:hover .cardName {
+    text-decoration-color: currentColor;
+  }
 }
 
 .priceText {
   color: var(--color-text);
+  font-size: var(--text-heading);
   font-weight: 700;
+  line-height: 1.3;
 }
 
 .muted {
@@ -144,8 +236,27 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 8px 12px;
-  margin-top: var(--space-4);
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-7);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+}
+
+.pagination > span {
+  font-size: var(--text-label);
+}
+
+@media (min-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-7) var(--space-5);
+  }
 }
 
 /* หน้ารายละเอียดสินค้า คอลัมน์เดียว: หัวเรื่อง รูป แถบซื้อ แล้วรายละเอียด */
@@ -507,7 +618,7 @@
 
 .skeletonLine {
   height: 1.4em;
-  margin: 8px 0;
+  margin: var(--space-2) 0;
 }
 
 .skeletonShort {
@@ -515,7 +626,8 @@
 }
 
 .skeletonCard {
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 1;
+  margin-bottom: var(--space-3);
 }
 
 .skeletonButton {

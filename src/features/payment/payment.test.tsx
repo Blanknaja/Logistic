@@ -1030,7 +1030,9 @@ describe("PAY-Q07 เครื่องหมายเงินทดลอง�
   });
 
   test("PAY-Q07 สไตล์ของหน้าจ่ายเงินไม่มีความกว้างตายตัวที่เกินจอ 360 จุด", () => {
-    const css = readFileSync(join(process.cwd(), "src/features/payment/components/payment.module.css"), "utf8");
+    const css = readFileSync(join(process.cwd(), "src/features/payment/components/payment.module.css"), "utf8")
+      // เงื่อนไขของ @media คือจุดเปลี่ยนจอ ไม่ใช่ความกว้างของสิ่งที่อยู่บนหน้า
+      .replace(/@media[^{]*/g, "");
     const fixed = [...css.matchAll(/(?<!max-)width:\s*(\d+)px/g)].map((match) => Number(match[1]));
     expect(fixed.filter((px) => px > 328)).toEqual([]);
   });

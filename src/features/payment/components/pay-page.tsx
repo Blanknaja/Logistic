@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { changeMethodAction, checkStatusAction, payByPromptPayAction } from "@/features/payment/actions";
 import { minutesLeftText, UNAVAILABLE_MESSAGE, type PaymentView, type PayPage } from "@/features/payment/server/payments";
 import type { SimulatorMode } from "@/features/payment/server/simulator";
@@ -25,7 +26,7 @@ const paidWith = (payment: PaymentView) =>
 
 function Summary({ page }: { page: PayPage }) {
   return (
-    <section className={`card ${styles.section}`}>
+    <section className={styles.summary}>
       <p className={styles.total}>ยอดที่ต้องจ่าย {formatBaht(page.amount)}</p>
       <ul className={styles.plainList}>
         {page.orders.map((order) => (
@@ -40,11 +41,22 @@ function Summary({ page }: { page: PayPage }) {
   );
 }
 
+/** จอกว้างเนื้อหาอยู่ซ้าย 8 ยอดที่ต้องจ่ายอยู่ขวา 4 จอแคบยอดขึ้นก่อนเนื้อหา */
+function Columns({ page, children }: { page: PayPage; children: ReactNode }) {
+  return (
+    <div className={styles.columns}>
+      <Summary page={page} />
+      <div>{children}</div>
+    </div>
+  );
+}
+
 function ChooseMethod({ page, method }: { page: PayPage; method?: "card" | "promptpay" }) {
+  // วิธีที่เลือกอยู่ใช้เส้นขอบเข้ม สีเน้นเก็บไว้ให้ปุ่มจ่ายเงิน
   const choice = (value: "card" | "promptpay", label: string) => (
     <Link
       href={`/pay/${page.groupId}?method=${value}`}
-      className={method === value ? "button" : "button button-secondary"}
+      className="button button-secondary"
       aria-current={method === value ? "true" : undefined}
     >
       {label}
@@ -53,29 +65,30 @@ function ChooseMethod({ page, method }: { page: PayPage; method?: "card" | "prom
   return (
     <>
       <h1>จ่ายเงิน</h1>
-      <Summary page={page} />
-      <h2>เลือกวิธีจ่าย</h2>
-      <div className={styles.row}>
-        {choice("card", "บัตร")}
-        {choice("promptpay", "PromptPay")}
-      </div>
-      {method === "card" && (
-        <section className={`card ${styles.section}`}>
-          <CardForm groupId={page.groupId} failedMessage={UNAVAILABLE_MESSAGE} />
-        </section>
-      )}
-      {method === "promptpay" && (
-        <section className={`card ${styles.section}`}>
-          <p>กดจ่ายเงินแล้วสแกน QR ด้วยแอปธนาคาร</p>
-          <PayForm
-            action={payByPromptPayAction}
-            groupId={page.groupId}
-            label="จ่ายเงิน"
-            pendingLabel="กำลังจ่ายเงิน"
-            failedMessage={UNAVAILABLE_MESSAGE}
-          />
-        </section>
-      )}
+      <Columns page={page}>
+        <h2>เลือกวิธีจ่าย</h2>
+        <div className={styles.row}>
+          {choice("card", "บัตร")}
+          {choice("promptpay", "PromptPay")}
+        </div>
+        {method === "card" && (
+          <section className={`${styles.section} ${styles.cardSection}`}>
+            <CardForm groupId={page.groupId} failedMessage={UNAVAILABLE_MESSAGE} />
+          </section>
+        )}
+        {method === "promptpay" && (
+          <section className={styles.section}>
+            <p>กดจ่ายเงินแล้วสแกน QR ด้วยแอปธนาคาร</p>
+            <PayForm
+              action={payByPromptPayAction}
+              groupId={page.groupId}
+              label="จ่ายเงิน"
+              pendingLabel="กำลังจ่ายเงิน"
+              failedMessage={UNAVAILABLE_MESSAGE}
+            />
+          </section>
+        )}
+      </Columns>
     </>
   );
 }
@@ -90,38 +103,39 @@ function Waiting({ page, pending, notice, simulated }: { page: PayPage; pending:
           มีการจ่ายเงินที่กำลังรอผลอยู่
         </p>
       )}
-      <Summary page={page} />
-      <section className={`card ${styles.section}`}>
-        {promptPay && <QrImage src={pending.qrImageUrl} amount={pending.amount} />}
-        <p className={styles.total}>
-          ยอด {formatBaht(pending.amount)} ด้วย {pending.method}
-        </p>
-        <p>กำลังรอผลการจ่ายเงิน เหลือเวลา {page.minutesLeft} นาที</p>
-        {promptPay && (
-          <p className={styles.hint}>
-            ในโหมดทดลอง ต้องมีคนกดทำเครื่องหมายว่าสำเร็จหรือไม่สำเร็จในหน้าจัดการของ Omise ระบบจึงจะรู้ผล
-            {simulated && " ตอนนี้ใช้ตัวจำลอง กดทำเครื่องหมายได้ที่ส่วนตัวจำลองด้านล่าง"}
+      <Columns page={page}>
+        <section className={styles.section}>
+          {promptPay && <QrImage src={pending.qrImageUrl} amount={pending.amount} />}
+          <p className={styles.total}>
+            ยอด {formatBaht(pending.amount)} ด้วย {pending.method}
           </p>
-        )}
-        <PayForm
-          action={checkStatusAction}
-          groupId={page.groupId}
-          label="เช็คสถานะการจ่ายเงิน"
-          pendingLabel="กำลังเช็คสถานะ"
-          failedMessage="เช็คสถานะไม่ได้ตอนนี้ กรุณาลองใหม่"
-          secondary
-        />
-        <details className={styles.confirm}>
-          <summary className="button button-secondary">เปลี่ยนวิธีจ่าย</summary>
-          <form action={changeMethodAction}>
-            <input type="hidden" name="groupId" value={page.groupId} />
-            <p>{promptPay ? "เลิกใช้ QR นี้ใช่ไหม" : "เลิกรอการจ่ายเงินนี้ใช่ไหม"}</p>
-            <button type="submit" className="button">
-              ยืนยัน
-            </button>
-          </form>
-        </details>
-      </section>
+          <p>กำลังรอผลการจ่ายเงิน เหลือเวลา {page.minutesLeft} นาที</p>
+          {promptPay && (
+            <p className={styles.hint}>
+              ในโหมดทดลอง ต้องมีคนกดทำเครื่องหมายว่าสำเร็จหรือไม่สำเร็จในหน้าจัดการของ Omise ระบบจึงจะรู้ผล
+              {simulated && " ตอนนี้ใช้ตัวจำลอง กดทำเครื่องหมายได้ที่ส่วนตัวจำลองด้านล่าง"}
+            </p>
+          )}
+          <PayForm
+            action={checkStatusAction}
+            groupId={page.groupId}
+            label="เช็คสถานะการจ่ายเงิน"
+            pendingLabel="กำลังเช็คสถานะ"
+            failedMessage="เช็คสถานะไม่ได้ตอนนี้ กรุณาลองใหม่"
+            secondary
+          />
+          <details className={styles.confirm}>
+            <summary className="button button-secondary">เปลี่ยนวิธีจ่าย</summary>
+            <form action={changeMethodAction}>
+              <input type="hidden" name="groupId" value={page.groupId} />
+              <p>{promptPay ? "เลิกใช้ QR นี้ใช่ไหม" : "เลิกรอการจ่ายเงินนี้ใช่ไหม"}</p>
+              <button type="submit" className="button">
+                ยืนยัน
+              </button>
+            </form>
+          </details>
+        </section>
+      </Columns>
     </>
   );
 }
@@ -130,13 +144,14 @@ function Failed({ page }: { page: PayPage }) {
   return (
     <>
       <h1>จ่ายเงินไม่สำเร็จ</h1>
-      <p role="alert" className={styles.alert}>
-        {page.lastFailed?.failureReason ?? "จ่ายเงินไม่สำเร็จ"}
-      </p>
-      <Summary page={page} />
-      <Link href={`/pay/${page.groupId}?retry=1`} className="button">
-        จ่ายใหม่
-      </Link>
+      <Columns page={page}>
+        <p role="alert" className={styles.alert}>
+          {page.lastFailed?.failureReason ?? "จ่ายเงินไม่สำเร็จ"}
+        </p>
+        <Link href={`/pay/${page.groupId}?retry=1`} className="button">
+          จ่ายใหม่
+        </Link>
+      </Columns>
     </>
   );
 }
@@ -151,7 +166,7 @@ function Paid({ page, notice }: { page: PayPage; notice?: string }) {
           คำสั่งซื้อนี้จ่ายเงินแล้ว
         </p>
       )}
-      <section className={`card ${styles.section}`}>
+      <section className={styles.section}>
         {paid && (
           <p className={styles.total}>
             จ่ายแล้ว {formatBaht(paid.amount)} ด้วย{paidWith(paid)} เวลา {formatDateTime(paid.resolvedAt ?? paid.startedAt)}

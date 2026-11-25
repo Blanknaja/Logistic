@@ -40,7 +40,7 @@ export function SimulatorPanel({
               type="submit"
               name="mode"
               value={option.mode}
-              className={option.mode === mode ? "button" : "button button-secondary"}
+              className="button button-secondary"
               aria-pressed={option.mode === mode}
             >
               {option.label}

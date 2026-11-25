@@ -103,7 +103,7 @@ const saveForm = (variantId: number, expected: number, stock: string) => {
 
 const stockOf = (variantId: number) =>
   (db.prepare("SELECT stock FROM variants WHERE id = ?").get(variantId) as { stock: number }).stock;
-const rowCount = (html = "") => html.match(/<li class="card /g)?.length ?? 0;
+const rowCount = (html = "") => html.match(/<li class="_row_/g)?.length ?? 0;
 const html = (node: React.ReactNode) => renderToStaticMarkup(node);
 
 /** สมชายเข้าสู่ระบบเป็นเจ้าของร้าน "สมชายสปอร์ต" */
@@ -141,7 +141,7 @@ describe("INV-001 แสดงหน้าสต็อก", () => {
 
     const page = (await stockPage()).html ?? "";
     expect(rowCount(page)).toBe(2);
-    const [first, second] = page.split('<li class="card ').slice(1);
+    const [first, second] = page.split('<li class="_row_').slice(1);
     for (const text of ["เสื้อยืดคอกลม", "แดง M", "สต็อก 12", "จองอยู่ 2"]) expect(first).toContain(text);
     expect(first).not.toContain("ใกล้หมด");
     for (const text of ["แดง L", "สต็อก 3", "จองอยู่ 0", "ใกล้หมด"]) expect(second).toContain(text);
@@ -178,7 +178,7 @@ describe("INV-002 ป้ายใกล้หมดและหมด", () => {
     const shop = signInAsSomchai();
     addProduct(db, { shopId: shop.id, name: "รองเท้าวิ่ง 41", stock: 6 });
     addProduct(db, { shopId: shop.id, name: "รองเท้าวิ่ง 42", stock: 5 });
-    const [six, five] = ((await stockPage()).html ?? "").split('<li class="card ').slice(1);
+    const [six, five] = ((await stockPage()).html ?? "").split('<li class="_row_').slice(1);
     expect(six).not.toMatch(/ใกล้หมด|หมด</);
     expect(five).toContain("ใกล้หมด");
   });
@@ -239,7 +239,7 @@ describe("INV-004 ผู้ขายตั้งสต็อก", () => {
       reserved: 0,
     });
     expect(html(<SaveFeedback outcome="saved" />)).toContain("บันทึกแล้ว");
-    const [row] = ((await stockPage()).html ?? "").split('<li class="card ').slice(1);
+    const [row] = ((await stockPage()).html ?? "").split('<li class="_row_').slice(1);
     expect(row).toContain("สต็อก 20");
     expect(row).not.toContain("ใกล้หมด");
     expect((await historyPage(variantId)).html).toContain("ผู้ขายแก้ +17 เหลือ 20");
@@ -423,7 +423,7 @@ describe("INV-015 แสดงประวัติสต็อก", () => {
 describe("INV-Q06 ใช้บนมือถือได้", () => {
   test("INV-Q06 สไตล์ของหน้าสต็อกไม่มีความกว้างตายตัวที่เกินจอ 360 จุด", () => {
     const css = readFileSync(join(process.cwd(), "src/features/stock/components/stock.module.css"), "utf8");
-    const fixed = [...css.matchAll(/(?<!max-)width:\s*(\d+)px/g)].map((match) => Number(match[1]));
+    const fixed = [...css.matchAll(/(?<!max-|\(min-)width:\s*(\d+)px/g)].map((match) => Number(match[1]));
     expect(fixed.filter((px) => px > 328)).toEqual([]);
     expect(css).not.toMatch(/white-space:\s*nowrap|<table/);
   });

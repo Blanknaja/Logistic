@@ -14,18 +14,20 @@ export function StockHistoryView({ history }: { history: StockHistory }) {
       <Link href="/seller/stock" className={styles.back}>
         กลับไปหน้าสต็อก
       </Link>
-      <h1>ประวัติสต็อก</h1>
-      <p className={styles.name}>
-        {history.productName}
-        {history.variantLabel && <span className={styles.variant}> {history.variantLabel}</span>}
-      </p>
-      <p>{`สต็อกปัจจุบัน ${formatNumber(history.stock)} ชิ้น`}</p>
+      <header className={styles.intro}>
+        <h1>ประวัติสต็อก</h1>
+        <p className={styles.name}>
+          {history.productName}
+          {history.variantLabel && <span className={styles.variant}> {history.variantLabel}</span>}
+        </p>
+        <p className={styles.current}>{`สต็อกปัจจุบัน ${formatNumber(history.stock)} ชิ้น`}</p>
+      </header>
       {history.entries.length === 0 ? (
         <EmptyState title="ยังไม่มีการเปลี่ยนสต็อก" />
       ) : (
         <ol className={styles.history}>
           {history.entries.map((entry) => (
-            <li key={entry.id} className={`card ${styles.entry}`}>
+            <li key={entry.id} className={styles.entry}>
               <time dateTime={entry.createdAt}>{formatDateTime(entry.createdAt)}</time>
               <span>{`${entry.reason} ${signed(entry.change)} เหลือ ${formatNumber(entry.stockAfter)}`}</span>
               {entry.orderNo && <span className={styles.orderNo}>{`คำสั่งซื้อ ${entry.orderNo}`}</span>}

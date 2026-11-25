@@ -1,30 +1,43 @@
-/* หน้าสต็อกและประวัติสต็อก ใช้ได้ที่จอกว้าง 360 จุด โดยไม่ต้องเลื่อนซ้ายขวา */
+/* หน้าสต็อกและประวัติสต็อก ใช้ได้ที่จอกว้าง 360 จุด โดยไม่ต้องเลื่อนซ้ายขวา
+   จอแคบเรียงเป็นแถวซ้อน จอกว้างเป็นตารางที่คอลัมน์ตรงกันทุกแถว */
+
+.filters :global(.chip) {
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.chipActive {
+  box-shadow: inset 0 0 0 2px var(--color-text);
+  font-weight: 700;
+}
 
 .rows,
 .history {
   display: grid;
-  gap: 12px;
   margin: 0;
   padding: 0;
+  border-top: 1px solid var(--color-text);
   list-style: none;
 }
 
 .row {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
+  padding-block: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .rowHead {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-1) var(--space-3);
 }
 
 .name {
   margin: 0;
-  font-weight: 600;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .variant {
@@ -35,58 +48,59 @@
 .numbers {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
+  gap: 0 var(--space-4);
   margin: 0;
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
 }
 
 .badgeLow,
 .badgeOut {
   display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-on-primary);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 1px currentColor;
+  font-size: var(--text-label);
+  font-weight: 700;
 }
 
 .badgeLow {
-  background: var(--color-warning);
+  color: var(--color-warning);
 }
 
 .badgeOut {
-  background: var(--color-danger);
+  color: var(--color-danger);
 }
 
 .form {
   display: grid;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .label {
-  font-size: 0.9rem;
   color: var(--color-muted);
+  font-size: var(--text-label);
 }
 
 .controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .input {
-  flex: 1 1 96px;
+  flex: 1 1 6em;
   width: auto;
   min-width: 0;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
 }
 
 .saved,
-.alert {
+.alert,
+.form :global(.field-error) {
   margin: 0;
-  font-size: 0.9rem;
-}
-
-.saved {
-  color: var(--color-primary);
+  font-size: var(--text-label);
 }
 
 .alert {
@@ -99,23 +113,39 @@
   align-items: center;
   min-height: var(--tap);
   justify-self: start;
+  font-size: var(--text-label);
 }
 
-.chipActive {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  font-weight: 600;
+/* หน้าประวัติสต็อก */
+
+.intro {
+  display: grid;
+  gap: var(--space-1);
+  margin-bottom: var(--space-5);
+}
+
+.intro h1 {
+  margin: 0 0 var(--space-2);
+}
+
+.current {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
 }
 
 .entry {
   display: grid;
-  gap: 2px;
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  font-variant-numeric: tabular-nums;
 }
 
 .entry time,
 .orderNo {
   color: var(--color-muted);
-  font-size: 0.9rem;
+  font-size: var(--text-label);
 }
 
 .pager {
@@ -123,6 +153,62 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-top: var(--space-4);
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 900px) {
+  .rows {
+    grid-template-columns: minmax(0, 1fr) repeat(4, auto);
+  }
+
+  .history {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .row,
+  .entry {
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    gap: 0 var(--space-5);
+    align-items: center;
+  }
+
+  .row {
+    align-items: baseline;
+    padding-block: var(--space-3);
+  }
+
+  .entry {
+    align-items: baseline;
+  }
+
+  .numbers {
+    display: contents;
+  }
+
+  .numbers > span {
+    text-align: end;
+  }
+
+  .form {
+    grid-template-columns: auto auto;
+    align-items: center;
+    column-gap: var(--space-3);
+  }
+
+  .form > p {
+    grid-column: 2;
+  }
+
+  .input {
+    flex: none;
+    width: 6em;
+  }
+
+  .historyLink {
+    justify-self: end;
+  }
 }

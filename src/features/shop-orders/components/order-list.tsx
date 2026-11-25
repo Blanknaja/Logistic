@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { orderHref, ordersHref, type ListParams, type StatusKey } from "@/features/shop-orders/paths";
-import type { OrderList, StatusCounts } from "@/features/shop-orders/server/orders";
+import type { OrderList, OrderRow, StatusCounts } from "@/features/shop-orders/server/orders";
 import { formatBaht, formatThaiDateTime, formatNumber } from "@/shared/format";
 import { ORDER_STATUS } from "@/shared/statuses";
 import { EmptyState } from "@/shared/ui/states";
@@ -13,36 +13,42 @@ type Props = {
   params: ListParams & { queryError: string | null };
   counts: StatusCounts;
   list: OrderList;
+  /** คำสั่งซื้อที่จ่ายแล้ว ใช้เมื่อเปิดตัวกรองทั้งหมดโดยไม่ค้น null ในกรณีอื่น */
+  awaitingPacking?: OrderList | null;
   version: string;
 };
 
 const FILTERS: [StatusKey | null, string][] = [[null, "ทั้งหมด"], ...(Object.entries(ORDER_STATUS) as [StatusKey, string][])];
 
-/** หน้ารายการคำสั่งซื้อของร้าน (ORD-001 ถึง ORD-003 ORD-009 ORD-010) */
-export function OrderListView({ params, counts, list, version }: Props) {
+/**
+ * หน้ารายการคำสั่งซื้อของร้าน (ORD-001 ถึง ORD-003 ORD-009 ORD-010)
+ * ตัวกรองทั้งหมดแสดงคำสั่งซื้อที่รอจัดของเป็นกลุ่มแรกที่หน้า 1 แล้วตามด้วยคำสั่งซื้ออื่น คำสั่งซื้อจึงไม่ซ้ำสองที่
+ */
+export function OrderListView({ params, counts, list, awaitingPacking = null, version }: Props) {
   const { status, q } = params;
+  const current = { status, q, page: list.page, asOf: list.asOf };
+  const work = awaitingPacking && list.page === 1 && awaitingPacking.total > 0 ? awaitingPacking : null;
+  const rest = awaitingPacking ? list.items.filter((row) => row.status !== ORDER_STATUS.paid) : list.items;
   return (
     <>
       <h1>คำสั่งซื้อ</h1>
       <LiveUpdates version={version} asOf={list.asOf} />
-      <SearchForm key={q} q={q} status={status} error={params.queryError} />
 
-      <ul className="chips" aria-label="กรองตามสถานะ">
-        {FILTERS.map(([key, label]) => {
-          const active = !q && status === key;
-          return (
-            <li key={label}>
-              <Link
-                href={ordersHref({ status: key })}
-                className={`chip ${styles.chipLink} ${active ? styles.chipActive : ""}`}
-                aria-current={active ? "page" : undefined}
-              >
-                {label} ({formatNumber(key ? counts[ORDER_STATUS[key]] : counts.all)})
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      <div className={styles.toolbar}>
+        <ul className={`chips ${styles.chips}`} aria-label="กรองตามสถานะ">
+          {FILTERS.map(([key, label]) => {
+            const active = !q && status === key;
+            return (
+              <li key={label}>
+                <Link href={ordersHref({ status: key })} className={`chip ${styles.chipLink}`} aria-current={active ? "page" : undefined}>
+                  {label} ({formatNumber(key ? counts[ORDER_STATUS[key]] : counts.all)})
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        <SearchForm key={q} q={q} status={status} error={params.queryError} />
+      </div>
 
       {list.newCount > 0 && (
         <Link href={ordersHref({ status, q })} className={styles.newOrders}>
@@ -51,47 +57,48 @@ export function OrderListView({ params, counts, list, version }: Props) {
       )}
 
       {q && (
-        <p className={styles.actions}>
+        <p className={styles.searchResult}>
           ผลการค้นหาเลข &quot;{q}&quot;
-          <Link href={ordersHref({ status })} className="button button-secondary">
+          <Link href={ordersHref({ status })} className="link-action">
             ล้างคำค้น
           </Link>
         </p>
       )}
 
-      <Results params={params} list={list} />
+      {work && (
+        <section aria-labelledby="awaiting-packing" className={styles.group}>
+          <h2 id="awaiting-packing">รอจัดของ {formatNumber(work.total)} รายการ</h2>
+          <OrderTable rows={work.items} current={current} />
+          {work.total > work.items.length && (
+            <Link href={ordersHref({ status: "paid" })} className="link-action">
+              ดูที่รอจัดของทั้งหมด {formatNumber(work.total)} รายการ
+            </Link>
+          )}
+        </section>
+      )}
+
+      <Results params={params} list={list} rows={rest} current={current} grouped={work !== null} />
     </>
   );
 }
 
-function Results({ params, list }: Pick<Props, "params" | "list">) {
+function Results({
+  params,
+  list,
+  rows,
+  current,
+  grouped,
+}: Pick<Props, "params" | "list"> & { rows: OrderRow[]; current: ListParams; grouped: boolean }) {
   if (list.total === 0) {
     if (params.q) return <EmptyState title={`ไม่พบคำสั่งซื้อเลข ${params.q} ในร้านของคุณ`} />;
     if (params.status) return <EmptyState title={`ไม่มีคำสั่งซื้อในสถานะ ${ORDER_STATUS[params.status]}`} />;
-    return <EmptyState title="ร้านยังไม่มีคำสั่งซื้อ" />;
+    return <EmptyState title="ร้านยังไม่มีคำสั่งซื้อ" message="คำสั่งซื้อจะขึ้นที่นี่เมื่อผู้ซื้อสั่งสินค้าของร้าน" />;
   }
 
-  const current = { status: params.status, q: params.q, page: list.page, asOf: list.asOf };
   return (
-    <section aria-label="รายการคำสั่งซื้อ">
-      <ul className={styles.list}>
-        {list.items.map((row) => (
-          <li key={row.orderNo} className={styles.row}>
-            <Link href={orderHref(row.orderNo, current)} className={styles.rowLink}>
-              <span className={styles.rowTop}>
-                <span className={styles.orderNo}>{row.orderNo}</span>
-                <span className={styles.status}>{row.status}</span>
-              </span>
-              <span className={styles.muted}>สั่งซื้อเมื่อ {formatThaiDateTime(row.orderedAt)}</span>
-              <span>ผู้รับ {row.recipientName}</span>
-              <span className={styles.total}>
-                {formatNumber(row.itemCount)} ชิ้น · ยอดรวม {formatBaht(row.total)}
-              </span>
-            </Link>
-            <ShippingActions orderNo={row.orderNo} status={row.status} trackingNo={row.trackingNo} secondary />
-          </li>
-        ))}
-      </ul>
+    <section aria-label="รายการคำสั่งซื้อ" className={styles.group}>
+      {grouped && rows.length > 0 && <h2>คำสั่งซื้ออื่น</h2>}
+      {rows.length > 0 && <OrderTable rows={rows} current={current} />}
       {list.totalPages > 1 && (
         <nav aria-label="เปลี่ยนหน้า" className={styles.pagination}>
           <PageLink current={current} page={list.page - 1} totalPages={list.totalPages} label="หน้าก่อนหน้า" />
@@ -102,6 +109,44 @@ function Results({ params, list }: Pick<Props, "params" | "list">) {
         </nav>
       )}
     </section>
+  );
+}
+
+/** ทั้งแถวกดไปหน้ารายละเอียด ปุ่มจัดส่งและลิงก์ดูการจัดส่งอยู่เหนือลิงก์ของแถว */
+function OrderTable({ rows, current }: { rows: OrderRow[]; current: ListParams }) {
+  return (
+    <div className={styles.table}>
+      <div className={styles.head} aria-hidden="true">
+        <span>เลขคำสั่งซื้อ</span>
+        <span>สถานะ</span>
+        <span>สั่งซื้อเมื่อ</span>
+        <span>ผู้รับ</span>
+        <span className={styles.end}>ยอดรวม</span>
+      </div>
+      <ul className={styles.list}>
+        {rows.map((row) => (
+          <li key={row.orderNo} className={styles.row}>
+            <Link href={orderHref(row.orderNo, current)} className={styles.rowLink}>
+              {row.orderNo}
+            </Link>
+            <span className={styles.status}>{row.status}</span>
+            <span className={styles.when}>
+              <span className={styles.cellLabel}>สั่งซื้อเมื่อ </span>
+              <time dateTime={row.orderedAt}>{formatThaiDateTime(row.orderedAt)}</time>
+            </span>
+            <span className={styles.recipient}>
+              <span className={styles.cellLabel}>ผู้รับ </span>
+              {row.recipientName}
+            </span>
+            <span className={styles.total}>
+              {formatNumber(row.itemCount)} ชิ้น · <span className={styles.cellLabel}>ยอดรวม </span>
+              {formatBaht(row.total)}
+            </span>
+            <ShippingActions orderNo={row.orderNo} status={row.status} trackingNo={row.trackingNo} secondary />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

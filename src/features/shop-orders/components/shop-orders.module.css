@@ -1,11 +1,41 @@
 /* หน้ารายการและรายละเอียดคำสั่งซื้อของร้าน ใช้ได้ที่จอกว้าง 360 จุด (ORD-Q04) */
 
+.toolbar {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.chips {
+  margin: 0;
+}
+
+/* จอเล็กตัวกรองเป็นแถวเดียวที่เลื่อนซ้ายขวา ไม่กินความสูงของจอแรก */
+@media (max-width: 599px) {
+  .chips {
+    flex-wrap: nowrap;
+    margin-inline: calc(-1 * var(--gutter));
+    padding: var(--space-1) var(--gutter);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .chips > li {
+    flex: none;
+  }
+}
+
+.chipLink {
+  color: var(--color-text);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+
 .search {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  max-width: 36rem;
-  margin-bottom: var(--space-4);
+  max-width: 28rem;
 }
 
 .search input {
@@ -18,25 +48,18 @@
   margin: 0;
 }
 
-.chipLink {
-  color: var(--color-text);
-  text-decoration: none;
-  font-variant-numeric: tabular-nums;
-}
-
-.chipActive {
-  box-shadow: inset 0 0 0 2px var(--color-text);
-  font-weight: 600;
+.searchResult {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-4);
+  margin: 0 0 var(--space-4);
 }
 
 .notice {
   margin: 0 0 var(--space-4);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-warning);
-  border-radius: var(--radius);
   color: var(--color-warning);
   font-size: var(--text-label);
-  font-weight: 600;
 }
 
 .newOrders {
@@ -54,58 +77,92 @@
   transition: box-shadow var(--duration) var(--ease);
 }
 
-/* รายการคำสั่งซื้อ จอแคบเรียงเป็นแถวซ้อน จอกว้างเป็นตารางที่คอลัมน์ตรงกันทุกแถว */
+/* กลุ่มรอจัดของกับกลุ่มคำสั่งซื้ออื่น */
+
+.group + .group {
+  margin-top: var(--space-6);
+}
+
+.group h2 {
+  margin: 0 0 var(--space-3);
+}
+
+/* รายการคำสั่งซื้อ จอแคบเรียงเป็นแถวซ้อน จอกว้างเป็นตารางที่มีหัวคอลัมน์ */
+
+.head {
+  display: none;
+}
 
 .list {
-  display: grid;
-  margin: 0 0 var(--space-5);
+  margin: 0;
   padding: 0;
-  border-top: 1px solid var(--color-text);
+  border-top: 1px solid var(--color-border);
   list-style: none;
 }
 
 .row {
+  position: relative;
   display: grid;
-  gap: var(--space-2);
-  padding-block: var(--space-4);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.rowLink {
-  display: grid;
-  gap: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "number status"
+    "recipient total"
+    "when actions";
+  align-items: center;
+  column-gap: var(--space-3);
   min-height: var(--tap);
-  color: var(--color-text);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
   font-size: var(--text-label);
   font-variant-numeric: tabular-nums;
-  text-decoration: none;
 }
 
-.rowTop {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: var(--space-1) var(--space-2);
-}
-
-.orderNo {
+/* ทั้งแถวกดได้ ลิงก์เลขคำสั่งซื้อยืดพื้นที่กดเต็มแถว แถวสูงอย่างน้อย --tap */
+.rowLink {
+  grid-area: number;
+  color: var(--color-text);
   font-size: var(--text-body);
-  font-weight: 600;
   text-decoration: underline;
   text-decoration-color: transparent;
   transition: text-decoration-color var(--duration) var(--ease);
 }
 
-.muted {
-  color: var(--color-muted);
+.rowLink::after {
+  content: "";
+  position: absolute;
+  inset: 0;
 }
 
 .status {
-  font-weight: 600;
+  grid-area: status;
+  font-size: var(--text-body);
+  text-align: end;
+}
+
+.recipient {
+  grid-area: recipient;
 }
 
 .total {
-  font-weight: 600;
+  grid-area: total;
+  text-align: end;
+}
+
+.when {
+  grid-area: when;
+  color: var(--color-muted);
+}
+
+.row > .actions {
+  position: relative;
+  z-index: 1;
+  grid-area: actions;
+  justify-self: end;
+  padding-top: var(--space-2);
+}
+
+.muted {
+  color: var(--color-muted);
 }
 
 .actions {
@@ -126,6 +183,7 @@
 
 .pagination {
   display: flex;
+  margin-top: var(--space-5);
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
@@ -135,7 +193,7 @@
 }
 
 @media (hover: hover) {
-  .rowLink:hover .orderNo {
+  .row:hover .rowLink {
     text-decoration-color: currentColor;
   }
 
@@ -144,87 +202,177 @@
   }
 }
 
+@media (min-width: 600px) {
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .search {
+    flex: 1 1 18rem;
+  }
+}
+
 @media (min-width: 900px) {
-  .list {
-    grid-template-columns: repeat(3, auto) minmax(0, 1fr) repeat(2, auto);
+  /* กลุ่มรอจัดของกับกลุ่มอื่นเป็นตารางแยกกัน ความกว้างคอลัมน์จึงตายตัวเพื่อให้ตรงกัน */
+  .table {
+    display: grid;
+    grid-template-columns: 7rem 6rem 9rem minmax(0, 1fr) 9rem 6rem;
+    column-gap: var(--space-4);
+  }
+
+  .head,
+  .list,
+  .row {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    grid-template-areas: none;
+  }
+
+  .head {
+    padding-bottom: var(--space-2);
+    color: var(--color-muted);
+    font-size: var(--text-label);
   }
 
   .row {
-    grid-column: 1 / -1;
-    grid-template-columns: subgrid;
-    gap: 0 var(--space-5);
-    align-items: baseline;
-    padding-block: var(--space-3);
+    padding-block: var(--space-1);
   }
 
-  .rowLink {
-    grid-column: 1 / span 5;
-    grid-template-columns: subgrid;
-    column-gap: var(--space-5);
-    align-items: baseline;
-    align-content: center;
-  }
-
-  .rowTop {
-    display: contents;
-  }
-
-  .total {
-    text-align: end;
+  .row > *,
+  .row > .actions {
+    grid-area: auto;
+    padding-top: 0;
   }
 
   .row > .actions {
-    justify-content: end;
+    grid-column: 6;
+  }
+
+  .rowLink,
+  .status {
+    font-size: var(--text-label);
+    text-align: start;
+  }
+
+  .when {
+    color: var(--color-text);
+  }
+
+  .end {
+    text-align: end;
+  }
+
+  .cellLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
 }
 
-/* หน้ารายละเอียดคำสั่งซื้อ แต่ละส่วนคั่นด้วยเส้น จอกว้างหัวส่วนอยู่ซ้าย เนื้อหาอยู่ขวาแบบ 4:8 */
+/* หน้ารายละเอียดคำสั่งซื้อ: หัวเรื่องคือสถานะ ปุ่มจัดส่งอยู่ใต้หัวเรื่อง จอกว้างสินค้าอยู่ซ้าย ที่อยู่อยู่ขวาแบบ 7:5 */
 
-.section {
+.back {
+  margin-bottom: var(--space-2);
+}
+
+.intro {
   display: grid;
-  gap: var(--space-3);
-  padding-block: var(--space-5);
-  border-top: 1px solid var(--color-border);
+  justify-items: start;
+  gap: var(--space-2);
+  margin-bottom: var(--space-7);
 }
 
-.section h2 {
+.intro h1,
+.intro p {
   margin: 0;
 }
 
-.section p {
-  margin: 0;
+.intro > .actions {
+  justify-self: stretch;
+  margin-top: var(--space-3);
+}
+
+.intro > .actions form {
+  flex: 1 1 auto;
+}
+
+.ship {
+  width: 100%;
+  min-height: var(--control-main);
+  font-size: var(--text-body);
+}
+
+.detail {
+  display: grid;
+  gap: var(--space-7);
+}
+
+.label {
+  margin: 0 0 var(--space-2);
+  color: var(--color-muted);
+  font-size: var(--text-label);
+  font-weight: 400;
+  line-height: var(--line-height);
 }
 
 .items {
-  display: grid;
-  gap: var(--space-3);
   margin: 0;
   padding: 0;
+  border-top: 1px solid var(--color-border);
   list-style: none;
 }
 
 .item {
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr);
-  gap: var(--space-3);
-  align-items: center;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "image name total"
+    "image quantity total";
+  align-content: start;
+  column-gap: var(--space-3);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
   font-variant-numeric: tabular-nums;
 }
 
 .item img,
 .noImage {
-  width: 56px;
-  height: 56px;
-  object-fit: cover;
+  grid-area: image;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.noImage {
   background: var(--color-surface);
+}
+
+.itemName {
+  grid-area: name;
+}
+
+.itemQuantity {
+  grid-area: quantity;
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.itemTotal {
+  grid-area: total;
+  text-align: end;
 }
 
 .totals {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   row-gap: var(--space-1);
-  max-width: var(--measure);
-  margin: 0;
+  margin: var(--space-4) 0 0;
   font-variant-numeric: tabular-nums;
 }
 
@@ -240,43 +388,58 @@
   font-weight: 600;
 }
 
-/* ปุ่มท้ายหน้า จอแคบติดขอบล่างจอเมื่อมีปุ่มจัดส่ง กดได้โดยไม่ต้องเลื่อนลงไปท้ายหน้า */
-.bar {
+.aside {
+  display: grid;
+  align-content: start;
+  gap: var(--space-6);
+}
+
+.aside p {
+  margin: 0;
+}
+
+.address {
+  max-width: var(--measure);
+}
+
+.copy {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--color-text);
+  gap: 0 var(--space-3);
+  font-size: var(--text-label);
 }
 
-@media (max-width: 899px) {
-  .bar:has(:global(.button):not(:global(.button-secondary))) {
-    position: sticky;
-    bottom: 0;
-    z-index: 1;
-    margin-inline: calc(-1 * var(--gutter));
-    padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
-    background: var(--color-bg);
+.facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.facts dt {
+  color: var(--color-muted);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+@media (min-width: 600px) {
+  .intro > .actions form {
+    flex: none;
+  }
+
+  .ship {
+    width: auto;
+    padding-inline: var(--space-7);
   }
 }
 
 @media (min-width: 900px) {
-  .section {
-    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
-    column-gap: var(--space-7);
-  }
-
-  .section > * {
-    grid-column: 2;
-  }
-
-  .section > h2 {
-    grid-row: 1;
-    grid-column: 1;
-  }
-
-  .bar {
-    padding-inline-start: calc((100% - var(--space-7)) / 3 + var(--space-7));
+  .detail {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    column-gap: var(--space-8);
   }
 }

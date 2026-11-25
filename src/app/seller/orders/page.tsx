@@ -17,5 +17,16 @@ export default async function SellerOrdersPage({ searchParams }: PageProps<"/sel
     page: params.page,
     asOf: params.asOf,
   });
-  return <OrderListView params={params} counts={countShopOrders(db, shopId)} list={list} version={version} />;
+  // ตัวกรองทั้งหมดแสดงคำสั่งซื้อที่รอจัดของเป็นกลุ่มแรก ใช้ asOf เดียวกับรายการ จึงไม่แทรกคำสั่งซื้อใหม่เอง
+  const awaitingPacking =
+    !params.status && !params.q ? listShopOrders(db, shopId, { status: ORDER_STATUS.paid, q: "", page: 1, asOf: list.asOf }) : null;
+  return (
+    <OrderListView
+      params={params}
+      counts={countShopOrders(db, shopId)}
+      list={list}
+      awaitingPacking={awaitingPacking}
+      version={version}
+    />
+  );
 }

@@ -151,6 +151,8 @@ const detail = (orderNo: string, query: Record<string, string> = {}) =>
 
 const rowsIn = (html = "") => [...html.matchAll(/href="\/seller\/orders\/(\d+)/g)].map((match) => match[1]);
 const text = (html = "") => html.replace(/<!-- -->/g, "");
+/** ข้อความที่ตาเห็น ไม่สนแท็ก */
+const plain = (html = "") => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 
 describe("ORD-001 หน้ารายการคำสั่งซื้อ", () => {
   test("ORD-001 เห็น 20 รายการของร้านตัวเอง ข้อมูลครบ และรู้ว่ามี 3 หน้า", async () => {
@@ -165,9 +167,9 @@ describe("ORD-001 หน้ารายการคำสั่งซื้อ",
 
     expect(rowsIn(html)).toHaveLength(20);
     expect(rowsIn(html)[0]).toBe("2611240045");
-    expect(text(html)).toContain(`สั่งซื้อเมื่อ ${formatThaiDateTime("2026-11-24T08:52+07:00")}`);
-    expect(text(html)).toContain("ผู้รับ สมหญิง ใจดี");
-    expect(text(html)).toContain("2 ชิ้น · ยอดรวม ฿540");
+    expect(plain(html)).toContain(`สั่งซื้อเมื่อ ${formatThaiDateTime("2026-11-24T08:52+07:00")}`);
+    expect(plain(html)).toContain("ผู้รับ สมหญิง ใจดี");
+    expect(plain(html)).toContain("2 ชิ้น · ยอดรวม ฿540");
     expect(text(html)).toContain("หน้า 1 จาก 3");
     expect(theirs.some((no) => html?.includes(no))).toBe(false);
   });
@@ -196,6 +198,42 @@ describe("ORD-001 หน้ารายการคำสั่งซื้อ",
     expect(next).not.toBeNull();
     expect(rowsIn(page2).filter((no) => rowsIn(page1).includes(no))).toEqual([]);
     expect(rowsIn(page2)).toHaveLength(20);
+  });
+});
+
+describe("ORD-001 ORD-009 กลุ่มรอจัดของ", () => {
+  test("ORD-001 ORD-009 ตัวกรองทั้งหมดแสดงคำสั่งซื้อที่รอจัดของเป็นกลุ่มแรกพร้อมปุ่มจัดส่ง และไม่ซ้ำในกลุ่มอื่น", async () => {
+    const somchai = newShop("สมชายเสื้อผ้า");
+    const waiting = order(somchai, ORDER_STATUS.paid);
+    for (let i = 0; i < 3; i++) order(somchai);
+    const shipping = order(somchai, ORDER_STATUS.shipping);
+    addParcel(db, { orderId: shipping.id, trackingNo: "BS0000001240", status: PARCEL_STATUS.handedOver });
+    signInAs(somchai.ownerId);
+
+    const html = (await list()).html ?? "";
+    const [work, rest] = html.split("คำสั่งซื้ออื่น");
+
+    expect(plain(work)).toContain("รอจัดของ 1 รายการ");
+    expect(rowsIn(work)).toEqual([waiting.orderNo]);
+    expect(work).toContain("จัดส่ง</button>");
+    expect(rowsIn(rest)).toHaveLength(4);
+    expect(rowsIn(rest)).not.toContain(waiting.orderNo);
+    expect(rest).not.toContain("จัดส่ง</button>");
+    expect(rest).toMatch(/class="link-action" href="\/track\/BS0000001240">ดูการจัดส่ง</);
+  });
+
+  test("ORD-002 ORD-003 ตัวกรองสถานะอื่นและการค้นหาไม่มีกลุ่มรอจัดของ", async () => {
+    const somchai = newShop("สมชายเสื้อผ้า");
+    const waiting = order(somchai, ORDER_STATUS.paid);
+    order(somchai);
+    signInAs(somchai.ownerId);
+
+    for (const query of [{ status: "paid" }, { status: "awaitingPayment" }, { q: waiting.orderNo }] as Record<string, string>[]) {
+      const html = (await list(query)).html ?? "";
+      expect(html).not.toContain("รอจัดของ");
+      expect(html).not.toContain("คำสั่งซื้ออื่น");
+    }
+    expect(rowsIn((await list({ status: "paid" })).html)).toEqual([waiting.orderNo]);
   });
 });
 
@@ -316,9 +354,9 @@ describe("ORD-005 ถึง ORD-008 หน้ารายละเอียด",
 
     const html = text((await detail("2611240045")).html);
 
-    expect(html).toContain("เสื้อยืดคอกลม สีดำ ขนาด L ฿250 × 2 = ฿500");
+    expect(plain(html)).toContain("เสื้อยืดคอกลม สีดำ ขนาด L ฿250 × 2 ฿500");
     expect(html).toMatch(/ยอดรวมสินค้า<\/dt><dd>฿500.*ค่าส่ง<\/dt><dd>฿40.*ยอดรวมทั้งหมด<\/dt><dd[^>]*>฿540/);
-    expect(html).toContain(`สั่งซื้อเมื่อ ${formatThaiDateTime("2026-11-24T08:52+07:00")}`);
+    expect(plain(html)).toContain(`สั่งซื้อเมื่อ ${formatThaiDateTime("2026-11-24T08:52+07:00")}`);
     expect(html).toContain("สมหญิง ใจดี<br/>081-234-5678<br/>99/1 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110");
     expect(html).toContain(`จ่ายแล้ว PromptPay ${formatThaiDateTime("2026-11-24T08:55+07:00")}`);
     expect(html).not.toContain("somying@example.com");
@@ -333,7 +371,7 @@ describe("ORD-005 ถึง ORD-008 หน้ารายละเอียด",
 
     const html = text((await detail("2611240045")).html);
 
-    expect(html).toContain("เสื้อยืดคอกลม สีดำ ขนาด L ฿250 × 2 = ฿500");
+    expect(plain(html)).toContain("เสื้อยืดคอกลม สีดำ ขนาด L ฿250 × 2 ฿500");
     expect(html).toContain("กรุงเทพฯ 10110");
   });
 
@@ -412,7 +450,7 @@ describe("ORD-009 ปุ่มจัดส่ง", () => {
     const html = text((await detail("2611240045")).html);
 
     expect(result).toEqual({ state: { error: "คำสั่งซื้อนี้ถูกยกเลิกแล้ว จัดส่งไม่ได้" } });
-    expect(html).toContain(">ยกเลิก</p>");
+    expect(html).toContain("<h1>ยกเลิก</h1>");
     expect(html).not.toContain("จัดส่ง</button>");
   });
 
@@ -489,7 +527,7 @@ describe("ORD-010 ORD-011 หน้าที่เปิดค้าง", () => 
     const html = text((await detail(pending.orderNo)).html);
 
     expect(await checkForUpdates(async () => shopOrdersVersion(db, somchai.id), version)).toBe("changed");
-    expect(html).toContain(">จ่ายแล้ว</p>");
+    expect(html).toContain("<h1>จ่ายแล้ว</h1>");
     expect(html).toContain("จ่ายแล้ว บัตร");
     expect(html).toContain(PARCEL_STATUS.awaitingPacking);
     expect(html).toContain("จัดส่ง</button>");
@@ -506,7 +544,7 @@ describe("ORD-010 ORD-011 หน้าที่เปิดค้าง", () => 
     const counts = text((await list()).html);
 
     expect(html).toContain("คำสั่งซื้อนี้ถูกยกเลิกแล้ว");
-    expect(html).toContain(">ยกเลิก</p>");
+    expect(html).toContain("<h1>ยกเลิก</h1>");
     expect(html).toContain("฿290");
     expect(html).toContain("99/1 ถนนสุขุมวิท");
     expect(html).not.toContain("จัดส่ง</button>");
@@ -521,7 +559,9 @@ describe("ORD-012 กันการเปิดคำสั่งซื้อ�
     example045(somchai);
     signInAs(somchai.ownerId);
 
-    expect((await detail("2611240045")).html).toContain("<h1>คำสั่งซื้อ 2611240045</h1>");
+    const html = (await detail("2611240045")).html;
+    expect(html).toContain("<h1>จ่ายแล้ว</h1>");
+    expect(plain(html)).toContain("คำสั่งซื้อ 2611240045");
   });
 
   test("ORD-012 คำสั่งซื้อของร้านอื่นกับเลขที่ไม่มีอยู่จริงได้หน้าไม่พบเดียวกัน ไม่เห็นข้อมูลใด", async () => {
@@ -596,7 +636,7 @@ describe("ORD-015 ผู้ขายเปลี่ยนสถานะคำ�
     const html = (await detail("2611240045")).html ?? "";
     const controls = [...html.matchAll(/<(a|button)\b[^>]*>(.*?)<\/\1>/g)].map((match) => match[2]);
 
-    expect(controls).toEqual(["จัดส่ง", "กลับไปหน้ารายการ"]);
+    expect(controls).toEqual(["กลับไปหน้ารายการ", "จัดส่ง"]);
     expect(html.match(/<input\b[^>]*>/g)).toEqual(['<input type="hidden" name="orderNo" value="2611240045"/>']);
   });
 
@@ -648,7 +688,10 @@ describe("คุณภาพของหน้า", () => {
     addParcel(db, { orderId: paid.id });
     signInAs(somchai.ownerId);
     const css = readFileSync(join(process.cwd(), "src/features/shop-orders/components/shop-orders.module.css"), "utf8");
-    const tallClasses = ["button", "chip", ...["rowLink", "newOrders"].filter((name) => css.match(new RegExp(`\\.${name} \\{[^}]*min-height: var\\(--tap\\)`)))];
+    const tall = (name: string) => css.match(new RegExp(`\\.${name} \\{[^}]*min-height: var\\(--tap\\)`));
+    // ลิงก์ของแถวยืดพื้นที่กดเต็มแถว จึงสูงเท่าแถว
+    const rowLinkFillsRow = tall("row") && css.match(/\.rowLink::after \{[^}]*inset: 0/);
+    const tallClasses = ["button", "chip", "link-action", ...(rowLinkFillsRow ? ["rowLink"] : []), ...(tall("newOrders") ? ["newOrders"] : [])];
 
     for (const html of [(await list()).html ?? "", (await detail("2611240045")).html ?? ""]) {
       const controls = [...html.matchAll(/<(a|button)\b[^>]*class="([^"]*)"/g)].map((match) => match[2]);

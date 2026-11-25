@@ -9,6 +9,7 @@ import styles from "./shop-orders.module.css";
 
 /**
  * ปุ่ม "จัดส่ง" ของคำสั่งซื้อที่จ่ายแล้ว หรือลิงก์ "ดูการจัดส่ง" ของคำสั่งซื้อที่มีพัสดุในสถานะอื่น (ORD-009)
+ * จัดส่งคืองานที่ต้องทำจึงเป็นปุ่ม ดูการจัดส่งแค่เปิดดูจึงเป็นลิงก์ข้อความ
  * ข้อความจากการกดยังค้างอยู่หลังหน้าโหลดสถานะใหม่แล้วปุ่มหายไป เพราะ component นี้ไม่ถูกถอดออก
  * secondary ใช้ในรายการ ซึ่งมีปุ่มจัดส่งหลายแถว สีเน้นจึงเหลือไว้ให้ปุ่มหลักปุ่มเดียวของหน้ารายละเอียด
  */
@@ -32,13 +33,13 @@ export function ShippingActions({
       {canShip && (
         <form action={formAction}>
           <input type="hidden" name="orderNo" value={orderNo} />
-          <button type="submit" className={secondary ? "button button-secondary" : "button"} disabled={pending}>
+          <button type="submit" className={secondary ? "button button-secondary" : `button ${styles.ship}`} disabled={pending}>
             จัดส่ง
           </button>
         </form>
       )}
       {!canShip && trackingNo && (
-        <Link href={trackingHref(trackingNo)} className="button button-secondary">
+        <Link href={trackingHref(trackingNo)} className="link-action">
           ดูการจัดส่ง
         </Link>
       )}

@@ -11,7 +11,7 @@ describe("P3D-003 ทางเข้า ดูแบบ 3 มิติ ในแ
   test("P3D-003 สินค้าที่มีไฟล์ 3 มิติ แสดงรูปปกเป็นรูปใหญ่ รูปย่อ 3 รูป ตามด้วยทางเข้า ดูแบบ 3 มิติ", () => {
     const html = renderToStaticMarkup(<ProductGallery images={images} name="เก้าอี้ผ้ากำมะหยี่" model={model} />);
 
-    expect(html).toMatch(/^<div><img src="\/sample-images\/c1\.svg" alt="เก้าอี้ผ้ากำมะหยี่"/);
+    expect(html).toMatch(/^<div class="[^"]+"><div class="[^"]+"><img src="\/sample-images\/c1\.svg" alt="เก้าอี้ผ้ากำมะหยี่"/);
     const thumbs = buttons(html);
     expect(thumbs).toHaveLength(4);
     expect(thumbs.slice(0, 3).map((button) => button.match(/aria-label="([^"]+)"/)?.[1])).toEqual(["ดูรูปที่ 1", "ดูรูปที่ 2", "ดูรูปที่ 3"]);

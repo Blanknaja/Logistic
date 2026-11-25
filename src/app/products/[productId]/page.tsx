@@ -17,27 +17,30 @@ export default async function ProductPage({ params }: PageProps<"/products/[prod
 
   return (
     <article className={styles.detail}>
-      <ProductGallery images={product.images} name={product.name} model={product.model} />
-      <div>
-        <h1>{product.name}</h1>
-        <AddToCartForm
-          product={product}
-          signedIn={viewer !== null}
-          isOwnShop={viewer?.shopId === product.shop.id}
-          loginHref={`/login?next=${encodeURIComponent(`/products/${product.id}`)}`}
-          addToCart={addToCartAction}
-        />
-        <p>
+      <header className={styles.intro}>
+        <p className={styles.kicker}>
+          {product.category && (
+            <>
+              หมวดหมู่ <Link href={browseHref({ category: String(product.category.id) })}>{product.category.name}</Link>
+              <span aria-hidden="true"> · </span>
+            </>
+          )}
           ร้าน <Link href={`/shops/${product.shop.id}`}>{product.shop.name}</Link>
         </p>
-        {product.category && (
-          <p>
-            หมวดหมู่ <Link href={browseHref({ category: String(product.category.id) })}>{product.category.name}</Link>
-          </p>
-        )}
-        <h2>รายละเอียด</h2>
+        <h1>{product.name}</h1>
+      </header>
+      <ProductGallery images={product.images} name={product.name} model={product.model} />
+      <AddToCartForm
+        product={product}
+        signedIn={viewer !== null}
+        isOwnShop={viewer?.shopId === product.shop.id}
+        loginHref={`/login?next=${encodeURIComponent(`/products/${product.id}`)}`}
+        addToCart={addToCartAction}
+      />
+      <section className={styles.story} aria-labelledby="product-description">
+        <h2 id="product-description">รายละเอียด</h2>
         <p className={styles.description}>{product.description}</p>
-      </div>
+      </section>
     </article>
   );
 }

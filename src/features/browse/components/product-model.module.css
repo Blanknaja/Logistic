@@ -1,10 +1,10 @@
-/* แบบ 3 มิติในแกลเลอรีของหน้าสินค้า (P3D-003 P3D-004 P3D-005) ขนาดเท่ารูปใหญ่ จอสลับรูปกับแบบ 3 มิติจึงไม่กระโดด */
+/* แบบ 3 มิติในแกลเลอรีของหน้าสินค้า (P3D-003 P3D-004 P3D-005) เต็มกรอบรูปใหญ่ จอสลับรูปกับแบบ 3 มิติจึงไม่กระโดด */
 
 .stage {
   position: relative;
   width: 100%;
-  aspect-ratio: 1;
-  background: var(--color-bg);
+  height: 100%;
+  background: var(--color-surface);
 }
 
 .viewer {
@@ -18,15 +18,25 @@
   display: none;
 }
 
-.arButton {
+.viewer > .arButton {
   position: absolute;
-  right: 12px;
-  bottom: 12px;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  background: var(--color-bg);
 }
 
 .cover {
   position: absolute;
   inset: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.cover > img,
+.cover > div {
+  width: auto;
+  max-width: 100%;
+  height: 100%;
 }
 
 .status {
@@ -34,10 +44,11 @@
   left: 50%;
   top: 50%;
   margin: 0;
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: rgb(0 0 0 / 60%);
-  color: #fff;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius);
+  background: var(--color-text);
+  color: var(--color-bg);
+  font-size: var(--text-label);
   transform: translate(-50%, -50%);
 }
 
@@ -45,13 +56,6 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  box-sizing: border-box;
   height: 100%;
   margin: 0;
-}
-
-.thumb {
-  font-size: 0.75rem;
-  line-height: 1.2;
-  color: var(--color-text);
 }

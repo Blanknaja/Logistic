@@ -78,7 +78,7 @@ export function ProductModel({ src, cover, alt }: { src: string; cover: string |
         ar
         ar-scale="fixed"
       >
-        <button slot="ar-button" type="button" className={`button ${styles.arButton}`}>
+        <button slot="ar-button" type="button" className={`button button-secondary ${styles.arButton}`}>
           ดูในห้องของคุณ
         </button>
       </model-viewer>

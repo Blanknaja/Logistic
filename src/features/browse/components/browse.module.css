@@ -108,25 +108,19 @@
 }
 
 .priceText {
-  color: var(--color-primary-hover);
-  font-weight: 700;
-}
-
-.bigPrice {
-  margin: 0 0 var(--space-4);
-  color: var(--color-primary-hover);
-  font-size: 1.6rem;
+  color: var(--color-text);
   font-weight: 700;
 }
 
 .muted {
   color: var(--color-muted);
-  font-size: 0.9rem;
+  font-size: var(--text-label);
 }
 
 .soldOut {
   color: var(--color-danger);
-  font-weight: 600;
+  font-size: var(--text-label);
+  font-weight: 700;
 }
 
 .image,
@@ -134,16 +128,15 @@
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  background: var(--color-bg);
+  background: var(--color-surface);
 }
 
 .noImage {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #e9ecf0;
   color: var(--color-muted);
-  font-size: 0.9rem;
+  font-size: var(--text-label);
 }
 
 .pagination {
@@ -155,54 +148,184 @@
   margin-top: var(--space-4);
 }
 
-/* หน้ารายละเอียดสินค้า */
+/* หน้ารายละเอียดสินค้า คอลัมน์เดียว: หัวเรื่อง รูป แถบซื้อ แล้วรายละเอียด */
 
 .detail {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 
-@media (min-width: 720px) {
-  .detail {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: start;
-  }
+.intro {
+  display: grid;
+  gap: var(--space-1);
+  max-width: var(--measure);
+}
+
+.intro h1 {
+  margin: 0;
+}
+
+.kicker {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.kicker a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--color-text);
+}
+
+.gallery {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* กรอบรูปใหญ่สูงคงที่ สลับรูปกับแบบ 3 มิติแล้วหน้าไม่กระโดด บนมือถือเตี้ยกว่าจอกว้าง ราคาจึงขึ้นในจอแรก */
+.plate {
+  display: flex;
+  justify-content: center;
+  height: min(75vw, 640px);
+  margin-inline: calc(-1 * var(--gutter));
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.plate > .image,
+.plate > .noImage {
+  width: auto;
+  max-width: 100%;
+  height: 100%;
 }
 
 .thumbs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 8px 0 0;
+  gap: var(--space-3);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .thumb {
-  width: 64px;
-  height: 64px;
+  display: block;
+  width: 56px;
+  height: 56px;
   padding: 0;
-  overflow: hidden;
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius);
+  border: 0;
   background: none;
   cursor: pointer;
 }
 
-.thumb[aria-pressed="true"] {
-  border-color: var(--color-primary);
+.thumb > * {
+  outline: 1px solid var(--color-border);
+  outline-offset: -1px;
+  transition: outline-color var(--duration) var(--ease);
+}
+
+.thumb[aria-pressed="true"] > * {
+  outline: 2px solid var(--color-text);
+  outline-offset: -2px;
+}
+
+.view3d {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 56px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-label);
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    box-shadow var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
+}
+
+.view3d svg {
+  flex: none;
+}
+
+.view3d[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 2px var(--color-text);
+}
+
+.view3d:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) {
+  .thumb:hover > * {
+    outline-color: var(--color-text);
+  }
+
+  .view3d:hover {
+    box-shadow: inset 0 0 0 2px var(--color-text);
+  }
+}
+
+/* แถบซื้อ: ราคาและสต็อก แล้วตัวเลือก จำนวน และปุ่มใส่ตะกร้า */
+
+.purchase {
+  display: grid;
+  gap: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-text);
+}
+
+.priceBlock {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+}
+
+.priceBlock p {
+  margin: 0;
+}
+
+.bigPrice {
+  color: var(--color-text);
+  font-size: var(--text-price);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.stock {
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.choose {
+  display: grid;
+  align-content: start;
+  gap: var(--space-5);
+  min-width: 0;
 }
 
 .option {
-  margin: 0 0 8px;
+  min-width: 0;
+  margin: 0;
   padding: 0;
   border: 0;
 }
 
 .option legend {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-2);
   padding: 0;
-  font-weight: 600;
+  font-size: var(--text-label);
+  font-weight: 700;
+}
+
+.option :global(.chips) {
+  margin: 0;
 }
 
 .choice {
@@ -221,53 +344,153 @@
 }
 
 .choice:has(input:checked) {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  font-weight: 600;
+  box-shadow: inset 0 0 0 2px var(--color-text);
+  font-weight: 700;
 }
 
 .choice:has(input:focus-visible) {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+@media (hover: hover) {
+  .choice:hover {
+    box-shadow: inset 0 0 0 2px var(--color-text);
+  }
+}
+
+.buyBar {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.buyBar > p {
+  margin: 0;
+}
+
+.buyBar > :global(.button) {
+  justify-self: start;
+}
+
+.actions {
+  display: flex;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.quantity {
+  display: grid;
+  flex: none;
+  gap: var(--space-1);
+  width: 112px;
+  font-size: var(--text-label);
+  font-weight: 700;
+}
+
+.quantity :global(.input) {
+  height: var(--control-main);
+}
+
+.actions > :global(.button) {
+  flex: 1;
+  min-height: var(--control-main);
+  font-size: var(--text-body);
 }
 
 .variantList {
   display: grid;
-  gap: 4px;
-  margin: 0 0 var(--space-4);
+  margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 0.95rem;
+  font-size: var(--text-label);
 }
 
 .variantList li {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 0 8px;
-  padding: 4px 8px;
-  border-radius: var(--radius);
-  background: var(--color-bg);
+  gap: 0 var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .faded {
   opacity: 0.5;
 }
 
-.quantity {
-  max-width: 8em;
+.story {
+  display: grid;
+  gap: var(--space-4);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+}
+
+.story h2 {
+  margin: 0;
 }
 
 .description {
+  max-width: var(--measure);
+  margin: 0;
+  line-height: 1.8;
   white-space: pre-line;
+}
+
+@media (min-width: 600px) {
+  .thumb {
+    width: 72px;
+  }
+
+  .thumb,
+  .view3d {
+    height: 72px;
+  }
+}
+
+/* จอแคบ ปุ่มใส่ตะกร้าติดขอบล่างจอ กดได้โดยไม่ต้องเลื่อนผ่านรูปและตัวเลือก */
+@media (max-width: 899px) {
+  .detail {
+    margin-bottom: var(--space-8);
+  }
+
+  .buyBar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 10;
+    padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--color-text);
+    background: var(--color-bg);
+  }
+
+  .quantity {
+    grid-template-columns: auto 72px;
+    align-items: center;
+    gap: var(--space-2);
+    width: auto;
+  }
+}
+
+@media (min-width: 900px) {
+  .plate {
+    margin-inline: 0;
+  }
+
+  .purchase,
+  .story {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    column-gap: var(--space-7);
+  }
+
+  .purchase {
+    padding-block: var(--space-6);
+  }
 }
 
 /* โครงสีเทาระหว่างรอข้อมูล (BRW-012) */
 
 .skeleton {
-  border-radius: var(--radius);
-  background: #e3e7ec;
+  background: var(--color-surface);
   animation: pulse 1.2s ease-in-out infinite;
 }
 
@@ -280,7 +503,6 @@
 .skeletonChip {
   width: 96px;
   height: var(--tap);
-  border-radius: 999px;
 }
 
 .skeletonLine {
@@ -294,10 +516,6 @@
 
 .skeletonCard {
   aspect-ratio: 3 / 4;
-}
-
-.skeletonSquare {
-  aspect-ratio: 1;
 }
 
 .skeletonButton {

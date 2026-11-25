@@ -5,30 +5,39 @@
   display: block;
 }
 
+.selectAll {
+  padding-bottom: var(--space-2);
+  font-size: var(--text-label);
+}
+
 .shop {
   border-top: 1px solid var(--color-border);
 }
 
 .shop + .shop {
-  margin-top: var(--space-6);
+  margin-top: var(--space-5);
 }
 
 .shopHeader {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0 var(--space-2);
-  padding-block: var(--space-2);
+  gap: 0 var(--space-3);
+  padding-top: var(--space-2);
 }
 
-.shopHeader a {
+/* ชื่อร้านเล็กกว่าชื่อสินค้า ผู้ซื้อมาดูสินค้า ร้านเป็นแค่ที่มา */
+.shopName {
+  margin: 0;
+  font-size: var(--text-label);
+  font-weight: 400;
+}
+
+.shopName a {
   display: inline-flex;
   align-items: center;
-  min-width: 0;
   min-height: var(--tap);
-  font-size: var(--text-heading);
-  font-weight: 600;
-  line-height: 1.3;
+  color: var(--color-muted);
 }
 
 .shopTotal {
@@ -46,10 +55,14 @@
 .item {
   display: grid;
   grid-template-columns: var(--tap) 64px minmax(0, 1fr);
-  gap: var(--space-3);
+  gap: var(--space-2) var(--space-3);
   align-items: start;
-  padding-block: var(--space-4);
+  padding-block: var(--space-3) var(--space-4);
+}
+
+.item + .item {
   border-top: 1px solid var(--color-border);
+  padding-top: var(--space-4);
 }
 
 .faded .thumb,
@@ -57,10 +70,11 @@
   opacity: 0.5;
 }
 
+/* ช่องเลือกจริงโปร่งใสคลุมทั้งป้าย กล่องที่เห็นวาดเอง */
 .check {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
   gap: var(--space-2);
   min-width: var(--tap);
   min-height: var(--tap);
@@ -68,11 +82,57 @@
 }
 
 .check input {
-  width: 20px;
-  height: 20px;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   margin: 0;
-  accent-color: var(--color-text);
+  opacity: 0;
   cursor: pointer;
+}
+
+.box {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+  transition: box-shadow var(--duration) var(--ease);
+}
+
+.box::after {
+  content: "";
+  width: 6px;
+  height: 11px;
+  margin-top: -3px;
+  border: solid var(--color-text);
+  border-width: 0 2px 2px 0;
+  opacity: 0;
+  transform: rotate(45deg);
+}
+
+.check input:checked + .box {
+  box-shadow: var(--selected-ring);
+}
+
+.check input:checked + .box::after {
+  opacity: 1;
+}
+
+.check input:disabled,
+.check:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+.check input:disabled + .box {
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+.check:has(input:focus-visible) .box {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
 .thumb {
@@ -80,11 +140,15 @@
   place-items: center;
   width: 64px;
   height: 64px;
-  object-fit: cover;
-  background: var(--color-surface);
+  object-fit: contain;
+  background: var(--color-bg);
   color: var(--color-muted);
   font-size: var(--text-label);
   text-align: center;
+}
+
+div.thumb {
+  background: var(--color-surface);
 }
 
 .details {
@@ -96,7 +160,6 @@
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  font-weight: 600;
   line-height: 1.4;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -125,7 +188,6 @@
 
 .reason {
   color: var(--color-danger);
-  font-weight: 600;
 }
 
 .controls {
@@ -133,7 +195,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2) var(--space-3);
+  gap: var(--space-2) var(--space-4);
 }
 
 .stepper {
@@ -173,31 +235,15 @@
   text-align: center;
 }
 
-.lineTotal {
-  margin-left: auto;
-  font-weight: 600;
-}
-
-/* ดึงกลับเท่า padding ตัวหนังสือจึงตรงขอบขวาของเนื้อหา */
+/* พื้นที่กดกว้างอย่างน้อย 44 จุดแม้คำว่า "ลบ" สั้น */
 .remove {
   min-width: var(--tap);
   min-height: var(--tap);
-  margin-right: calc(-1 * var(--space-2));
-  padding: 0 var(--space-2);
-  border: 0;
-  background: none;
-  color: var(--color-text);
-  font: inherit;
-  font-size: var(--text-label);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-  cursor: pointer;
+  justify-content: center;
 }
 
-.remove:disabled {
-  color: var(--color-muted);
-  cursor: not-allowed;
+.lineTotal {
+  margin-left: auto;
 }
 
 .message {
@@ -210,66 +256,89 @@
     background: var(--color-surface);
   }
 
-  .remove:hover:not(:disabled) {
-    text-decoration-thickness: 2px;
+  .check:hover input:not(:checked, :disabled) + .box {
+    box-shadow: inset 0 0 0 1px var(--color-text);
   }
 }
 
-/* แถบยอดรวม: จอแคบติดขอบล่างจอแบบแถบซื้อของหน้าสินค้า จอกว้างเป็นคอลัมน์ขวาที่ติดจอ */
+/* แถบยอดรวม: จอแคบติดขอบล่างจอ ยอดรวมกับปุ่มอยู่แถวบน ค่าสินค้ากับค่าส่งอยู่แถวล่าง */
 .summary {
   position: sticky;
   bottom: 0;
   z-index: 1;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "retry retry"
+    "grand action"
+    "items ship";
   align-items: center;
-  gap: var(--space-2) var(--space-3);
+  gap: var(--space-1) var(--space-3);
   margin: var(--space-6) calc(-1 * var(--gutter)) 0;
   padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--color-text);
+  border-top: 1px solid var(--color-border);
   background: var(--color-bg);
 }
 
-.summary > [role="alert"] {
-  flex-basis: 100%;
+.retry {
+  grid-area: retry;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
-  margin: 0;
-}
-
-.summary > .check {
-  font-size: var(--text-label);
-}
-
-.summary > :global(.button) {
-  flex: 1 0 auto;
-  min-height: var(--control-main);
-  padding-inline: var(--space-4);
-  font-size: var(--text-body);
 }
 
 .totals {
-  margin-left: auto;
-  text-align: right;
+  display: contents;
+}
+
+.totals dd {
+  margin: 0;
+}
+
+.part {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-1);
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.part:first-child {
+  grid-area: items;
+}
+
+.part + .part {
+  grid-area: ship;
+  justify-self: end;
+}
+
+.grand {
+  grid-area: grand;
   line-height: 1.3;
 }
 
-.grandTotal {
+.grand dt {
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.grand dd {
   font-size: var(--text-heading);
   font-weight: 600;
 }
 
-.totals .muted {
-  margin-top: var(--space-1);
+.summary > :global(.button) {
+  grid-area: action;
+  min-height: var(--control-main);
+  padding-inline: var(--space-5);
+  font-size: var(--text-body);
 }
 
 .dialog {
   width: min(100% - 2 * var(--gutter), 420px);
   padding: var(--space-5);
   border: 0;
-  border-top: 1px solid var(--color-text);
   border-radius: var(--radius);
   background: var(--color-bg);
   color: var(--color-text);
@@ -277,7 +346,6 @@
 
 .dialog p {
   margin: 0 0 var(--space-5);
-  font-weight: 600;
 }
 
 .dialog::backdrop {
@@ -322,7 +390,9 @@
     grid-template-columns: var(--tap) 96px minmax(0, 1fr);
   }
 
+  /* รูปกินสองแถว ปุ่มจำนวนจึงอยู่ใต้ชื่อข้างรูป ไม่ตกไปใต้รูป */
   .item > .thumb {
+    grid-row: span 2;
     width: 96px;
     height: 96px;
   }
@@ -333,10 +403,11 @@
   }
 }
 
+/* จอกว้าง: รายการซ้าย 7 สรุปยอดขวา 5 บนแผ่นสีกระดาษ */
 @media (min-width: 900px) {
   .layout {
     display: grid;
-    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
     column-gap: var(--space-7);
     align-items: start;
   }
@@ -344,24 +415,43 @@
   .summary {
     top: var(--space-5);
     bottom: auto;
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-4);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "retry"
+      "items"
+      "ship"
+      "grand"
+      "action";
+    gap: var(--space-2);
     margin: 0;
-    padding: var(--space-3) 0 0;
+    padding: var(--space-5);
+    border-top: 0;
+    background: var(--color-surface);
   }
 
-  .totals {
-    margin-left: 0;
-    text-align: left;
+  .part {
+    justify-content: space-between;
+    color: var(--color-text);
+    font-size: var(--text-body);
   }
 
-  .grandTotal {
-    font-size: var(--text-heading);
-    line-height: 1.1;
+  .part + .part {
+    justify-self: stretch;
   }
 
-  .summary > :global(.button) {
-    flex: none;
+  .grand {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0 var(--space-3);
+    margin-bottom: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .grand dt {
+    color: var(--color-text);
+    font-size: var(--text-body);
   }
 }

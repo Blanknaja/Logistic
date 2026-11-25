@@ -1,5 +1,5 @@
 // ต่อ Omise โหมดทดลองตามคู่มือที่ docs.omise.co (Charges API, Tokens API, PromptPay) อ่านเมื่อ 2026-11-25
-// ยังไม่เคยลองกับบัญชีจริง เรื่องที่ต้องลองอยู่ในคำถามค้างของ docs/requirements/payment.md
+// ลองกับ Omise จริงแล้วเมื่อ 2026-11-25 ลองซ้ำด้วย pnpm test:omise คำตอบจริงที่บันทึกไว้อยู่ใน omise-recorded.json
 
 import { ProviderRejected, ProviderUnavailable, type Charge, type PaymentProvider } from "./provider";
 
@@ -43,7 +43,8 @@ export function createOmiseProvider({
       throw new ProviderUnavailable(`ต่อ Omise ไม่ได้ (${path})`);
     }
     const body = (await response.json().catch(() => null)) as (T & { object?: string; code?: string; message?: string }) | null;
-    if (response.status >= 500 || response.status === 429 || !body) {
+    // 401 คือ Omise ไม่รับกุญแจของเรา ยังไม่ได้ทำรายการ จึงไม่ใช่การจ่ายเงินที่ไม่สำเร็จ
+    if (response.status >= 500 || response.status === 429 || response.status === 401 || !body) {
       throw new ProviderUnavailable(`Omise ตอบ ${response.status} (${path})`);
     }
     if (!response.ok || body.object === "error") throw new ProviderRejected(body.code ?? "error", body.message ?? "");

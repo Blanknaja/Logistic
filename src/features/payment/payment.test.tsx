@@ -25,6 +25,8 @@ import { CLIENT_TIMEOUT_MS } from "@/features/payment/components/pay-form";
 import { POLL_INTERVAL_MS } from "@/features/payment/components/payment-poller";
 import { QrImage } from "@/features/payment/components/qr-image";
 import type { CardFields } from "@/features/payment/server/card";
+import { createOmiseProvider } from "@/features/payment/server/omise";
+import recorded from "@/features/payment/server/omise-recorded.json";
 import {
   abandonPendingPayments,
   checkPaymentStatus,
@@ -463,6 +465,23 @@ describe("PAY-007 Omise ล่มหรือตอบช้า", () => {
     expect(result).toEqual({ kind: "unavailable", minutesLeft: 24 });
     expect(performance.now() - begin).toBeLessThan(1000);
     expect(payments(group.groupId).map((p) => p.status)).toEqual(["เลิกรอ"]);
+  });
+
+  test("PAY-007 Omise ตัดบัตรสำเร็จหลังระบบเลิกรอไปแล้ว ระบบยังจับคู่เงินนั้นได้ คำสั่งซื้อเป็นจ่ายแล้ว", async () => {
+    // คำตอบจริงของ Omise ที่มาถึงหลังหมดเวลารอ ลองกับ Omise จริงแล้วเกิดได้ (charge สำเร็จ แต่ระบบไม่รู้เลขอ้างอิง)
+    const late = (async (url: string) => {
+      if (url.endsWith("/tokens")) return Response.json(recorded.token);
+      await new Promise((done) => setTimeout(done, 60));
+      return Response.json(recorded.cardSuccessful);
+    }) as typeof fetch;
+    const omise = createOmiseProvider({ publicKey: "pkey_test_a", secretKey: "skey_test_b", fetch: late });
+    const group = addGroup("14:00");
+
+    const result = await payByCard(db, omise, { buyerId: group.buyerId, groupId: group.groupId, card: GOOD }, at("14:06"), 30);
+
+    expect(result).toEqual({ kind: "unavailable", minutesLeft: 24 });
+    await vi.waitFor(() => expect(payments(group.groupId).map((p) => [p.status, p.omise_charge_id])).toEqual([["สำเร็จ", recorded.cardSuccessful.id]]));
+    expect(orderStatuses(group.groupId)).toEqual(["จ่ายแล้ว", "จ่ายแล้ว"]);
   });
 
   test("PAY-007 Omise ล่มยาวถึง 14:40 ลองใหม่กี่ครั้งก็จ่ายไม่ได้ ไม่ต่อเวลาหมดเขต และ 14:30 จ่ายไม่ได้แล้ว", async () => {

@@ -306,11 +306,24 @@ function beginPayment(db: Db, buyerId: number, groupId: number, method: PaymentM
   });
 }
 
+/** เก็บเลขอ้างอิงของ Omise ไว้กับการจ่ายเงิน แล้วใช้ผลนั้น */
+function recordCharge(db: Db, paymentId: number, charge: Charge, answeredAt: Date): PaymentStatus {
+  db.prepare("UPDATE payments SET omise_charge_id = ?, card_last4 = ?, qr_image_url = ? WHERE id = ?").run(
+    charge.id,
+    charge.cardLast4,
+    charge.qrImageUrl,
+    paymentId,
+  );
+  return applyCharge(db, paymentId, charge, answeredAt);
+}
+
 async function runCharge(db: Db, started: Started, request: () => Promise<Charge>, now: Date, timeoutMs: number): Promise<PayResult> {
+  const askedAt = Date.now();
+  const charging = Promise.resolve().then(request);
   let charge: Charge;
   let answeredAt: Date;
   try {
-    ({ answer: charge, answeredAt } = await ask(request, timeoutMs, now));
+    ({ answer: charge, answeredAt } = await ask(() => charging, timeoutMs, now));
   } catch (error) {
     if (error instanceof ProviderRejected) {
       markFailed(db, started.paymentId, failureReason(error.code, error.message), now);
@@ -322,15 +335,16 @@ async function runCharge(db: Db, started: Started, request: () => Promise<Charge
       started.paymentId,
       PAYMENT_STATUS.pending,
     );
+    // Omise อาจทำรายการเสร็จหลังเราเลิกรอ ถ้าไม่เก็บเลขอ้างอิง เงินที่ตัดไปแล้วจะไม่มีวันถูกจับคู่ (PAY-007 สถานะ `เลิกรอ`)
+    charging
+      .then(
+        (late) => recordCharge(db, started.paymentId, late, new Date(now.getTime() + Date.now() - askedAt)),
+        () => {},
+      )
+      .catch(console.error);
     return { kind: "unavailable", minutesLeft: started.minutesLeft };
   }
-  db.prepare("UPDATE payments SET omise_charge_id = ?, card_last4 = ?, qr_image_url = ? WHERE id = ?").run(
-    charge.id,
-    charge.cardLast4,
-    charge.qrImageUrl,
-    started.paymentId,
-  );
-  return { kind: "done", status: applyCharge(db, started.paymentId, charge, answeredAt) };
+  return { kind: "done", status: recordCharge(db, started.paymentId, charge, answeredAt) };
 }
 
 const describe = (groupId: number) => `Blanksong กลุ่มคำสั่งซื้อ ${groupId}`;

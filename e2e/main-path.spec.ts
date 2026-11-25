@@ -176,6 +176,7 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
 
   await test.step("ผู้ซื้อจ่ายด้วยบัตรทดลองของตัวจำลอง", async () => {
     const page = buyerPage;
+    await expect(page.getByText("กำลังใช้ตัวจำลองการจ่ายเงิน")).toBeVisible();
     await shot(page, "pay-choose-method", { mobile: true });
     await page.getByRole("link", { name: "บัตร", exact: true }).click();
     await page.getByLabel("เลขบัตร").fill("4242 4242 4242 4242");

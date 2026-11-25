@@ -3,7 +3,8 @@
 .search {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
+  max-width: 36rem;
   margin-bottom: var(--space-4);
 }
 
@@ -20,21 +21,22 @@
 .chipLink {
   color: var(--color-text);
   text-decoration: none;
+  font-variant-numeric: tabular-nums;
 }
 
 .chipActive {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  font-weight: 600;
+  box-shadow: inset 0 0 0 2px var(--color-text);
+  font-weight: 700;
 }
 
 .notice {
   margin: 0 0 var(--space-4);
-  padding: 12px var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-warning);
   border-radius: var(--radius);
-  background: #fff4e5;
   color: var(--color-warning);
+  font-size: var(--text-label);
+  font-weight: 700;
 }
 
 .newOrders {
@@ -44,30 +46,38 @@
   min-height: var(--tap);
   margin-bottom: var(--space-4);
   border-radius: var(--radius);
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--color-text);
+  color: var(--color-text);
+  font-size: var(--text-label);
+  font-weight: 700;
   text-decoration: none;
+  transition: box-shadow var(--duration) var(--ease);
 }
+
+/* รายการคำสั่งซื้อ จอแคบเรียงเป็นแถวซ้อน จอกว้างเป็นตารางที่คอลัมน์ตรงกันทุกแถว */
 
 .list {
   display: grid;
-  gap: 8px;
-  margin: 0 0 var(--space-4);
+  margin: 0 0 var(--space-5);
   padding: 0;
+  border-top: 1px solid var(--color-text);
   list-style: none;
 }
 
 .row {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
+  padding-block: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .rowLink {
   display: grid;
-  gap: 2px;
+  gap: 0;
   min-height: var(--tap);
   color: var(--color-text);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
   text-decoration: none;
 }
 
@@ -75,28 +85,34 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 4px 8px;
-  font-weight: 600;
+  gap: var(--space-1) var(--space-2);
 }
 
 .orderNo {
-  color: var(--color-primary);
+  font-size: var(--text-body);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color var(--duration) var(--ease);
 }
 
 .muted {
   color: var(--color-muted);
-  font-size: 0.95rem;
 }
 
 .status {
-  font-weight: 600;
+  font-weight: 700;
+}
+
+.total {
+  font-weight: 700;
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .actions form {
@@ -113,53 +129,154 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-3);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
 }
 
+@media (hover: hover) {
+  .rowLink:hover .orderNo {
+    text-decoration-color: currentColor;
+  }
+
+  .newOrders:hover {
+    box-shadow: inset 0 0 0 2px var(--color-text);
+  }
+}
+
+@media (min-width: 900px) {
+  .list {
+    grid-template-columns: repeat(3, auto) minmax(0, 1fr) repeat(2, auto);
+  }
+
+  .row {
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    gap: 0 var(--space-5);
+    align-items: baseline;
+    padding-block: var(--space-3);
+  }
+
+  .rowLink {
+    grid-column: 1 / span 5;
+    grid-template-columns: subgrid;
+    column-gap: var(--space-5);
+    align-items: baseline;
+    align-content: center;
+  }
+
+  .rowTop {
+    display: contents;
+  }
+
+  .total {
+    text-align: end;
+  }
+
+  .row > .actions {
+    justify-content: end;
+  }
+}
+
+/* หน้ารายละเอียดคำสั่งซื้อ แต่ละส่วนคั่นด้วยเส้น จอกว้างหัวส่วนอยู่ซ้าย เนื้อหาอยู่ขวาแบบ 4:8 */
+
 .section {
-  margin-bottom: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+  padding-block: var(--space-5);
+  border-top: 1px solid var(--color-border);
 }
 
 .section h2 {
-  margin-top: 0;
+  margin: 0;
+}
+
+.section p {
+  margin: 0;
 }
 
 .items {
   display: grid;
-  gap: 12px;
-  margin: 0 0 var(--space-4);
+  gap: var(--space-3);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .item {
   display: grid;
-  grid-template-columns: 64px 1fr;
-  gap: 12px;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: var(--space-3);
   align-items: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .item img,
 .noImage {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius);
+  width: 56px;
+  height: 56px;
   object-fit: cover;
-  background: var(--color-bg);
+  background: var(--color-surface);
 }
 
 .totals {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 4px 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  row-gap: var(--space-1);
+  max-width: var(--measure);
   margin: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 .totals dd {
   margin: 0;
-  text-align: right;
+  padding-inline-start: var(--space-4);
+  text-align: end;
 }
 
 .grandTotal {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-text);
   font-weight: 700;
+}
+
+/* ปุ่มท้ายหน้า จอแคบติดขอบล่างจอเมื่อมีปุ่มจัดส่ง กดได้โดยไม่ต้องเลื่อนลงไปท้ายหน้า */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-text);
+}
+
+@media (max-width: 899px) {
+  .bar:has(:global(.button):not(:global(.button-secondary))) {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    margin-inline: calc(-1 * var(--gutter));
+    padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
+    background: var(--color-bg);
+  }
+}
+
+@media (min-width: 900px) {
+  .section {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    column-gap: var(--space-7);
+  }
+
+  .section > * {
+    grid-column: 2;
+  }
+
+  .section > h2 {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .bar {
+    padding-inline-start: calc((100% - var(--space-7)) / 3 + var(--space-7));
+  }
 }

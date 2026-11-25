@@ -61,3 +61,19 @@ describe("P3D-005 ดูในห้องของคุณ", () => {
     expect(html).toMatch(/<button slot="ar-button" type="button"[^>]*>ดูในห้องของคุณ<\/button>/);
   });
 });
+
+describe("ชนิดของ <model-viewer>", () => {
+  test("TypeScript ตรวจค่าของ attribute ที่มีขีดกลางซึ่งตัวแสดงใช้", () => {
+    const wrong = (
+      <>
+        {/* @ts-expect-error ar-scale รับแค่ auto หรือ fixed */}
+        <model-viewer src={model} alt="" ar-scale="huge" />
+        {/* @ts-expect-error camera-controls เป็นค่าจริงหรือเท็จ */}
+        <model-viewer src={model} alt="" camera-controls="yes" />
+        {/* @ts-expect-error touch-action รับเฉพาะค่าที่ตัวแสดงรู้จัก */}
+        <model-viewer src={model} alt="" touch-action="sideways" />
+      </>
+    );
+    expect(renderToStaticMarkup(wrong)).toContain("<model-viewer");
+  });
+});

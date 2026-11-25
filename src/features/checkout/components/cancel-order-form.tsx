@@ -12,8 +12,9 @@ export function CancelOrderForm({ orderNo, message }: { orderNo: string; message
       initialState={{ error: null }}
       label="ยืนยันยกเลิก"
       pendingLabel="กำลังยกเลิก..."
+      destructive
       secondary={
-        <Link href={`/orders/${orderNo}`} className="button button-secondary">
+        <Link href={`/orders/${orderNo}`} className="button">
           ไม่ยกเลิก
         </Link>
       }

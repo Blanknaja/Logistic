@@ -291,7 +291,7 @@ describe("CHK-003 ลบที่อยู่และตั้งที่อ�
     const { somchai, home } = signedInSomchai();
 
     const confirming = cards(await listPage({ delete: String(home) }))[0];
-    expect(confirming).toContain("ยืนยันลบ");
+    expect(confirming).toMatch(/class="button button-secondary"[^>]*>ยืนยันลบ/);
     expect(confirming).toMatch(/href="\/addresses"[^>]*>ไม่ลบ/);
     expect(listAddresses(db, somchai)).toHaveLength(2);
 

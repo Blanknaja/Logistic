@@ -366,7 +366,7 @@ describe("CHK-011 ผู้ซื้อยกเลิกคำสั่งซ�
 
     const confirm = await orderPage(first.orderNo, { cancel: "1" });
     expect(confirm.html).toContain("จะยกเลิก 2 คำสั่งซื้อที่จ่ายรวมกัน: ผ้าดี และ บ้านแก้ว");
-    expect(confirm.html).toContain("ยืนยันยกเลิก");
+    expect(confirm.html).toMatch(/class="button button-secondary"[^>]*>ยืนยันยกเลิก/);
 
     expect((await cancel(first.orderNo)).redirect).toBe(`/orders/${first.orderNo}`);
     expect(statusOf(first.orderNo)).toBe(ORDER_STATUS.cancelled);

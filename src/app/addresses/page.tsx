@@ -21,7 +21,7 @@ export default async function AddressesPage({ searchParams }: PageProps<"/addres
   const addresses = listAddresses(getDb(), viewer.id);
   const { notice, delete: confirming } = await searchParams;
   const message = typeof notice === "string" && Object.hasOwn(NOTICES, notice) ? NOTICES[notice] : null;
-  // ระหว่างถามยืนยันลบ ปุ่มยืนยันลบเป็นปุ่มหลักของหน้า
+  // ระหว่างถามยืนยันลบ ปุ่ม "ไม่ลบ" เป็นปุ่มหลักของหน้า ปุ่มที่ลบจริงไม่ใช้สีเน้น
   const asking = addresses.some((address) => String(address.id) === confirming);
   const addButton = (
     <Link href="/addresses/new" className={asking ? "button button-secondary" : "button"}>
@@ -55,9 +55,9 @@ export default async function AddressesPage({ searchParams }: PageProps<"/addres
                     <p>ลบที่อยู่นี้ใช่ไหม</p>
                     <form action={deleteAddressAction}>
                       <input type="hidden" name="addressId" value={address.id} />
-                      <PendingButton label="ยืนยันลบ" pendingLabel="กำลังลบ..." />
+                      <PendingButton label="ยืนยันลบ" pendingLabel="กำลังลบ..." variant="secondary" />
                     </form>
-                    <Link href="/addresses" scroll={false} className="button button-secondary">
+                    <Link href="/addresses" scroll={false} className="button">
                       ไม่ลบ
                     </Link>
                   </div>

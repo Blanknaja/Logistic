@@ -285,7 +285,8 @@ describe("CRT-011 ลบรายการ", () => {
   test("CRT-011 หน้าต่างถามก่อนลบ ยืนยันแล้วรายการหาย ไอคอนตะกร้านับใหม่", async () => {
     const dialog = renderToStaticMarkup(<ConfirmRemove onConfirm={noop} onCancel={noop} />);
     expect(dialog).toContain("ลบสินค้านี้ออกจากตะกร้า?");
-    expect(dialog).toContain(">ยืนยัน</button>");
+    // ปุ่มที่ลบจริงไม่ใช้สีเน้น (docs/design-system.md)
+    expect(dialog).toContain('class="button button-secondary">ยืนยัน</button>');
     expect(dialog).toContain(">ยกเลิก</button>");
 
     const buyer = signIn();

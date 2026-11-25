@@ -62,6 +62,7 @@ export function ActionForm<S extends object>({
   pendingLabel,
   clearOnResult,
   secondary,
+  destructive = false,
   children,
 }: {
   action: (formData: FormData) => Promise<S>;
@@ -70,6 +71,8 @@ export function ActionForm<S extends object>({
   pendingLabel: string;
   clearOnResult?: string;
   secondary?: ReactNode;
+  /** ปุ่มส่งลบหรือยกเลิกของที่ย้อนไม่ได้ จึงไม่ใช้สีเน้น */
+  destructive?: boolean;
   children: (state: S | Failed) => ReactNode;
 }) {
   const [state, dispatch, pending] = useActionState<S | Failed, FormData>(
@@ -119,7 +122,7 @@ export function ActionForm<S extends object>({
         </div>
       )}
       <div className={styles.actions}>
-        <SubmitButton pending={pending} label={label} pendingLabel={pendingLabel} />
+        <SubmitButton pending={pending} label={label} pendingLabel={pendingLabel} secondary={destructive} />
         {secondary}
       </div>
     </form>

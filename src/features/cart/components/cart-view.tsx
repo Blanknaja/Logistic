@@ -312,10 +312,10 @@ export function ConfirmRemove({ onConfirm, onCancel }: { onConfirm: () => void; 
     <dialog ref={dialog} className={styles.dialog} aria-labelledby="cart-remove-title" onCancel={onCancel}>
       <p id="cart-remove-title">ลบสินค้านี้ออกจากตะกร้า?</p>
       <div className={styles.dialogActions}>
-        <button type="button" className="button button-secondary" onClick={onCancel}>
+        <button type="button" className="button" onClick={onCancel}>
           ยกเลิก
         </button>
-        <button type="button" className="button" onClick={onConfirm}>
+        <button type="button" className="button button-secondary" onClick={onConfirm}>
           ยืนยัน
         </button>
       </div>

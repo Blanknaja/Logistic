@@ -3,7 +3,7 @@
 .search {
   display: flex;
   gap: 8px;
-  margin-bottom: var(--space);
+  margin-bottom: var(--space-4);
 }
 
 .search input {
@@ -27,8 +27,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 8px var(--space);
-  margin-bottom: var(--space);
+  gap: 8px var(--space-4);
+  margin-bottom: var(--space-4);
 }
 
 .price {
@@ -108,13 +108,13 @@
 }
 
 .priceText {
-  color: var(--color-primary-dark);
+  color: var(--color-primary-hover);
   font-weight: 700;
 }
 
 .bigPrice {
-  margin: 0 0 var(--space);
-  color: var(--color-primary-dark);
+  margin: 0 0 var(--space-4);
+  color: var(--color-primary-hover);
   font-size: 1.6rem;
   font-weight: 700;
 }
@@ -152,14 +152,14 @@
   align-items: center;
   justify-content: center;
   gap: 8px 12px;
-  margin-top: var(--space);
+  margin-top: var(--space-4);
 }
 
 /* หน้ารายละเอียดสินค้า */
 
 .detail {
   display: grid;
-  gap: var(--space);
+  gap: var(--space-4);
 }
 
 @media (min-width: 720px) {
@@ -235,7 +235,7 @@
 .variantList {
   display: grid;
   gap: 4px;
-  margin: 0 0 var(--space);
+  margin: 0 0 var(--space-4);
   padding: 0;
   list-style: none;
   font-size: 0.95rem;
@@ -303,7 +303,7 @@
 .skeletonButton {
   width: 160px;
   height: var(--tap);
-  margin-top: var(--space);
+  margin-top: var(--space-4);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -2,15 +2,16 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-bottom: var(--space);
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .failed {
-  margin-bottom: var(--space);
+  margin-bottom: var(--space-4);
   color: var(--color-danger);
+  font-size: var(--text-label);
 }
 
 .failed p {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2);
 }

@@ -124,5 +124,5 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin-top: var(--space);
+  margin-top: var(--space-4);
 }

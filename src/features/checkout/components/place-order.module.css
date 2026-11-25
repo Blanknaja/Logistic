@@ -1,5 +1,5 @@
 .section {
-  margin-bottom: var(--space);
+  margin-bottom: var(--space-4);
 }
 
 .section h2 {
@@ -9,7 +9,7 @@
 .addresses {
   display: grid;
   gap: 8px;
-  margin: 0 0 var(--space);
+  margin: 0 0 var(--space-4);
   padding: 0;
   border: 0;
 }
@@ -51,7 +51,7 @@
 }
 
 .lines {
-  margin: 0 0 var(--space);
+  margin: 0 0 var(--space-4);
   padding: 0;
   list-style: none;
 }
@@ -80,8 +80,8 @@
 .totals {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 4px var(--space);
-  margin: 0 0 var(--space);
+  gap: 4px var(--space-4);
+  margin: 0 0 var(--space-4);
 }
 
 .totals dd {

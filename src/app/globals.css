@@ -1,20 +1,70 @@
-/* สไตล์กลางของทั้งแอป สไตล์เฉพาะ feature ให้เขียนเป็น *.module.css ในโฟลเดอร์ของ feature */
+/* สไตล์กลางของทั้งแอป สไตล์เฉพาะ feature ให้เขียนเป็น *.module.css ในโฟลเดอร์ของ feature
+   ค่าทุกตัวและกฎการใช้อยู่ใน docs/design-system.md */
 
 :root {
-  --color-bg: #f6f7f9;
-  --color-surface: #ffffff;
-  --color-text: #1f2933;
-  --color-muted: #5f6b7a;
-  --color-border: #d9dee5;
-  --color-primary: #0f766e;
-  --color-primary-dark: #115e59;
+  /* สี: พื้นกระดาษ ตัวอักษรสองระดับ สีเน้นเขียวเข้มใช้กับปุ่มหลักปุ่มเดียวของหน้า */
+  --color-bg: #f6f2ea;
+  --color-surface: #ece6da;
+  --color-text: #1d1b18;
+  --color-muted: #4d4943;
+  --color-border: #ddd5c8;
+  --color-border-strong: #857d71;
+  --color-primary: #24543f;
+  --color-primary-hover: #1c4433;
+  --color-primary-press: #143326;
   --color-on-primary: #ffffff;
+  --color-disabled: #cfc7b9;
   --color-danger: #b42318;
   --color-warning: #b54708;
-  --radius: 8px;
-  --space: 16px;
+
+  /* ระยะห่าง ฐาน 4 จุด */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* ขนาดตัวอักษรตามบทบาท */
+  --text-title: 32px;
+  --text-price: 32px;
+  --text-heading: 20px;
+  --text-body: 18px;
+  --text-label: 14px;
+  --font: var(--font-serif), Georgia, serif;
+
+  /* รูปทรงและขนาดของปุ่ม */
+  --radius: 2px;
   --tap: 44px;
-  --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sukhumvit Set", "Leelawadee UI", sans-serif;
+  --control-main: 56px;
+  --focus-ring: 2px solid var(--color-text);
+  --focus-offset: 3px;
+
+  /* การเคลื่อนไหว */
+  --duration: 0.2s;
+  --ease: cubic-bezier(0.4, 0, 0.4, 1);
+
+  /* ความกว้างหน้า */
+  --content-width: 1200px;
+  --gutter: 20px;
+  --measure: 64ch;
+}
+
+@media (min-width: 600px) {
+  :root {
+    --gutter: 32px;
+  }
+}
+
+@media (min-width: 900px) {
+  :root {
+    --gutter: 48px;
+    --text-title: 48px;
+    --text-price: 40px;
+    --text-heading: 24px;
+  }
 }
 
 *,
@@ -32,8 +82,8 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font);
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: var(--text-body);
+  line-height: 1.7;
   overflow-wrap: anywhere;
 }
 
@@ -44,78 +94,116 @@ img {
 }
 
 a {
-  color: var(--color-primary);
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+@media (hover: hover) {
+  a:hover {
+    text-decoration-thickness: 2px;
+  }
+}
+
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
 h1 {
-  font-size: 1.5rem;
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-title);
+  font-weight: 700;
   line-height: 1.3;
-  margin: 0 0 var(--space);
 }
 
 h2 {
-  font-size: 1.15rem;
+  margin: var(--space-5) 0 var(--space-2);
+  font-size: var(--text-heading);
+  font-weight: 700;
   line-height: 1.3;
-  margin: var(--space) 0 8px;
+}
+
+h3 {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: var(--text-body);
+  font-weight: 700;
+  line-height: 1.3;
 }
 
 .container {
   width: 100%;
-  max-width: 1040px;
+  max-width: var(--content-width);
   margin: 0 auto;
-  padding: 0 var(--space);
+  padding: 0 var(--gutter);
 }
 
 .page {
-  padding-top: var(--space);
-  padding-bottom: 48px;
+  padding-top: var(--space-5);
+  padding-bottom: var(--space-8);
 }
 
 /* แถบนำทาง */
 
 .site-header {
-  background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
 }
 
 .site-header-inner {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0 var(--space);
+  gap: 0 var(--space-5);
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
   min-height: 56px;
+  color: var(--color-text);
+  font-size: var(--text-heading);
   font-weight: 700;
-  font-size: 1.2rem;
-  color: var(--color-primary);
   text-decoration: none;
 }
 
 .nav-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 0 var(--space-1);
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* ตัวหนังสือของลิงก์แรกตรงกับขอบเนื้อหา ไม่เยื้องตาม padding ของลิงก์ */
+.seller-menu {
+  margin-inline-start: calc(-1 * var(--space-3));
+}
+
+@media (max-width: 599px) {
+  .site-header .nav-list {
+    margin-inline-start: calc(-1 * var(--space-3));
+  }
 }
 
 .nav-link {
   display: inline-flex;
   align-items: center;
   min-height: var(--tap);
-  padding: 0 12px;
-  border-radius: var(--radius);
+  padding: 0 var(--space-3);
   color: var(--color-text);
-  text-decoration: none;
+  font-size: var(--text-label);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 6px;
+  transition: text-decoration-color var(--duration) var(--ease);
 }
 
-.nav-link:hover {
-  background: var(--color-bg);
+@media (hover: hover) {
+  .nav-link:hover {
+    text-decoration-color: currentColor;
+  }
 }
 
 /* ปุ่มและฟอร์ม ทุกปุ่มสูงอย่างน้อย 44 จุดตาม BRW-Q03 */
@@ -124,72 +212,121 @@ h2 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: var(--space-2);
   min-height: var(--tap);
   min-width: var(--tap);
   /* min-width ข้างบนแทนค่า auto ปุ่มในแถว flex จึงหดจนคำในปุ่มขาดกลางคำ */
   flex-shrink: 0;
-  padding: 0 var(--space);
-  border: 1px solid var(--color-primary);
+  padding: 0 var(--space-5);
+  border: 0;
   border-radius: var(--radius);
   background: var(--color-primary);
   color: var(--color-on-primary);
   font: inherit;
-  font-weight: 600;
+  font-size: var(--text-label);
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
   text-decoration: none;
   cursor: pointer;
+  transition:
+    background-color var(--duration) var(--ease),
+    box-shadow var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
 }
 
-.button:hover {
-  background: var(--color-primary-dark);
+.button:active:not(:disabled) {
+  background: var(--color-primary-press);
+  transform: scale(0.98);
 }
 
 .button:disabled {
-  opacity: 0.6;
+  background: var(--color-disabled);
+  color: var(--color-muted);
   cursor: not-allowed;
 }
 
 .button-secondary {
-  background: var(--color-surface);
-  color: var(--color-primary);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--color-text);
+  color: var(--color-text);
 }
 
-.button-secondary:hover {
-  background: var(--color-bg);
+.button-secondary:active:not(:disabled) {
+  background: transparent;
+}
+
+.button-secondary:disabled {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+}
+
+@media (hover: hover) {
+  .button:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+  }
+
+  .button-secondary:hover:not(:disabled) {
+    background: transparent;
+    box-shadow: inset 0 0 0 2px var(--color-text);
+  }
 }
 
 .field {
   display: grid;
-  gap: 4px;
-  margin-bottom: var(--space);
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-label);
+}
+
+.field > label,
+label.field {
+  color: var(--color-text);
+  font-weight: 700;
 }
 
 .input {
   min-height: var(--tap);
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--color-border);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius);
-  background: var(--color-surface);
+  background: transparent;
+  color: var(--color-text);
   font: inherit;
+  font-size: var(--text-body);
+  font-weight: 400;
+  transition: border-color var(--duration) var(--ease);
+}
+
+.input[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+@media (hover: hover) {
+  .input:hover:not(:disabled) {
+    border-color: var(--color-text);
+  }
 }
 
 .field-error {
   color: var(--color-danger);
-  font-size: 0.9rem;
+  font-size: var(--text-label);
+  font-weight: 400;
 }
 
 .card {
-  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  padding: var(--space);
+  background: transparent;
+  padding: var(--space-4);
 }
 
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 0 0 var(--space);
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
   padding: 0;
   list-style: none;
 }
@@ -198,20 +335,23 @@ h2 {
   display: inline-flex;
   align-items: center;
   min-height: var(--tap);
-  padding: 0 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: var(--color-surface);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+  color: var(--color-text);
+  font-size: var(--text-label);
+  transition: box-shadow var(--duration) var(--ease);
 }
 
 /* หน้าว่าง กำลังโหลด ผิดพลาด และไม่พบ */
 
 .state {
-  margin: var(--space) 0;
-  padding: 32px var(--space);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
+  margin: var(--space-4) 0;
+  padding: var(--space-7) var(--space-4);
+  border-top: 1px solid var(--color-text);
+  border-bottom: 1px solid var(--color-border);
   text-align: center;
 }
 
@@ -220,7 +360,7 @@ h2 {
 }
 
 .state-message {
-  margin: 8px 0 0;
+  margin: var(--space-2) 0 0;
   color: var(--color-muted);
 }
 
@@ -228,6 +368,16 @@ h2 {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px;
-  margin-top: var(--space);
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

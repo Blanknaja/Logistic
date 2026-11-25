@@ -5,7 +5,7 @@
 
 /* ต้องเห็นโดยไม่เลื่อนจอบนมือถือกว้าง 360 จุด (PAY-Q07) */
 .testMode {
-  margin: 0 0 var(--space);
+  margin: 0 0 var(--space-4);
   padding: 8px 12px;
   border-radius: var(--radius);
   background: #fef0c7;
@@ -14,7 +14,7 @@
 }
 
 .simulatorNote {
-  margin: 0 0 var(--space);
+  margin: 0 0 var(--space-4);
   padding: 8px 12px;
   border: 1px dashed var(--color-warning);
   border-radius: var(--radius);
@@ -22,7 +22,7 @@
 }
 
 .section {
-  margin-bottom: var(--space);
+  margin-bottom: var(--space-4);
 }
 
 .total {
@@ -56,33 +56,33 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-bottom: var(--space);
+  margin-bottom: var(--space-4);
 }
 
 .hint {
-  margin: 0 0 var(--space);
+  margin: 0 0 var(--space-4);
   color: var(--color-muted);
   font-size: 0.9rem;
 }
 
 /* ข้อความใต้ช่องกรอกที่อยู่ชิดช่องนั้น */
 .fieldHint {
-  margin: -12px 0 var(--space);
+  margin: -12px 0 var(--space-4);
   color: var(--color-muted);
   font-size: 0.9rem;
 }
 
 .notice {
-  margin: 0 0 var(--space);
-  padding: 12px var(--space);
+  margin: 0 0 var(--space-4);
+  padding: 12px var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
 }
 
 .alert {
-  margin: 0 0 var(--space);
-  padding: 12px var(--space);
+  margin: 0 0 var(--space-4);
+  padding: 12px var(--space-4);
   border: 1px solid var(--color-danger);
   border-radius: var(--radius);
   background: var(--color-surface);
@@ -96,11 +96,11 @@
 .qr {
   width: 240px;
   max-width: 100%;
-  margin: 0 auto var(--space);
+  margin: 0 auto var(--space-4);
 }
 
 .confirm {
-  margin-top: var(--space);
+  margin-top: var(--space-4);
 }
 
 .confirm summary {
@@ -109,7 +109,7 @@
 
 .simulatorPanel {
   margin-top: 32px;
-  padding: var(--space);
+  padding: var(--space-4);
   border: 2px dashed var(--color-warning);
   border-radius: var(--radius);
   background: var(--color-surface);

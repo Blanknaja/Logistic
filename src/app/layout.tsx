@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Noto_Serif_Thai } from "next/font/google";
 import { SiteHeader } from "@/shared/layout/site-header";
 import "./globals.css";
 
@@ -10,9 +11,15 @@ export const metadata: Metadata = {
   description: "แพลตฟอร์มซื้อขายของออนไลน์ที่มีหลายร้านในที่เดียว",
 };
 
+const serif = Noto_Serif_Thai({
+  subsets: ["thai", "latin"],
+  weight: ["400", "700"],
+  variable: "--font-serif",
+});
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="th">
+    <html lang="th" className={serif.variable}>
       <body>
         <SiteHeader />
         <main className="container page">{children}</main>

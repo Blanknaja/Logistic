@@ -64,7 +64,14 @@ export function DeliveryMap({ route }: { route: DeliveryRoute }) {
             })
             .addTo(map);
         }
-        map.fitBounds(L.latLngBounds(route.pins.map(at)), { padding: [48, 48], maxZoom: 8 });
+        const bounds = L.latLngBounds(route.pins.map(at));
+        const fit = () => {
+          // แผนที่ที่ซ่อนอยู่ตอนแสดงไม่ได้มีขนาด 0 คิดระดับซูมไม่ได้
+          if (map && map.getSize().x > 0) map.fitBounds(bounds, { padding: [48, 48], maxZoom: 8, animate: false });
+        };
+        fit();
+        // หมุนจอหรือย่อหน้าต่าง หมุดยังอยู่ในกรอบครบ
+        map.on("resize", fit);
         // ส่งไปแค่ชื่อเว็บ ไม่ส่งที่อยู่หน้าที่มีเลขติดตามพัสดุให้ OpenStreetMap
         L.tileLayer(TILES, { attribution: ATTRIBUTION, maxZoom: 19, referrerPolicy: "origin" })
           .on("load", () => finish("ready"))

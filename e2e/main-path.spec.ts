@@ -3,6 +3,7 @@
 
 import { deflateSync, crc32 } from "node:zlib";
 import { expect, test, type Page } from "@playwright/test";
+import { stubTiles } from "./osm-tiles";
 
 const SAVE_SCREENSHOTS = process.env.SCREENSHOTS === "1";
 // ฐานข้อมูลของ e2e ถูกล้างทุกครั้ง ชื่อเหล่านี้จึงไม่ซ้ำกับข้อมูลเดิม
@@ -72,6 +73,8 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
   const startedAt = Date.now();
   const sellerPage = await (await browser.newContext()).newPage();
   const buyerPage = await (await browser.newContext()).newPage();
+  await stubTiles(sellerPage);
+  await stubTiles(buyerPage);
 
   await test.step("บัญชีแรกสมัครและเปิดร้าน", async () => {
     const page = sellerPage;
@@ -209,6 +212,8 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
     ] as const) {
       await page.getByRole("link", { name: `เปลี่ยนเป็น ${status}` }).click();
       await page.getByLabel("สถานที่").fill(status === "ร้านส่งของแล้ว" ? "ไปรษณีย์คลองเตย" : "ศูนย์กระจายสินค้าเชียงใหม่");
+      // MAP-002 ขั้นแรกได้จังหวัดของร้านไว้ให้ก่อน ขั้นหลังจากนี้ได้เชียงใหม่ที่เลือกไว้ครั้งก่อน
+      if (status === "อยู่ระหว่างขนส่ง") await page.getByLabel("จังหวัด").selectOption("เชียงใหม่");
       if (extra) await page.getByLabel("ชื่อผู้รับ").fill(extra);
       if (status === "ส่งสำเร็จ") await shot(page, "parcel-delivered-form");
       await page.getByRole("button", { name: "บันทึก" }).click();
@@ -228,6 +233,8 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
     await shot(page, "buyer-order", { mobile: true });
     await page.getByRole("main").getByRole("link", { name: "ติดตามพัสดุ" }).click();
     await expect(page.getByText("ส่งสำเร็จ").first()).toBeVisible();
+    await expect(page.getByText("กรุงเทพมหานคร → เชียงใหม่ (ล่าสุด และปลายทาง)")).toBeVisible();
+    await expect(page.locator('[data-delivery-map="ready"]')).toBeVisible();
     await shot(page, "tracking", { mobile: true });
     await page.getByRole("button", { name: "ได้รับสินค้าแล้ว" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "ยืนยัน" }).click();

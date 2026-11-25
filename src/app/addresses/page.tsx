@@ -21,8 +21,10 @@ export default async function AddressesPage({ searchParams }: PageProps<"/addres
   const addresses = listAddresses(getDb(), viewer.id);
   const { notice, delete: confirming } = await searchParams;
   const message = typeof notice === "string" && Object.hasOwn(NOTICES, notice) ? NOTICES[notice] : null;
+  // ระหว่างถามยืนยันลบ ปุ่มยืนยันลบเป็นปุ่มหลักของหน้า
+  const asking = addresses.some((address) => String(address.id) === confirming);
   const addButton = (
-    <Link href="/addresses/new" className="button">
+    <Link href="/addresses/new" className={asking ? "button button-secondary" : "button"}>
       เพิ่มที่อยู่
     </Link>
   );
@@ -42,7 +44,7 @@ export default async function AddressesPage({ searchParams }: PageProps<"/addres
           {addButton}
           <ul className={styles.list}>
             {addresses.map((address) => (
-              <li key={address.id} className="card">
+              <li key={address.id} className={styles.item}>
                 <p>
                   <strong>{address.recipientName}</strong>
                   {address.isDefault && <span className={styles.badge}>ที่อยู่หลัก</span>}

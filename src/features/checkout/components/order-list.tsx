@@ -38,7 +38,7 @@ export function OrderList({ initial, status }: { initial: OrderListState; status
     });
 
   return (
-    <>
+    <div>
       <ul className={styles.list}>
         {state.orders.map((order) => (
           <OrderCard key={order.id} order={order} />
@@ -58,13 +58,13 @@ export function OrderList({ initial, status }: { initial: OrderListState; status
           </button>
         )
       )}
-    </>
+    </div>
   );
 }
 
 function OrderCard({ order }: { order: BuyerOrderSummary }) {
   return (
-    <li className="card">
+    <li className={styles.order}>
       <Link href={`/orders/${order.orderNo}`} className={styles.cardLink}>
         <span className={styles.row}>
           <strong>{order.shopName}</strong>
@@ -81,7 +81,8 @@ function OrderCard({ order }: { order: BuyerOrderSummary }) {
       {order.payable && (
         <div className={styles.payRow}>
           <span>จ่ายภายใน {formatDateTime(order.paymentDeadline)}</span>
-          <PayButton orderNo={order.orderNo} groupId={order.groupId} />
+          {/* หน้ารายการมีได้หลายคำสั่งซื้อที่รอจ่าย ปุ่มจึงเป็นปุ่มรอง */}
+          <PayButton orderNo={order.orderNo} groupId={order.groupId} secondary />
         </div>
       )}
     </li>

@@ -41,6 +41,7 @@ export function CheckoutForm({
   return (
     <form
       method="post"
+      className={styles.layout}
       onSubmit={(event) => {
         event.preventDefault();
         if (busy.current || !checkout.canOrder) return;
@@ -58,78 +59,80 @@ export function CheckoutForm({
         )}
       />
 
-      <section className={`card ${styles.section}`}>
-        <h2>ที่อยู่จัดส่ง</h2>
-        {checkout.addresses.length === 0 ? (
-          <p>ยังไม่มีที่อยู่จัดส่ง</p>
-        ) : (
-          <fieldset className={styles.addresses}>
-            <legend className={styles.hidden}>เลือกที่อยู่จัดส่ง</legend>
-            {checkout.addresses.map((address) => (
-              <label key={address.id} className={styles.address}>
-                <input type="radio" name="addressId" value={address.id} defaultChecked={address.id === selectedAddressId} />
-                <span>
-                  <strong>{address.recipientName}</strong> {address.phone}
-                  {address.isDefault && <span className={styles.badge}>ที่อยู่หลัก</span>}
-                  <br />
-                  {fullAddress(address)}
-                </span>
-              </label>
-            ))}
-          </fieldset>
-        )}
-        {failure?.addressProblem && (
-          <p className="field-error" role="alert">
-            {failure.addressProblem}
-          </p>
-        )}
-        <Link href="/addresses/new?next=%2Fcheckout" className="button button-secondary">
-          เพิ่มที่อยู่
-        </Link>
-      </section>
-
-      {checkout.shops.map((shop) => (
-        <section key={shop.shopId} className={`card ${styles.section}`}>
-          <h2>{shop.shopName}</h2>
-          <ul className={styles.lines}>
-            {shop.lines.map((line) => {
-              const problem = failure?.problems[line.cartItemId] ?? line.problem;
-              return (
-                <li key={line.cartItemId} className={styles.line}>
-                  {line.coverImageUrl ? (
-                    <img src={line.coverImageUrl} alt="" width={64} height={64} className={styles.image} />
-                  ) : (
-                    <span className={styles.image} />
-                  )}
-                  <div>
-                    <div>{line.productName}</div>
-                    {line.variantLabel && <div className={styles.muted}>{line.variantLabel}</div>}
-                    <div>
-                      {line.unitPrice === null ? "-" : formatBaht(line.unitPrice)} × {line.quantity}
-                    </div>
-                    {problem && (
-                      <p className="field-error" role="alert">
-                        {problem}
-                      </p>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-          <dl className={styles.totals}>
-            <dt>ค่าสินค้า</dt>
-            <dd>{formatBaht(shop.itemsTotal)}</dd>
-            <dt>ค่าส่ง</dt>
-            <dd>{formatBaht(shop.shippingFee)}</dd>
-            <dt>รวม</dt>
-            <dd>{formatBaht(shop.total)}</dd>
-          </dl>
+      <div>
+        <section className={styles.section}>
+          <h2>ที่อยู่จัดส่ง</h2>
+          {checkout.addresses.length === 0 ? (
+            <p>ยังไม่มีที่อยู่จัดส่ง</p>
+          ) : (
+            <fieldset className={styles.addresses}>
+              <legend className={styles.hidden}>เลือกที่อยู่จัดส่ง</legend>
+              {checkout.addresses.map((address) => (
+                <label key={address.id} className={styles.address}>
+                  <input type="radio" name="addressId" value={address.id} defaultChecked={address.id === selectedAddressId} />
+                  <span>
+                    <strong>{address.recipientName}</strong> {address.phone}
+                    {address.isDefault && <span className={styles.badge}>ที่อยู่หลัก</span>}
+                    <br />
+                    {fullAddress(address)}
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+          )}
+          {failure?.addressProblem && (
+            <p className="field-error" role="alert">
+              {failure.addressProblem}
+            </p>
+          )}
+          <Link href="/addresses/new?next=%2Fcheckout" className="button button-secondary">
+            เพิ่มที่อยู่
+          </Link>
         </section>
-      ))}
 
-      <section className={`card ${styles.section}`}>
-        <dl className={styles.totals}>
+        {checkout.shops.map((shop) => (
+          <section key={shop.shopId} className={styles.section}>
+            <h2>{shop.shopName}</h2>
+            <ul className={styles.lines}>
+              {shop.lines.map((line) => {
+                const problem = failure?.problems[line.cartItemId] ?? line.problem;
+                return (
+                  <li key={line.cartItemId} className={styles.line}>
+                    {line.coverImageUrl ? (
+                      <img src={line.coverImageUrl} alt="" width={64} height={64} className={styles.image} />
+                    ) : (
+                      <span className={styles.image} />
+                    )}
+                    <div>
+                      <div>{line.productName}</div>
+                      {line.variantLabel && <div className={styles.muted}>{line.variantLabel}</div>}
+                      <div>
+                        {line.unitPrice === null ? "-" : formatBaht(line.unitPrice)} × {line.quantity}
+                      </div>
+                      {problem && (
+                        <p className="field-error" role="alert">
+                          {problem}
+                        </p>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <dl className={styles.totals}>
+              <dt>ค่าสินค้า</dt>
+              <dd>{formatBaht(shop.itemsTotal)}</dd>
+              <dt>ค่าส่ง</dt>
+              <dd>{formatBaht(shop.shippingFee)}</dd>
+              <dt>รวม</dt>
+              <dd>{formatBaht(shop.total)}</dd>
+            </dl>
+          </section>
+        ))}
+      </div>
+
+      <section className={styles.summary}>
+        <dl className={styles.grand}>
           <dt>ยอดรวมที่ต้องจ่าย</dt>
           <dd className={styles.grandTotal}>{formatBaht(checkout.total)}</dd>
         </dl>

@@ -67,9 +67,11 @@ export function PayForm({
           )}
         </div>
       )}
-      <button type="submit" className={secondary ? "button button-secondary" : "button"} disabled={pending}>
-        {pending ? pendingLabel : label}
-      </button>
+      <div className={styles.submit}>
+        <button type="submit" className={secondary ? "button button-secondary" : "button"} disabled={pending}>
+          {pending ? pendingLabel : label}
+        </button>
+      </div>
     </form>
   );
 }

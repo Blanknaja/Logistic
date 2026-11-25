@@ -25,37 +25,39 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
   return (
     <>
       <h1>คำสั่งซื้อ</h1>
-      <nav aria-label="กรองตามสถานะ">
-        <ul className="chips">
-          {FILTERS.map((filter) => {
-            const active = filter.status === status;
-            return (
-              <li key={filter.label}>
-                <Link
-                  href={filterHref(filter.status)}
-                  className={`chip ${styles.chipLink} ${active ? styles.chipActive : ""}`}
-                  aria-current={active ? "page" : undefined}
-                >
-                  {filter.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-      {page.orders.length === 0 ? (
-        status ? (
-          <EmptyState title="ไม่มีคำสั่งซื้อในสถานะนี้" />
+      <div className={styles.layout}>
+        <nav aria-label="กรองตามสถานะ">
+          <ul className="chips">
+            {FILTERS.map((filter) => {
+              const active = filter.status === status;
+              return (
+                <li key={filter.label}>
+                  <Link
+                    href={filterHref(filter.status)}
+                    className={`chip ${styles.chipLink} ${active ? styles.chipActive : ""}`}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    {filter.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+        {page.orders.length === 0 ? (
+          status ? (
+            <EmptyState title="ไม่มีคำสั่งซื้อในสถานะนี้" />
+          ) : (
+            <EmptyState title="ยังไม่มีคำสั่งซื้อ">
+              <Link href="/" className="button">
+                ไปเลือกซื้อสินค้า
+              </Link>
+            </EmptyState>
+          )
         ) : (
-          <EmptyState title="ยังไม่มีคำสั่งซื้อ">
-            <Link href="/" className="button">
-              ไปเลือกซื้อสินค้า
-            </Link>
-          </EmptyState>
-        )
-      ) : (
-        <OrderList key={status ?? ""} initial={{ ...page, failed: false }} status={status} />
-      )}
+          <OrderList key={status ?? ""} initial={{ ...page, failed: false }} status={status} />
+        )}
+      </div>
     </>
   );
 }

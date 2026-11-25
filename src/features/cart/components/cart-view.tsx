@@ -56,49 +56,53 @@ export function CartView({ cart }: { cart: Cart }) {
 
   return (
     <>
-      {message?.itemId === null && (
-        <p role="alert" className="field-error">
-          {message.text}
-        </p>
-      )}
-      {cart.shops.map((shop) => (
-        <section key={shop.id} className={`card ${styles.shop}`} aria-label={shop.name}>
-          <header className={styles.shopHeader}>
-            <label className={styles.check}>
-              <input
-                type="checkbox"
-                aria-label={`เลือกทั้งร้าน ${shop.name}`}
-                checked={allSelected(shop.items)}
-                disabled={pending || buyable(shop.items).length === 0}
-                onChange={(event) => select(shop.items, event.target.checked)}
-              />
-            </label>
-            <Link href={`/shops/${shop.id}`}>{shop.name}</Link>
-            <span className={styles.shopTotal}>ยอดของร้าน {pending ? "กำลังคิด…" : formatBaht(shop.total)}</span>
-          </header>
-          <ul className={styles.items}>
-            {shop.items.map((item) => (
-              <CartLine
-                key={`${item.id}:${item.quantity}:${version}`}
-                item={item}
-                pending={pending}
-                message={message?.itemId === item.id ? message.text : null}
-                onSelect={(selected) => select([item], selected)}
-                onQuantity={(quantity) => run(() => changeQuantityAction(item.id, quantity), item.id)}
-                onRemove={() => setRemoving(item.id)}
-              />
-            ))}
-          </ul>
-        </section>
-      ))}
-      <CartSummary
-        cart={cart}
-        pending={pending}
-        allSelected={allSelected(allItems(cart))}
-        onSelectAll={(selected) => select(allItems(cart), selected)}
-        onCheckout={checkout}
-        onRetry={retry}
-      />
+      <div className={styles.layout}>
+        <div>
+          {message?.itemId === null && (
+            <p role="alert" className="field-error">
+              {message.text}
+            </p>
+          )}
+          {cart.shops.map((shop) => (
+            <section key={shop.id} className={styles.shop} aria-label={shop.name}>
+              <header className={styles.shopHeader}>
+                <label className={styles.check}>
+                  <input
+                    type="checkbox"
+                    aria-label={`เลือกทั้งร้าน ${shop.name}`}
+                    checked={allSelected(shop.items)}
+                    disabled={pending || buyable(shop.items).length === 0}
+                    onChange={(event) => select(shop.items, event.target.checked)}
+                  />
+                </label>
+                <Link href={`/shops/${shop.id}`}>{shop.name}</Link>
+                <span className={styles.shopTotal}>ยอดของร้าน {pending ? "กำลังคิด…" : formatBaht(shop.total)}</span>
+              </header>
+              <ul className={styles.items}>
+                {shop.items.map((item) => (
+                  <CartLine
+                    key={`${item.id}:${item.quantity}:${version}`}
+                    item={item}
+                    pending={pending}
+                    message={message?.itemId === item.id ? message.text : null}
+                    onSelect={(selected) => select([item], selected)}
+                    onQuantity={(quantity) => run(() => changeQuantityAction(item.id, quantity), item.id)}
+                    onRemove={() => setRemoving(item.id)}
+                  />
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+        <CartSummary
+          cart={cart}
+          pending={pending}
+          allSelected={allSelected(allItems(cart))}
+          onSelectAll={(selected) => select(allItems(cart), selected)}
+          onCheckout={checkout}
+          onRetry={retry}
+        />
+      </div>
       {removing !== null && (
         <ConfirmRemove
           onCancel={() => setRemoving(null)}
@@ -208,7 +212,7 @@ export function CartLine({
   );
 }
 
-/** แถบยอดรวมติดขอบล่างจอ ระหว่างรอผลไม่แสดงยอดเก่าและกดสั่งซื้อไม่ได้ (CRT-012 CRT-Q02) */
+/** ยอดรวมกับปุ่มสั่งซื้อ จอแคบติดขอบล่างจอ จอกว้างติดอยู่คอลัมน์ขวา ระหว่างรอผลไม่แสดงยอดเก่าและกดสั่งซื้อไม่ได้ (CRT-012 CRT-Q02) */
 export function CartSummary({
   cart,
   pending,

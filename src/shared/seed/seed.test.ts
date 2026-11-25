@@ -1,17 +1,24 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { beforeAll, describe, expect, test } from "vitest";
 import { verifyPassword } from "@/features/account/server/password";
 import { getProductDetail } from "@/features/browse/server/product-detail";
+import { getImageFile, IMAGE_URL_PREFIX, isShopUpload } from "@/features/product-listing/server/image-files";
 import { getModelFile } from "@/features/product-listing/server/model-files";
 import { modelFileError } from "@/features/product-listing/server/product-rules";
 import type { Db } from "@/shared/db";
 import { addProduct } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
+import { detectImageType } from "@/shared/rules";
 import { ADMIN_PASSWORD, DEMO_PASSWORD, seed } from "@/shared/seed";
+import { SAMPLE_PHOTOS } from "@/shared/seed/catalog";
 
 let db: Db;
 
 const count = (sql: string, ...params: (string | number)[]) => Number(db.prepare(sql).get(...params)?.n);
+
+const PHOTO_DIR = new URL("./photos/", import.meta.url);
+const photoFiles = readdirSync(PHOTO_DIR).filter((file) => file !== "SOURCES.txt");
+const photoBytes = new Map(photoFiles.map((file) => [file, readFileSync(new URL(file, PHOTO_DIR))]));
 
 // สร้างข้อมูลตัวอย่างครั้งเดียวแล้วใช้ร่วมกันทั้งไฟล์ เพราะ hash รหัสผ่านใช้เวลา
 beforeAll(async () => {
@@ -101,6 +108,54 @@ describe("ข้อมูลตัวอย่าง", () => {
 
   test("P3D-006 สินค้าตัวอย่างชิ้นอื่นไม่มีไฟล์ 3 มิติ", () => {
     expect(count("SELECT count(*) AS n FROM products WHERE model_url IS NULL")).toBe(998);
+  });
+
+  test("รูปถ่ายทุกไฟล์ใน photos/ มีที่มา ผู้สร้าง สัญญาอนุญาต CC0 หรือสาธารณสมบัติ และชื่อสินค้าที่ตรงกับที่ใช้ ใน SOURCES.txt", () => {
+    const sources = readFileSync(new URL("SOURCES.txt", PHOTO_DIR), "utf8");
+    const entries = new Map(sources.split(/\n\s*\n/).map((block) => [block.split("\n")[0].trim(), block]));
+    expect(photoFiles.length).toBeGreaterThan(0);
+    for (const file of photoFiles) {
+      const entry = entries.get(file);
+      expect(entry, file).toMatch(/^ {2}ที่มา: https:\/\/\S+/m);
+      expect(entry, file).toMatch(/^ {2}ผู้สร้าง: \S/m);
+      expect(entry, file).toMatch(/^ {2}สัญญาอนุญาต: (CC0 1\.0|สาธารณสมบัติ)/m);
+    }
+    for (const [name, files] of Object.entries(SAMPLE_PHOTOS)) {
+      for (const file of files!) expect(entries.get(file), file).toContain(`\n  สินค้า: ${name}\n`);
+    }
+  });
+
+  test("รูปถ่ายเป็น JPEG ไฟล์ละไม่เกิน 160 KB รวมไม่เกิน 5 MB และทุกไฟล์มีสินค้าใช้", () => {
+    expect(new Set(Object.values(SAMPLE_PHOTOS).flat())).toEqual(new Set(photoFiles));
+    for (const [file, bytes] of photoBytes) {
+      expect(detectImageType(bytes), file).toBe("image/jpeg");
+      expect(bytes.byteLength, file).toBeLessThanOrEqual(160 * 1024);
+    }
+    expect([...photoBytes.values()].reduce((total, bytes) => total + bytes.byteLength, 0)).toBeLessThan(5 * 1024 * 1024);
+  });
+
+  test("สินค้าตัวอย่างใช้รูปถ่ายตามชื่อ เป็นรูปที่ร้านนั้นส่งขึ้นมาเอง ร้านละหนึ่งสำเนา และชื่อที่ไม่มีรูปถ่ายใช้รูป SVG", () => {
+    const products = db.prepare("SELECT id, shop_id, name FROM products ORDER BY id").all() as { id: number; shop_id: number; name: string }[];
+    const photoNames = Object.keys(SAMPLE_PHOTOS);
+    const usedNames = new Set<string>();
+    for (const product of products) {
+      const urls = db.prepare("SELECT url FROM product_images WHERE product_id = ? ORDER BY position").all(product.id).map((row) => String(row.url));
+      const photoName = photoNames.find((name) => product.name === name || product.name.startsWith(`${name} `));
+      if (!photoName) {
+        expect(urls.every((url) => url.startsWith("/sample-images/")), product.name).toBe(true);
+        continue;
+      }
+      usedNames.add(photoName);
+      expect(urls.length).toBeGreaterThan(0);
+      urls.forEach((url, i) => {
+        expect(isShopUpload(db, product.shop_id, url), product.name).toBe(true);
+        const stored = getImageFile(db, url.slice(IMAGE_URL_PREFIX.length));
+        expect(stored?.contentType).toBe("image/jpeg");
+        expect(Buffer.from(stored!.data).equals(photoBytes.get(SAMPLE_PHOTOS[photoName]![i])!), product.name).toBe(true);
+      });
+    }
+    expect([...usedNames].sort()).toEqual(photoNames.sort());
+    expect(count("SELECT count(*) AS n FROM (SELECT 1 FROM product_image_files GROUP BY shop_id, data HAVING count(*) > 1)")).toBe(0);
   });
 
   test("รันซ้ำแล้วข้อมูลไม่ซ้ำ และของที่ผู้ใช้สร้างเองยังอยู่", async () => {

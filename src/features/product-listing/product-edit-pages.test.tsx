@@ -265,10 +265,13 @@ describe("PRD-007 บันทึกการแก้ไขสินค้า",
 
 describe("PRD-008 ซ่อนและเลิกซ่อนสินค้า", () => {
   test("PRD-008 กด ซ่อน ตัวกรองเปลี่ยนเป็น ขายอยู่ 17 ซ่อน 4 และกด เลิกซ่อน กลับเป็น ขายอยู่", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(at("10:00")));
     const shopId = signInSeller();
     for (let i = 0; i < 17; i++) addProduct(db, { shopId });
     for (let i = 0; i < 3; i++) addProduct(db, { shopId, status: PRODUCT_STATUS.hidden });
     const product = tshirt(shopId);
+    vi.setSystemTime(new Date(at("11:00")));
 
     const before = (await open(listPage())).html;
     expect(text(before)).toContain("ขายอยู่ 18");
@@ -282,6 +285,7 @@ describe("PRD-008 ซ่อนและเลิกซ่อนสินค้�
 
     await submit(setHiddenAction(product.id, false, "/seller/products"));
     expect(statusOf(product.id)).toBe(PRODUCT_STATUS.onSale);
+    vi.useRealTimers();
   });
 
   test("PRD-008 ร่างไม่มีปุ่ม ซ่อน และ เลิกซ่อน มีเฉพาะ แก้ไข และ ลบ และยังเป็นร่าง", async () => {

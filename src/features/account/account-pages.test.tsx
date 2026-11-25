@@ -505,8 +505,9 @@ describe("ACC-Q04 รหัสผ่านไม่อยู่ในหน้�
       expect(html).not.toContain(password);
       // ฟอร์มแบบ GET จะใส่รหัสผ่านไว้ในที่อยู่หน้าเว็บถ้ากดก่อนหน้าโหลดเสร็จ
       // ฟอร์มที่ผูก server action ไว้กับ prop action ได้ POST จาก Next.js เอง ตัวเรนเดอร์ของ test ทำแทนไม่ได้
+      // ช่องค้นหาสินค้าในแถบด้านบนเป็นฟอร์ม GET ที่มีแต่คำค้น เพราะคำค้นต้องอยู่ในที่อยู่หน้าเว็บ (BRW-006)
       for (const tag of html?.match(/<form[^>]*>/g) ?? []) {
-        if (!tag.includes('action="javascript:')) expect(tag).toMatch(/method="post"/i);
+        if (!tag.includes('action="javascript:') && !tag.includes('role="search"')) expect(tag).toMatch(/method="post"/i);
       }
     }
   });

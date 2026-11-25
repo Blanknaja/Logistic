@@ -87,6 +87,12 @@ const page = async () => {
   return { redirect: result.redirect, html: result.value === undefined ? "" : renderToStaticMarkup(result.value) };
 };
 const header = async () => renderToStaticMarkup(await SiteHeader());
+
+/** ไอคอนตะกร้าที่แถบด้านบน: ชื่อที่โปรแกรมอ่านจอได้ยิน กับตัวเลขที่ตาเห็น */
+async function cartIcon() {
+  const link = (await header()).match(/<a[^>]*href="\/cart"[^>]*>.*?<\/a>/)![0];
+  return { name: link.match(/aria-label="([^"]*)"/)![1], count: link.replace(/<[^>]*>/g, "") };
+}
 const allCartRows = () => Number(db.prepare("SELECT count(*) AS n FROM cart_items").get()?.n);
 
 function signIn(): number {
@@ -108,7 +114,7 @@ describe("CRT-001 เพิ่มสินค้าลงตะกร้าจ�
     const result = await attempt(addToCartAction({ variantId: shirt.variantIds[0], quantity: "2" }));
 
     expect(result.value).toEqual({ ok: true, message: "ใส่ตะกร้าแล้ว" });
-    expect(await header()).toContain(">ตะกร้า (3)</a>");
+    expect(await cartIcon()).toEqual({ name: "ตะกร้า (3)", count: "3" });
   });
 
   test("CRT-001 จำนวนเว้นว่าง ไม่เพิ่มสินค้าและไอคอนเท่าเดิม", async () => {
@@ -117,7 +123,7 @@ describe("CRT-001 เพิ่มสินค้าลงตะกร้าจ�
     const result = await attempt(addToCartAction({ variantId: shirt.variantIds[0], quantity: "" }));
 
     expect(result.value).toEqual({ ok: false, message: "จำนวนต้องเป็น 1 ขึ้นไป" });
-    expect(await header()).toContain(">ตะกร้า</a>");
+    expect(await cartIcon()).toEqual({ name: "ตะกร้า", count: "" });
   });
 });
 
@@ -183,7 +189,7 @@ describe("CRT-007 หน้าตะกร้าว่าง", () => {
     expect(html).toContain('<a class="button" href="/">เลือกซื้อสินค้า</a>');
     expect(html).not.toContain("สั่งซื้อ<");
     expect(html).not.toContain("฿");
-    expect(await header()).toContain(">ตะกร้า</a>");
+    expect(await cartIcon()).toEqual({ name: "ตะกร้า", count: "" });
   });
 
   test("CRT-007 ลบรายการสุดท้ายไม่สำเร็จ ยังเห็นรายการพร้อมข้อความผิดพลาด ไม่เป็นหน้าว่าง", async () => {
@@ -288,7 +294,7 @@ describe("CRT-011 ลบรายการ", () => {
     await attempt(removeItemAction(cup.id));
 
     expect((await page()).html).not.toContain("แก้วเซรามิก");
-    expect(await header()).toContain(">ตะกร้า (1)</a>");
+    expect(await cartIcon()).toEqual({ name: "ตะกร้า (1)", count: "1" });
   });
 
   test("CRT-011 ยืนยันลบรายการที่ถูกลบไปแล้ว ไม่มีข้อความผิดพลาด", async () => {

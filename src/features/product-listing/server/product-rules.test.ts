@@ -3,6 +3,7 @@ import {
   addOptionValue,
   EMPTY_PRODUCT,
   MESSAGES,
+  modelFileError,
   parseProductValues,
   validateProduct,
   variantCombos,
@@ -16,6 +17,7 @@ const tshirt = (overrides: Partial<ProductValues> = {}): ProductValues => ({
   images: ["/product-images/a"],
   options: [],
   prices: { "[]": "250" },
+  model: null,
   ...overrides,
 });
 
@@ -168,5 +170,49 @@ describe("ข้อมูลที่ส่งมาจากหน้าเว�
     expect(parseProductValues({ ...tshirt(), images: [1] })).toBeNull();
     expect(parseProductValues({ ...tshirt(), options: [{ name: "สี", values: "แดง" }] })).toBeNull();
     expect(parseProductValues({ ...tshirt(), prices: { "[]": 250 } })).toBeNull();
+    expect(parseProductValues({ ...tshirt(), model: 1 })).toBeNull();
+    expect(parseProductValues({ ...tshirt(), model: undefined })).toBeNull();
+  });
+
+  test("P3D-001 ที่อยู่ไฟล์ 3 มิติอ่านได้ และสินค้าที่ไม่มีไฟล์ได้ null", () => {
+    expect(parseProductValues(tshirt({ model: "/product-models/a" }))?.model).toBe("/product-models/a");
+    expect(parseProductValues(tshirt())?.model).toBeNull();
+  });
+});
+
+const MB = 1024 * 1024;
+
+/** ไฟล์ที่ส่วนหัวเป็น GLB รุ่น 2 และบอกความยาวไว้เท่ากับขนาดจริง */
+function glb(size: number, { version = 2, declared = size } = {}): Uint8Array {
+  const bytes = new Uint8Array(size);
+  const view = new DataView(bytes.buffer);
+  bytes.set([0x67, 0x6c, 0x54, 0x46]);
+  view.setUint32(4, version, true);
+  view.setUint32(8, declared, true);
+  return bytes;
+}
+
+describe("P3D-001 ตรวจไฟล์ 3 มิติจากเนื้อไฟล์", () => {
+  test("P3D-001 ไฟล์ GLB 4.1 MB และ 10 MB พอดีถูกรับ", () => {
+    const chair = glb(Math.round(4.1 * MB));
+    expect(modelFileError(chair, chair.byteLength)).toBeUndefined();
+    expect(modelFileError(glb(10 * MB), 10 * MB)).toBeUndefined();
+  });
+
+  test("P3D-001 รูป JPG ที่เปลี่ยนนามสกุลเป็น .glb ไม่ถูกรับ เห็น ไฟล์ต้องเป็นชนิด GLB", () => {
+    const jpg = new Uint8Array(2048);
+    jpg.set([0xff, 0xd8, 0xff, 0xe0]);
+    expect(modelFileError(jpg, jpg.byteLength)).toBe("ไฟล์ต้องเป็นชนิด GLB");
+  });
+
+  test("P3D-001 ไฟล์ GLB 12 MB ไม่ถูกรับ เห็น ไฟล์ 3 มิติต้องมีขนาดไม่เกิน 10 MB", () => {
+    expect(modelFileError(glb(12, { declared: 12 * MB }), 12 * MB)).toBe("ไฟล์ 3 มิติต้องมีขนาดไม่เกิน 10 MB");
+  });
+
+  test("P3D-001 ส่วนหัวรุ่นอื่น ความยาวในหัวไม่ตรงกับขนาดจริง หรือไฟล์สั้นกว่าส่วนหัว ไม่ถูกรับ", () => {
+    expect(modelFileError(glb(100, { version: 1 }), 100)).toBe(MESSAGES.modelWrongType);
+    expect(modelFileError(glb(100, { declared: 99 }), 100)).toBe(MESSAGES.modelWrongType);
+    expect(modelFileError(glb(100), 101)).toBe(MESSAGES.modelWrongType);
+    expect(modelFileError(glb(12).slice(0, 8), 8)).toBe(MESSAGES.modelWrongType);
   });
 });

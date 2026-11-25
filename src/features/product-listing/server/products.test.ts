@@ -33,6 +33,7 @@ function tshirt(overrides: Partial<ProductValues> = {}): ProductValues {
     images: [upload()],
     options: [],
     prices: { "[]": "250" },
+    model: null,
     ...overrides,
   };
 }

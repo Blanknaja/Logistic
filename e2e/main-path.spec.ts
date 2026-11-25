@@ -98,7 +98,7 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
     await page.getByLabel("ชื่อสินค้า").fill(productName);
     await page.getByLabel("รายละเอียด").fill("ผ้าฝ้ายเนื้อนุ่ม ใส่สบาย");
     await page.getByLabel("หมวดหมู่").selectOption({ index: 1 });
-    await page.locator('input[type="file"]').setInputFiles({ name: "shirt.png", mimeType: "image/png", buffer: png(240, 240, [15, 118, 110]) });
+    await page.getByLabel("เพิ่มรูป").setInputFiles({ name: "shirt.png", mimeType: "image/png", buffer: png(240, 240, [15, 118, 110]) });
     await expect(page.getByRole("img").first()).toBeVisible();
     for (const [index, name, values] of [
       [1, "สี", ["ดำ", "ขาว"]],

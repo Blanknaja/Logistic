@@ -198,6 +198,7 @@ describe("PRD-002 สร้างสินค้าและเปิดขา�
       images: [upload(shopId)],
       options: [],
       prices: { "[]": "250" },
+      model: null,
     };
 
     const result = await submit(createProductAction(randomUUID(), "publish", values));
@@ -218,6 +219,7 @@ describe("PRD-002 สร้างสินค้าและเปิดขา�
       images: [upload(shopId)],
       options: [],
       prices: { "[]": "0" },
+      model: null,
     };
 
     const result = await submit(createProductAction(randomUUID(), "publish", values));
@@ -294,7 +296,7 @@ describe("PRD-003 ส่งรูปขึ้นและเปิดดูร�
     const html = renderToStaticMarkup(
       <ProductForm
         categories={[]}
-        initial={{ name: "เสื้อยืดคอกลม", description: "", categoryId: null, images: ["/a", "/b", "/c"], options: [], prices: {} }}
+        initial={{ name: "เสื้อยืดคอกลม", description: "", categoryId: null, images: ["/a", "/b", "/c"], options: [], prices: {}, model: null }}
         save={async () => ({ errors: {} })}
       />,
     );
@@ -308,7 +310,7 @@ describe("PRD-004 ตัวเลือกในหน้าฟอร์ม", ()
     renderToStaticMarkup(
       <ProductForm
         categories={[]}
-        initial={{ name: "เสื้อยืดคอกลม", description: "", categoryId: null, images: [], options, prices: {} }}
+        initial={{ name: "เสื้อยืดคอกลม", description: "", categoryId: null, images: [], options, prices: {}, model: null }}
         save={async () => ({ errors: {} })}
       />,
     );
@@ -342,7 +344,7 @@ describe("PRD-004 ตัวเลือกในหน้าฟอร์ม", ()
 describe("PRD-005 บันทึกร่างผ่านหน้าเว็บ", () => {
   test("PRD-005 กด บันทึกร่าง เห็นข้อความ และรายการแสดงสินค้าเป็น ร่าง พร้อมรูปแทนว่ายังไม่มีรูป", async () => {
     signInSeller();
-    const values: ProductValues = { name: "หมวกแก๊ป", description: "", categoryId: null, images: [], options: [], prices: { "[]": "120" } };
+    const values: ProductValues = { name: "หมวกแก๊ป", description: "", categoryId: null, images: [], options: [], prices: { "[]": "120" }, model: null };
 
     expect((await submit(createProductAction(randomUUID(), "draft", values))).redirect).toBe("/seller/products?notice=draft");
     const page = text((await open(listPage({ notice: "draft" }))).html);
@@ -352,7 +354,7 @@ describe("PRD-005 บันทึกร่างผ่านหน้าเว�
 
   test("PRD-005 ไม่กรอกชื่อ เห็นข้อความ และยังไม่มีสินค้าใหม่ในร้าน", async () => {
     signInSeller();
-    const values: ProductValues = { name: "", description: "", categoryId: null, images: [], options: [], prices: { "[]": "120" } };
+    const values: ProductValues = { name: "", description: "", categoryId: null, images: [], options: [], prices: { "[]": "120" }, model: null };
 
     const result = await submit(createProductAction(randomUUID(), "draft", values));
     expect(result.state?.errors).toEqual({ name: "กรอกชื่อสินค้าก่อนบันทึกร่าง" });
@@ -380,7 +382,7 @@ describe("PRD-012 จัดการได้เฉพาะสินค้า�
     signInAs(addAccount(db).id);
     expect((await open(listPage())).redirect).toBe("/open-shop");
     expect((await open(NewProductPage())).redirect).toBe("/open-shop");
-    const values: ProductValues = { name: "หมวก", description: "", categoryId: null, images: [], options: [], prices: {} };
+    const values: ProductValues = { name: "หมวก", description: "", categoryId: null, images: [], options: [], prices: {}, model: null };
     expect((await submit(createProductAction(randomUUID(), "draft", values))).redirect).toBe("/open-shop");
     expect((await uploadImage(new Request("http://localhost/product-images", { method: "POST", body: "x" }))).status).toBe(401);
     expect(count("products")).toBe(0);
@@ -395,7 +397,7 @@ describe("PRD-012 จัดการได้เฉพาะสินค้า�
   test("PRD-012 ยังไม่เข้าสู่ระบบ ถูกพาไปหน้าเข้าสู่ระบบก่อน แล้วกลับมาหน้าเดิม", async () => {
     expect((await open(listPage())).redirect).toBe("/login?next=%2Fseller%2Fproducts");
     expect((await open(NewProductPage())).redirect).toBe("/login?next=%2Fseller%2Fproducts%2Fnew");
-    const values: ProductValues = { name: "หมวก", description: "", categoryId: null, images: [], options: [], prices: {} };
+    const values: ProductValues = { name: "หมวก", description: "", categoryId: null, images: [], options: [], prices: {}, model: null };
     expect((await submit(createProductAction(randomUUID(), "draft", values))).redirect).toBe(
       "/login?next=%2Fseller%2Fproducts%2Fnew&notice=relogin",
     );
@@ -411,6 +413,7 @@ describe("PRD-012 จัดการได้เฉพาะสินค้า�
       images: [upload(other.id)],
       options: [],
       prices: { "[]": "100" },
+      model: null,
     };
     expect((await submit(createProductAction(randomUUID(), "publish", values))).state?.errors.images).toBe("ไม่พบรูปบางรูป ลบรูปนั้นแล้วใส่ใหม่");
     expect(count("products")).toBe(0);
@@ -454,7 +457,7 @@ describe("PRD-Q01 ความเร็วของหน้าฟอร์ม�
     const html = renderToStaticMarkup(
       <ProductForm
         categories={listCategories(db)}
-        initial={{ name: "เสื้อ", description: "ผ้า", categoryId: 1, images, options, prices }}
+        initial={{ name: "เสื้อ", description: "ผ้า", categoryId: 1, images, options, prices, model: null }}
         save={async () => ({ errors: {} })}
       />,
     );

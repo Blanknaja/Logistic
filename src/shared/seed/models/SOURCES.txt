@@ -1,0 +1,17 @@
+ไฟล์ 3 มิติของข้อมูลตัวอย่าง (P3D-006) ไม่ได้แก้ไฟล์ใดๆ
+มาจาก Khronos glTF-Sample-Assets https://github.com/KhronosGroup/glTF-Sample-Assets
+สัญญาอนุญาตอ่านจาก Models/<ชื่อ>/metadata.json เมื่อ 2026-11-25
+
+SheenChair.glb
+  ที่มา: https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenChair
+  สัญญาอนุญาต: CC0-1.0 (Eric Chadwick, Wayfair LLC, 2020)
+  ขนาด 4,125,648 ไบต์ SHA-256 f0af2a2b102d28d540236306ae19f8fb36842df76bd38cf76f063f9bd2853399
+  ใช้กับสินค้า "เก้าอี้ผ้ากำมะหยี่"
+
+GlassVaseFlowers.glb
+  ที่มา: https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/GlassVaseFlowers
+  สัญญาอนุญาต: CC0-1.0 (แจกัน: Eric Chadwick 2023, ดอกไม้: Rico Cilliers 2023)
+  ขนาด 1,819,824 ไบต์ SHA-256 faa2e19329961652b585cc62132ef50b1d95dca8a6a2fd63409158e680563761
+  ใช้กับสินค้า "แจกันแก้วใส่ดอกไม้"
+
+CC0-1.0: https://creativecommons.org/publicdomain/zero/1.0/legalcode ใช้ได้โดยไม่ต้องให้เครดิต

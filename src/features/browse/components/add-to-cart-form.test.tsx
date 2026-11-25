@@ -11,6 +11,7 @@ const bag: ProductDetail = {
   category: { id: 2, name: "กระเป๋าและรองเท้า" },
   shop: { id: 3, name: "บ้านสวนผ้าไทย" },
   images: [],
+  model: null,
   options: [],
   variants: [{ id: 70, valueIds: [], label: "", price: 290, stock: 15 }],
 };

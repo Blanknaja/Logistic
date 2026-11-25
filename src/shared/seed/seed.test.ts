@@ -1,5 +1,9 @@
+import { readFileSync } from "node:fs";
 import { beforeAll, describe, expect, test } from "vitest";
 import { verifyPassword } from "@/features/account/server/password";
+import { getProductDetail } from "@/features/browse/server/product-detail";
+import { getModelFile } from "@/features/product-listing/server/model-files";
+import { modelFileError } from "@/features/product-listing/server/product-rules";
 import type { Db } from "@/shared/db";
 import { addProduct } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
@@ -75,6 +79,28 @@ describe("ข้อมูลตัวอย่าง", () => {
     expect(Object.fromEntries(statuses)).toEqual({ จ่ายแล้ว: 2, กำลังจัดส่ง: 2, สำเร็จ: 2, ยกเลิก: 2 });
     expect(count("SELECT count(*) AS n FROM orders o WHERE o.status <> 'ยกเลิก' AND NOT EXISTS (SELECT 1 FROM parcels p WHERE p.order_id = o.id)")).toBe(0);
     expect(count("SELECT count(*) AS n FROM parcels WHERE status = 'ส่งสำเร็จ' AND receipt_confirmed_at IS NULL")).toBe(1);
+  });
+
+  test("P3D-006 มีสินค้า 2 ชิ้นที่ README บอกว่ามีไฟล์ 3 มิติ เปิดหน้าสินค้าได้ และไฟล์เป็น GLB ที่ไม่เกิน 5 MB", () => {
+    const rows = db.prepare("SELECT id, name, model_url FROM products WHERE model_url IS NOT NULL ORDER BY id").all() as {
+      id: number;
+      name: string;
+      model_url: string;
+    }[];
+    expect(rows.map((row) => row.name)).toEqual(["เก้าอี้ผ้ากำมะหยี่", "แจกันแก้วใส่ดอกไม้"]);
+
+    const readme = readFileSync("README.md", "utf8");
+    for (const row of rows) {
+      expect(readme).toContain(row.name);
+      expect(getProductDetail(db, row.id)?.model).toBe(row.model_url);
+      const file = getModelFile(db, row.model_url.split("/").pop()!);
+      expect(file && modelFileError(file.data, file.data.byteLength)).toBeUndefined();
+      expect(file?.data.byteLength).toBeLessThanOrEqual(5 * 1024 * 1024);
+    }
+  });
+
+  test("P3D-006 สินค้าตัวอย่างชิ้นอื่นไม่มีไฟล์ 3 มิติ", () => {
+    expect(count("SELECT count(*) AS n FROM products WHERE model_url IS NULL")).toBe(998);
   });
 
   test("รันซ้ำแล้วข้อมูลไม่ซ้ำ และของที่ผู้ใช้สร้างเองยังอยู่", async () => {

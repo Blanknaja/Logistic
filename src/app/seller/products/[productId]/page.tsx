@@ -30,6 +30,7 @@ export default async function EditProductPage({ params }: PageProps<"/seller/pro
         categories={listCategories(db)}
         initial={product.values}
         status={product.status}
+        modelFile={product.modelFile}
         save={updateProductAction.bind(null, product.id, product.updatedAt)}
       />
     </>

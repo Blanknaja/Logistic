@@ -17,7 +17,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[prod
 
   return (
     <article className={styles.detail}>
-      <ProductGallery images={product.images} name={product.name} />
+      <ProductGallery images={product.images} name={product.name} model={product.model} />
       <div>
         <h1>{product.name}</h1>
         <AddToCartForm

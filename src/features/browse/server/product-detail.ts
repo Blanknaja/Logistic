@@ -19,6 +19,8 @@ export type ProductDetail = {
   category: { id: number; name: string } | null;
   shop: { id: number; name: string };
   images: string[];
+  /** ที่อยู่ไฟล์ 3 มิติ null ถ้าไม่มี (P3D-003) */
+  model: string | null;
   options: ProductOption[];
   variants: ProductVariant[];
 };
@@ -28,7 +30,7 @@ export function getProductDetail(db: Db, productId: number): ProductDetail | nul
   if (!Number.isSafeInteger(productId)) return null;
   const product = db
     .prepare(
-      `SELECT p.id, p.name, p.description, c.id AS category_id, c.name AS category_name, s.id AS shop_id, s.name AS shop_name
+      `SELECT p.id, p.name, p.description, p.model_url, c.id AS category_id, c.name AS category_name, s.id AS shop_id, s.name AS shop_name
        FROM products p
        JOIN shops s ON s.id = p.shop_id
        LEFT JOIN categories c ON c.id = p.category_id
@@ -39,6 +41,7 @@ export function getProductDetail(db: Db, productId: number): ProductDetail | nul
         id: number;
         name: string;
         description: string;
+        model_url: string | null;
         category_id: number | null;
         category_name: string | null;
         shop_id: number;
@@ -101,6 +104,7 @@ export function getProductDetail(db: Db, productId: number): ProductDetail | nul
     category: product.category_id === null ? null : { id: product.category_id, name: product.category_name ?? "" },
     shop: { id: product.shop_id, name: product.shop_name },
     images,
+    model: product.model_url,
     options,
     variants,
   };

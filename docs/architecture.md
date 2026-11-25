@@ -19,7 +19,7 @@
 | `pnpm seed --reset` | ลบฐานข้อมูลในเครื่องแล้วสร้างใหม่ |
 | `pnpm check` | ตรวจชนิดข้อมูล ตรวจรูปแบบโค้ด และรัน test ทั้งหมด ต้องผ่านก่อน commit ใช้เวลาราว 20 วินาที |
 | `pnpm test:full` | รัน test ทั้งหมดโดยให้ผู้ซื้อ 20 คนแย่งชิ้นสุดท้ายครบ 100 รอบตาม CHK-Q02 (`pnpm check` รัน 10 รอบ) ต้องผ่านก่อน merge งานที่แตะการสั่งซื้อหรือการจองสต็อก |
-| `pnpm e2e` | เดินเส้นทางหลักผ่านหน้าเว็บจริงด้วย Playwright (`e2e/main-path.spec.ts`) build แอปแล้วเปิดที่พอร์ต 3300 กับฐานข้อมูล `data/e2e.db` ที่ล้างใหม่ทุกครั้ง ใช้ Google Chrome ในเครื่อง ราว 30 วินาที ไม่อยู่ใน `pnpm check` แต่ต้องผ่านก่อน merge งานที่แตะหน้าในเส้นทางหลัก วิธีใช้อื่นอยู่ใน README |
+| `pnpm e2e` | เดินเส้นทางหลักผ่านหน้าเว็บจริงด้วย Playwright (`e2e/main-path.spec.ts`) และลองภาพ 3 มิติของสินค้าพร้อมวัด P3D-Q01 P3D-Q02 (`e2e/product-3d.spec.ts`) build แอปแล้วเปิดที่พอร์ต 3300 กับฐานข้อมูล `data/e2e.db` ที่ล้างใหม่ทุกครั้ง ใช้ Google Chrome ในเครื่อง ราว 1 นาที ไม่อยู่ใน `pnpm check` แต่ต้องผ่านก่อน merge งานที่แตะหน้าในเส้นทางหลัก วิธีใช้อื่นอยู่ใน README |
 
 ถ้าทำงานหลาย worktree พร้อมกัน ให้แต่ละ worktree ใช้พอร์ตของตัวเอง ฐานข้อมูลอยู่ที่ `data/blanksong.db` ของแต่ละ worktree จึงไม่ชนกัน
 
@@ -69,7 +69,7 @@ feature ทั้ง 10: `account` `shop` `product-listing` `stock` `browse` `ca
 |---|---|
 | account | `/login` (รับ `?next=` เพื่อพากลับหน้าเดิม) `/signup` `/profile` `/forgot-password` `/reset-password` |
 | shop | `/open-shop` `/seller` (หน้าแรกของหลังบ้าน) `/seller/settings` `/shops/[shopId]` (หน้าร้าน) |
-| product-listing | `/seller/products` `/seller/products/new` `/seller/products/[productId]` `/product-images/[key]` (รูปที่ผู้ขายส่งขึ้นมา) |
+| product-listing | `/seller/products` `/seller/products/new` `/seller/products/[productId]` `/product-images/[key]` (รูปที่ผู้ขายส่งขึ้นมา) `/product-models/[key]` (ไฟล์ 3 มิติที่ผู้ขายส่งขึ้นมา หน้าฟอร์มส่งไฟล์ด้วย `POST /product-models?name=`) |
 | stock | `/seller/stock` |
 | browse | `/` (หน้าแรก) `/products/[productId]` ส่วนหน้าผลค้นหา BRW เลือกเอง |
 | cart | `/cart` |
@@ -124,6 +124,7 @@ export default async function CartPage() {
 - ข้อมูลไม่มีหรือเป็นของคนอื่น ให้เรียก `notFound()` จาก `next/navigation` ทั้งสองกรณี จะได้หน้า "ไม่พบ" แบบเดียวกัน
 - หน้ากำลังโหลด ใช้ `loading.tsx` ที่คืน `<LoadingState />` หรือ `<Suspense fallback={<LoadingState />}>` ถ้า requirement บอกว่าเกิน 10 วินาทีถือว่าโหลดไม่สำเร็จ ห่อด้วย `<LoadingTimeout>`
 - หน้าผิดพลาด ใช้ `<ErrorState />` ปุ่ม "ลองใหม่" โหลดข้อมูลหน้าเดิมใหม่โดยคงที่อยู่หน้าเว็บไว้
+- ไลบรารีที่ใช้ได้เฉพาะในเบราว์เซอร์ (อ่าน `window` `self` หรือ `customElements` ตอนโหลด) ให้โหลดด้วย `import()` ใน `useEffect` ของ client component ไม่ import ไว้บนสุดของไฟล์ เพราะ client component ยังถูกเรนเดอร์บนเซิร์ฟเวอร์ก่อน และไลบรารีจะถูกโหลดเมื่อ component นั้นแสดงเท่านั้น แบบอย่างคือ `ProductModel` ใน `src/features/browse/components/product-model.tsx` ชนิดของ custom element ที่ใช้ใน JSX ประกาศในไฟล์ `.d.ts` แบบ `model-viewer.d.ts` ข้างกัน
 - หน้าและ layout ฝั่งเซิร์ฟเวอร์ import ได้เฉพาะ component จากไฟล์ที่ขึ้นต้นด้วย `"use client"` ค่าอื่นเช่นข้อความหรือค่าคงที่ที่ import มาจะไม่มีค่าจริงฝั่งเซิร์ฟเวอร์ ให้ย้ายค่าไปไว้ในไฟล์ที่ไม่ใช่ client เช่น `server/`
 - สไตล์กลาง (`button` `button-secondary` `card` `field` `input` `field-error` `chips` `chip`) อยู่ใน `src/app/globals.css` สไตล์เฉพาะ feature ให้เขียน `*.module.css` ในโฟลเดอร์ feature ไม่แก้ globals.css
 - ข้อความที่ผู้ใช้เห็นเป็นภาษาไทยตาม `GLOSSARY.md` ปุ่มสูงอย่างน้อย 44 จุด และหน้าต้องใช้ได้ที่จอกว้าง 360 จุด
@@ -253,6 +254,6 @@ const buyer: CurrentAccount = await requireAccount(`/orders/${orderNo}`);
 
 ## ข้อมูลตัวอย่าง
 
-`pnpm seed` สร้าง 12 หมวดหมู่ 50 ร้าน 1,000 สินค้าที่ขายอยู่ พร้อมแบบย่อย สต็อก และประวัติสต็อก บัญชีผู้ดูแลแพลตฟอร์ม 1 บัญชี ผู้ขาย 50 บัญชี และผู้ซื้อ 3 บัญชี (อีเมลและรหัสผ่านอยู่ใน README) และคำสั่งซื้อตัวอย่าง 8 รายการของร้าน seller01 ครบทุกสถานะ ที่สร้างผ่านกฎจริง (`src/shared/seed/orders.ts`) รูปเป็น SVG ที่สร้างจากชื่อไฟล์ที่ `/sample-images/<ชื่อ>.svg`
+`pnpm seed` สร้าง 12 หมวดหมู่ 50 ร้าน 1,000 สินค้าที่ขายอยู่ พร้อมแบบย่อย สต็อก และประวัติสต็อก บัญชีผู้ดูแลแพลตฟอร์ม 1 บัญชี ผู้ขาย 50 บัญชี และผู้ซื้อ 3 บัญชี (อีเมลและรหัสผ่านอยู่ใน README) และคำสั่งซื้อตัวอย่าง 8 รายการของร้าน seller01 ครบทุกสถานะ ที่สร้างผ่านกฎจริง (`src/shared/seed/orders.ts`) รูปเป็น SVG ที่สร้างจากชื่อไฟล์ที่ `/sample-images/<ชื่อ>.svg` สินค้า 2 ชิ้นของร้านแรกมีไฟล์ 3 มิติจาก `src/shared/seed/models/` (ที่มาและสัญญาอนุญาตอยู่ใน `SOURCES.txt` ข้างไฟล์ ใช้เฉพาะไฟล์ CC0)
 
 ระบบรู้ว่าเคยสร้างแล้วจากบัญชี `admin@example.com` จึงรันซ้ำได้ ถ้าต้องเพิ่มข้อมูลตัวอย่าง ให้แก้ `src/shared/seed/index.ts` และ test ใน `seed.test.ts`

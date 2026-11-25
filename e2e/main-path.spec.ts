@@ -128,9 +128,14 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
     const page = sellerPage;
     await page.getByRole("navigation", { name: "เมนูหลังบ้านของร้าน" }).getByRole("link", { name: "สต็อก" }).click();
     const row = page.getByRole("listitem").filter({ hasText: productName }).filter({ hasText: "ดำ L" });
-    await row.getByLabel("ตั้งสต็อกใหม่").fill("10");
-    await row.getByRole("button", { name: "บันทึก" }).click();
-    await expect(row.getByText("สต็อก 10")).toBeVisible();
+    const save = row.getByRole("button", { name: "บันทึก" });
+    // INV-004 ตัวเลขสต็อกอยู่ในช่องกรอกที่เดียว ปุ่มบันทึกขึ้นเมื่อแก้ตัวเลขแล้วเท่านั้น
+    await expect(save).toBeHidden();
+    await row.getByRole("textbox", { name: /^สต็อก/ }).fill("10");
+    await save.click();
+    await expect(row.getByRole("status")).toHaveText("บันทึกแล้ว");
+    await expect(row.getByRole("textbox", { name: /^สต็อก/ })).toHaveValue("10");
+    await expect(save).toBeHidden();
     await shot(page, "stock");
   });
 

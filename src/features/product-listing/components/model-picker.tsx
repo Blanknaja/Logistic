@@ -72,11 +72,11 @@ export function ModelPicker({
           )}
           <div className={styles.imageActions}>
             {model.status === "failed" && model.file && (
-              <button type="button" className="button button-secondary" onClick={() => send(model.file as File)}>
+              <button type="button" className="link-action" onClick={() => send(model.file as File)}>
                 ลองใหม่
               </button>
             )}
-            <button type="button" className="button button-secondary" onClick={remove}>
+            <button type="button" className="link-action" onClick={remove}>
               เอาออก
             </button>
           </div>

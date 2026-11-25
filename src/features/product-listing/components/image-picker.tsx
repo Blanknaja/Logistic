@@ -91,14 +91,14 @@ export function ImagePicker({
               )}
               <div className={styles.imageActions}>
                 {item.status === "failed" && item.file && (
-                  <button type="button" className="button button-secondary" onClick={() => send(item.id, item.file as File)}>
+                  <button type="button" className="link-action" onClick={() => send(item.id, item.file as File)}>
                     ลองใหม่
                   </button>
                 )}
                 {index > 0 && (
                   <button
                     type="button"
-                    className="button button-secondary"
+                    className={`link-action ${styles.arrow}`}
                     aria-label={`เลื่อนรูปที่ ${index + 1} ไปก่อน`}
                     onClick={() => move(index, index - 1)}
                   >
@@ -108,7 +108,7 @@ export function ImagePicker({
                 {index < items.length - 1 && (
                   <button
                     type="button"
-                    className="button button-secondary"
+                    className={`link-action ${styles.arrow}`}
                     aria-label={`เลื่อนรูปที่ ${index + 1} ไปหลัง`}
                     onClick={() => move(index, index + 1)}
                   >
@@ -117,7 +117,7 @@ export function ImagePicker({
                 )}
                 <button
                   type="button"
-                  className="button button-secondary"
+                  className="link-action"
                   aria-label={`ลบรูปที่ ${index + 1}`}
                   onClick={() => remove(item)}
                 >

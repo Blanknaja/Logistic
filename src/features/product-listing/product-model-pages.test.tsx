@@ -81,7 +81,7 @@ const MB = 1024 * 1024;
 const text = (html: string) => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 const count = () => Number(db.prepare("SELECT count(*) AS n FROM product_model_files").get()?.n);
 const editPage = (productId: number) =>
-  EditProductPage({ params: Promise.resolve({ productId: String(productId) }) } as PageProps<"/seller/products/[productId]">);
+  EditProductPage({ params: Promise.resolve({ productId: String(productId) }), searchParams: Promise.resolve({}) } as PageProps<"/seller/products/[productId]">);
 
 /** สมชายเจ้าของ "ร้านสมชาย" เข้าสู่ระบบอยู่ */
 function signInSomchai() {

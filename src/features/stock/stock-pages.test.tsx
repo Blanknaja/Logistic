@@ -12,7 +12,7 @@ import StockLoading from "@/app/seller/stock/loading";
 import StockNotFound from "@/app/seller/stock/not-found";
 import StockPage from "@/app/seller/stock/page";
 import { createSession } from "@/features/account/server/sessions";
-import { saveStockAction } from "@/features/stock/actions";
+import { saveStockAction, saveStockFormAction } from "@/features/stock/actions";
 import { SaveFeedback, StockRowItem } from "@/features/stock/components/stock-row";
 import { INVALID_STOCK_MESSAGE } from "@/features/stock/server/labels";
 import type { Db } from "@/shared/db";
@@ -106,6 +106,10 @@ const stockOf = (variantId: number) =>
   (db.prepare("SELECT stock FROM variants WHERE id = ?").get(variantId) as { stock: number }).stock;
 const rowCount = (html = "") => html.match(/<li class="_row_/g)?.length ?? 0;
 const html = (node: React.ReactNode) => renderToStaticMarkup(node);
+/** ข้อความที่ตาเห็น ไม่สนแท็ก */
+const plain = (markup = "") => markup.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+/** ตัวเลขสต็อกของแถว ซึ่งอยู่ในช่องกรอกที่เดียว */
+const stockValue = (row = "") => row.match(/name="stock"[^>]*value="([^"]*)"/)?.[1];
 
 /** สมชายเข้าสู่ระบบเป็นเจ้าของร้าน "สมชายสปอร์ต" */
 function signInAsSomchai() {
@@ -143,9 +147,12 @@ describe("INV-001 แสดงหน้าสต็อก", () => {
     const page = (await stockPage()).html ?? "";
     expect(rowCount(page)).toBe(2);
     const [first, second] = page.split('<li class="_row_').slice(1);
-    for (const text of ["เสื้อยืดคอกลม", "แดง M", "สต็อก 12", "จองอยู่ 2"]) expect(first).toContain(text);
+    expect(stockValue(first)).toBe("12");
+    for (const text of ["เสื้อยืดคอกลม", "แดง M", "จองอยู่ 2"]) expect(plain(first)).toContain(text);
     expect(first).not.toContain("ใกล้หมด");
-    for (const text of ["แดง L", "สต็อก 3", "จองอยู่ 0", "ใกล้หมด"]) expect(second).toContain(text);
+    expect(stockValue(second)).toBe("3");
+    for (const text of ["แดง L", "จองอยู่ 0", "ใกล้หมด"]) expect(plain(second)).toContain(text);
+    expect(page.match(/name="stock"/g)).toHaveLength(2);
     expect(page).toContain(`href="/seller/stock/${shirt.variantIds[1]}"`);
   });
 
@@ -163,7 +170,7 @@ describe("INV-001 แสดงหน้าสต็อก", () => {
   test("INV-001 ร้านที่ยังไม่มีสินค้า เห็นข้อความและลิงก์ไปหน้าลงสินค้า", async () => {
     signInAsNewSeller("สมหญิงเบเกอรี่");
     const page = (await stockPage()).html;
-    expect(page).toContain("ยังไม่มีสินค้า ลงสินค้าก่อนจึงจะจัดการสต็อกได้");
+    expect(plain(page)).toContain("ยังไม่มีสินค้า ลงสินค้าก่อนจึงจะจัดการสต็อกได้");
     expect(page).toContain('href="/seller/products/new"');
   });
 
@@ -189,7 +196,7 @@ describe("INV-002 ป้ายใกล้หมดและหมด", () => {
     const shoes = addProduct(db, { shopId: shop.id, name: "รองเท้าวิ่ง 42", stock: 0 });
     reserve(shoes.variantIds[0], 2);
     const page = (await stockPage()).html;
-    expect(page).toContain("จองอยู่ 2");
+    expect(plain(page)).toContain("จองอยู่ 2");
     expect(page).toMatch(/>หมด</);
   });
 });
@@ -241,9 +248,9 @@ describe("INV-004 ผู้ขายตั้งสต็อก", () => {
     });
     expect(html(<SaveFeedback outcome="saved" />)).toContain("บันทึกแล้ว");
     const [row] = ((await stockPage()).html ?? "").split('<li class="_row_').slice(1);
-    expect(row).toContain("สต็อก 20");
+    expect(stockValue(row)).toBe("20");
     expect(row).not.toContain("ใกล้หมด");
-    expect((await historyPage(variantId)).html).toContain("ผู้ขายแก้ +17 เหลือ 20");
+    expect(plain((await historyPage(variantId)).html)).toContain("ผู้ขายแก้ +17 เหลือ 20");
   });
 
   test("INV-004 บันทึกไม่สำเร็จเพราะเน็ตหลุด เห็นข้อความให้ลองใหม่", () => {
@@ -257,6 +264,37 @@ describe("INV-004 ผู้ขายตั้งสต็อก", () => {
     expect(page).toMatch(/<input type="hidden" name="expected" value="3"/);
     expect(page).toMatch(/<button type="submit"[^>]*>บันทึก</);
     expect(page).toMatch(/<button type="button"[^>]*>ยกเลิก</);
+  });
+
+  test("INV-004 ปุ่มบันทึกและยกเลิกซ่อนจนกว่าจะแก้ตัวเลข เฉพาะเมื่อเบราว์เซอร์มี JavaScript", () => {
+    const row = { variantId: 7, productName: "เสื้อยืดคอกลม", variantLabel: "แดง L", stock: 3, reserved: 0, label: "ใกล้หมด" as const };
+    const page = html(<StockRowItem row={row} />);
+    const css = readFileSync(join(process.cwd(), "src/features/stock/components/stock.module.css"), "utf8");
+
+    // ยังไม่แก้ แถวไม่มี data-dirty ปุ่มจึงถูกซ่อนด้วยกฎที่ใช้เฉพาะตอนมี JavaScript
+    expect(page).toMatch(/<li class="_row_[^"]*">/);
+    expect(css).toMatch(/@media \(scripting: enabled\) \{\s*\.row:not\(\[data-dirty\]\) \.controls \{\s*display: none;/);
+  });
+
+  test("INV-004 เบราว์เซอร์ที่ไม่มี JavaScript กดบันทึกแล้วกลับไปหน้าสต็อกเดิม เห็นจำนวนใหม่และข้อความบันทึกแล้ว", async () => {
+    const shop = signInAsSomchai();
+    const shirt = addProduct(db, { shopId: shop.id, name: "เสื้อยืดคอกลม", stock: 3 });
+    const variantId = shirt.variantIds[0];
+    const form = saveForm(variantId, 3, "20");
+    form.set("back", "/seller/stock?filter=low");
+
+    const result = await submit(saveStockFormAction(form));
+    expect(result.redirect).toBe(`/seller/stock?filter=low&saved=${variantId}&outcome=saved`);
+    expect(stockOf(variantId)).toBe(20);
+    const [row] = ((await stockPage({ saved: String(variantId), outcome: "saved" })).html ?? "").split('<li class="_row_').slice(1);
+    expect(stockValue(row)).toBe("20");
+    expect(row).toContain("บันทึกแล้ว");
+
+    form.set("back", "https://example.com/");
+    form.set("expected", "20");
+    form.set("stock", "-1");
+    expect((await submit(saveStockFormAction(form))).redirect).toBe(`/seller/stock?saved=${variantId}&outcome=invalid`);
+    expect(stockOf(variantId)).toBe(20);
   });
 });
 
@@ -310,7 +348,8 @@ describe("INV-007 ผู้ขายตั้งสต็อกต่ำกว�
 
     expect((await submit(saveStockAction(saveForm(water.variantIds[0], 2, "0")))).state?.outcome).toBe("saved");
     const page = (await stockPage()).html;
-    for (const text of ["สต็อก 0", "จองอยู่ 3"]) expect(page).toContain(text);
+    expect(stockValue(page)).toBe("0");
+    expect(plain(page)).toContain("จองอยู่ 3");
     expect(page).toMatch(/>หมด</);
   });
 
@@ -325,8 +364,8 @@ describe("INV-007 ผู้ขายตั้งสต็อกต่ำกว�
       "INSERT INTO stock_history (variant_id, reason, change, stock_after, order_id, created_at) VALUES (?, ?, 3, 3, ?, ?)",
     ).run(variantId, STOCK_CHANGE_REASON.returned, order.id, "2026-11-25T10:30:00.000Z");
 
-    expect((await stockPage()).html).toContain("จองอยู่ 0");
-    const page = (await historyPage(variantId)).html;
+    expect(plain((await stockPage()).html)).toContain("จองอยู่ 0");
+    const page = plain((await historyPage(variantId)).html);
     for (const text of [formatThaiDateTime("2026-11-25T10:30:00.000Z"), "คืนจากคำสั่งซื้อ +3 เหลือ 3", `คำสั่งซื้อ ${order.orderNo}`]) {
       expect(page).toContain(text);
     }
@@ -396,7 +435,7 @@ describe("INV-015 แสดงประวัติสต็อก", () => {
     const page = (await historyPage(variantId)).html ?? "";
     expect(page.indexOf(formatThaiDateTime("2026-11-25T02:10:00.000Z"))).toBeLessThan(page.indexOf(formatThaiDateTime("2026-11-25T02:00:00.000Z")));
     for (const text of ["จองจากคำสั่งซื้อ -2 เหลือ 8", "ผู้ขายแก้ +5 เหลือ 10", `คำสั่งซื้อ ${order.orderNo}`, "สต็อกปัจจุบัน"]) {
-      expect(page).toContain(text);
+      expect(plain(page)).toContain(text);
     }
     expect(page).not.toMatch(/<button|<form/);
   });

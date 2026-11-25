@@ -9,8 +9,8 @@ import { getDb } from "@/shared/db";
 import { formatTimeOrDateTime } from "@/shared/format";
 import { PRODUCT_STATUS } from "@/shared/statuses";
 
-/** ข้อความที่หน้ารายการสินค้าของร้านแสดงตาม ?notice= หลังบันทึก */
-export type SavedNotice = "published" | "draft" | "saved" | "deleted";
+/** ข้อความที่หน้ารายการสินค้าและหน้าแก้ไขแสดงตาม ?notice= หลังบันทึก */
+export type SavedNotice = "published" | "draft" | "saved" | "deleted" | "hidden" | "shown";
 
 const LIST_PATH = "/seller/products";
 
@@ -53,9 +53,9 @@ export async function updateProductAction(productId: number, version: string, in
   redirect(`${LIST_PATH}?notice=${notice}`);
 }
 
-/** ปุ่ม "ซ่อน" และ "เลิกซ่อน" ในหน้ารายการ แล้วกลับไปหน้ารายการเดิมพร้อมตัวกรองเดิม (PRD-008) */
+/** ปุ่ม "ซ่อนสินค้านี้" และ "เลิกซ่อนสินค้านี้" ในหน้าแก้ไข แล้วกลับไปที่ back ซึ่งต้องเป็นหน้ารายการหรือหน้าแก้ไขของร้าน (PRD-008) */
 export async function setHiddenAction(productId: number, hidden: boolean, back: string): Promise<void> {
-  const target = typeof back === "string" && /^\/seller\/products(\?|$)/.test(back) ? back : LIST_PATH;
+  const target = typeof back === "string" && /^\/seller\/products(\/\d+)?(\?|$)/.test(back) ? back : LIST_PATH;
   const shopId = await sellerShopId(target);
   if (!Number.isSafeInteger(productId) || typeof hidden !== "boolean") throw new Error("ข้อมูลสินค้าผิดรูปแบบ");
   setProductHidden(getDb(), shopId, productId, hidden);

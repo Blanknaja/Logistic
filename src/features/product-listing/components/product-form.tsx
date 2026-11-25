@@ -143,9 +143,16 @@ export function ProductForm({
   const listed = status === PRODUCT_STATUS.onSale || status === PRODUCT_STATUS.hidden;
   const label = (forIntent: SaveIntent, text: string) => (pending && intent === forIntent ? "กำลังบันทึก..." : text);
 
+  // ปุ่มบันทึกติดขอบล่างจอ ช่องที่ผิดอาจอยู่นอกจอ จึงพาไปช่องแรกที่ผิด
+  const form = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [state]);
+
   return (
-    <form className={styles.form} noValidate onSubmit={(event) => event.preventDefault()}>
-      <div className={styles.section}>
+    <form ref={form} className={styles.form} noValidate onSubmit={(event) => event.preventDefault()}>
+      <fieldset className={styles.section}>
+        <legend>ข้อมูลสินค้า</legend>
         <div className="field">
           <label htmlFor="product-name">ชื่อสินค้า</label>
           <input
@@ -176,7 +183,7 @@ export function ProductForm({
           <label htmlFor="product-category">หมวดหมู่</label>
           <select
             id="product-category"
-            className="input"
+            className={`input ${styles.select}`}
             value={categoryId ?? ""}
             onChange={(event) => setCategoryId(event.target.value ? Number(event.target.value) : null)}
             {...describedBy("product-category", errors.categoryId)}
@@ -190,45 +197,46 @@ export function ProductForm({
           </select>
           <ErrorText id="product-category-error" text={errors.categoryId} />
         </div>
-      </div>
+      </fieldset>
 
       <ImagePicker items={images} setItems={setImages} error={errors.images} />
       <ModelPicker model={model} setModel={setModel} error={errors.model} />
       <OptionEditor options={options} setOptions={setOptions} prices={prices} setPrices={setPrices} errors={errors} />
 
-      {"failed" in state && (
-        <p role="alert" className={styles.alert}>
-          {MESSAGES.saveFailed}
-        </p>
-      )}
-      {conflict && <ConflictAlert message={conflict} onReload={() => router.refresh()} />}
-      {Object.keys(errors).length > 0 && (
-        <p role="alert" className={styles.alert}>
-          ยังบันทึกไม่ได้ ดูข้อความใต้ช่องที่ผิด
-        </p>
-      )}
-      {!imagesReady && <p className={styles.hint}>รอรูปส่งเสร็จ หรือลบรูปที่ส่งไม่สำเร็จ ก่อนบันทึก</p>}
-
       <div className={styles.saveBar}>
-        {listed ? (
-          // แก้สินค้าที่ลงขายแล้วต้องข้อมูลครบเหมือนเปิดขาย และสถานะคงเดิม
-          <button type="button" className="button" disabled={pending || !filesReady} onClick={() => submit("publish")}>
-            {label("publish", "บันทึก")}
-          </button>
-        ) : (
-          <>
-            <button type="button" className="button button-secondary" disabled={pending || !filesReady} onClick={() => submit("draft")}>
-              {label("draft", "บันทึกร่าง")}
-            </button>
-            <button type="button" className="button" disabled={pending || !filesReady} onClick={() => submit("publish")}>
-              {label("publish", "บันทึกและเปิดขาย")}
-            </button>
-          </>
+        {"failed" in state && (
+          <p role="alert" className={styles.alert}>
+            {MESSAGES.saveFailed}
+          </p>
         )}
-        <Link href={LIST_PATH} className="button button-secondary">
-          กลับไปรายการสินค้า
-        </Link>
+        {conflict && <ConflictAlert message={conflict} onReload={() => router.refresh()} />}
+        {Object.keys(errors).length > 0 && (
+          <p role="alert" className={styles.alert}>
+            ยังบันทึกไม่ได้ ดูข้อความใต้ช่องที่ผิด
+          </p>
+        )}
+        {!imagesReady && <p className={styles.hint}>รอรูปส่งเสร็จ หรือลบรูปที่ส่งไม่สำเร็จ ก่อนบันทึก</p>}
+        <div className={styles.saveButtons}>
+          {listed ? (
+            // แก้สินค้าที่ลงขายแล้วต้องข้อมูลครบเหมือนเปิดขาย และสถานะคงเดิม
+            <button type="button" className="button" disabled={pending || !filesReady} onClick={() => submit("publish")}>
+              {label("publish", "บันทึก")}
+            </button>
+          ) : (
+            <>
+              <button type="button" className="button button-secondary" disabled={pending || !filesReady} onClick={() => submit("draft")}>
+                {label("draft", "บันทึกร่าง")}
+              </button>
+              <button type="button" className="button" disabled={pending || !filesReady} onClick={() => submit("publish")}>
+                {label("publish", "บันทึกและเปิดขาย")}
+              </button>
+            </>
+          )}
+        </div>
       </div>
+      <Link href={LIST_PATH} className={`link-action ${styles.back}`}>
+        กลับไปรายการสินค้า
+      </Link>
 
       {leaveTo && <LeaveDialog onStay={() => setLeaveTo(null)} onLeave={() => router.push(leaveTo)} />}
     </form>

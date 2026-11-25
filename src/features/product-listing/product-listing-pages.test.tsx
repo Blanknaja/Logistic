@@ -208,7 +208,22 @@ describe("PRD-002 สร้างสินค้าและเปิดขา�
     const page = text((await open(listPage({ notice: "published" }))).html);
     expect(page).toContain("เปิดขายสินค้าแล้ว");
     expect(page.indexOf("เสื้อยืดคอกลม")).toBeLessThan(page.indexOf("ของเก่า"));
-    expect(page).toContain("฿250 สต็อก 0 ขายอยู่");
+    expect(page).toContain("฿250 สต็อก 0 หมด ขายอยู่");
+  });
+
+  test("PRD-001 สต็อกรวมที่ใกล้หมดหรือหมดมีป้ายตามเกณฑ์ของ INV-002 สต็อกปกติและร่างไม่มีป้าย", async () => {
+    const { shopId } = signInSeller();
+    addProduct(db, { shopId, name: "มีเยอะ", stock: 6 });
+    addProduct(db, { shopId, name: "ใกล้หมดแล้ว", stock: 5 });
+    addProduct(db, { shopId, name: "ไม่เหลือ", stock: 0 });
+    addProduct(db, { shopId, name: "ร่างใหม่", stock: 0, status: PRODUCT_STATUS.draft });
+
+    const html = (await open(listPage())).html;
+    const line = (name: string) => text(html.split("<li").find((part) => part.includes(`>${name}<`)) ?? "");
+    expect(line("มีเยอะ")).not.toMatch(/ใกล้หมด|หมด/);
+    expect(line("ใกล้หมดแล้ว")).toContain("สต็อก 5 ใกล้หมด");
+    expect(line("ไม่เหลือ")).toContain("สต็อก 0 หมด");
+    expect(line("ร่างใหม่")).toContain("สต็อก 0 ร่าง");
   });
 
   test("PRD-002 ข้อมูลไม่ครบ ยังอยู่ที่หน้าฟอร์มพร้อมข้อความ และยังไม่มีสินค้าใหม่", async () => {

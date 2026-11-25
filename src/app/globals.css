@@ -495,7 +495,7 @@ label.field {
 }
 
 @media (hover: hover) {
-  .input:hover:not(:disabled) {
+  .input:hover:not(:disabled, [aria-invalid="true"]) {
     border-color: var(--color-text);
   }
 }

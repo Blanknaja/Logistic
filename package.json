@@ -16,6 +16,7 @@
     "test": "vitest run",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
     "test:full": "CHK_Q02_ROUNDS=100 vitest run",
+    "test:omise": "vitest run --config vitest.omise.config.mts --reporter=verbose",
     "e2e": "playwright test"
   },
   "dependencies": {

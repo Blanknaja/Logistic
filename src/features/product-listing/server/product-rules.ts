@@ -5,6 +5,7 @@ export const LIMITS = {
   description: 3000,
   images: 9,
   imageBytes: 5 * 1024 * 1024,
+  modelBytes: 10 * 1024 * 1024,
   options: 2,
   values: 10,
   label: 20,
@@ -26,6 +27,10 @@ export const MESSAGES = {
   imageWrongType: "รูปต้องเป็นไฟล์ JPG หรือ PNG",
   imageNotFound: "ไม่พบรูปบางรูป ลบรูปนั้นแล้วใส่ใหม่",
   uploadFailed: "ส่งรูปไม่สำเร็จ",
+  modelWrongType: "ไฟล์ต้องเป็นชนิด GLB",
+  modelTooLarge: "ไฟล์ 3 มิติต้องมีขนาดไม่เกิน 10 MB",
+  modelUploadFailed: "ส่งไฟล์ไม่สำเร็จ",
+  modelNotFound: "ไม่พบไฟล์ 3 มิติ เอาไฟล์นั้นออกแล้วใส่ใหม่",
   tooManyOptions: "ใส่ตัวเลือกได้ไม่เกิน 2 ตัวเลือก",
   optionNameRequired: "กรอกชื่อตัวเลือก",
   optionNameTooLong: "ชื่อตัวเลือกยาวได้ไม่เกิน 20 ตัวอักษร",
@@ -51,6 +56,8 @@ export type ProductValues = {
   images: string[];
   options: OptionInput[];
   prices: Record<string, string>;
+  /** ที่อยู่ไฟล์ 3 มิติ null ถ้าไม่มี (P3D-001) */
+  model: string | null;
 };
 
 /** "draft" คือกด "บันทึกร่าง" ส่วน "publish" คือกด "บันทึกและเปิดขาย" */
@@ -66,6 +73,7 @@ export const EMPTY_PRODUCT: ProductValues = {
   images: [],
   options: [],
   prices: {},
+  model: null,
 };
 
 export type VariantCombo = { key: string; values: string[]; label: string };
@@ -84,6 +92,18 @@ export function variantCombos(options: OptionInput[]): VariantCombo[] {
     values,
     label: values.join(" "),
   }));
+}
+
+/**
+ * เหตุที่ไม่รับไฟล์ 3 มิติ หรือ undefined ถ้ารับ (P3D-001) head คือไบต์ต้นไฟล์อย่างน้อย 12 ไบต์ size คือขนาดทั้งไฟล์
+ * ตรวจส่วนหัว GLB: "glTF" รุ่น 2 และความยาวในหัวเท่ากับขนาดจริง ไม่เชื่อนามสกุล
+ */
+export function modelFileError(head: Uint8Array, size: number): string | undefined {
+  if (size > LIMITS.modelBytes) return MESSAGES.modelTooLarge;
+  if (head.byteLength < 12) return MESSAGES.modelWrongType;
+  const view = new DataView(head.buffer, head.byteOffset, 12);
+  const glb = view.getUint32(0, true) === 0x46546c67 && view.getUint32(4, true) === 2 && view.getUint32(8, true) === size;
+  return glb ? undefined : MESSAGES.modelWrongType;
 }
 
 const sameLabel = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -171,8 +191,9 @@ const isText = (value: unknown): value is string => typeof value === "string";
 /** อ่านข้อมูลที่หน้าเว็บส่งมา คืน null ถ้ารูปแบบผิด เช่นมีคนส่งเองโดยไม่ผ่านหน้าฟอร์ม */
 export function parseProductValues(raw: unknown): ProductValues | null {
   if (typeof raw !== "object" || raw === null) return null;
-  const { name, description, categoryId, images, options, prices } = raw as Record<string, unknown>;
+  const { name, description, categoryId, images, options, prices, model } = raw as Record<string, unknown>;
   if (!isText(name) || !isText(description)) return null;
+  if (model !== null && !isText(model)) return null;
   if (categoryId !== null && !Number.isSafeInteger(categoryId)) return null;
   if (!Array.isArray(images) || !images.every(isText)) return null;
   if (!Array.isArray(options)) return null;
@@ -192,5 +213,6 @@ export function parseProductValues(raw: unknown): ProductValues | null {
     images: [...images],
     options: parsedOptions,
     prices: { ...(prices as Record<string, string>) },
+    model,
   };
 }

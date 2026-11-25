@@ -268,8 +268,9 @@ describe("PRD-008 ซ่อนและเลิกซ่อนสินค้�
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(at("10:00")));
     const shopId = signInSeller();
-    for (let i = 0; i < 17; i++) addProduct(db, { shopId });
-    for (let i = 0; i < 3; i++) addProduct(db, { shopId, status: PRODUCT_STATUS.hidden });
+    const earlier = new Date(at("09:00")).toISOString();
+    for (let i = 0; i < 17; i++) addProduct(db, { shopId, createdAt: earlier });
+    for (let i = 0; i < 3; i++) addProduct(db, { shopId, status: PRODUCT_STATUS.hidden, createdAt: earlier });
     const product = tshirt(shopId);
     vi.setSystemTime(new Date(at("11:00")));
 
@@ -348,7 +349,7 @@ describe("PRD-013 กดซ้ำ และแก้พร้อมกันจ�
   function scarf(shopId: number): ProductValues {
     const image = saveImageFile(db, shopId, new Uint8Array([0xff, 0xd8, 0xff, 0]));
     if (!image.ok) throw new Error(image.error);
-    return { name: "ผ้าพันคอ", description: "ผ้าไหม", categoryId: 1, images: [image.url], options: [], prices: { "[]": "199" } };
+    return { name: "ผ้าพันคอ", description: "ผ้าไหม", categoryId: 1, images: [image.url], options: [], prices: { "[]": "199" }, model: null };
   }
 
   test("PRD-013 บันทึกจากหน้าต่างเดียว เห็น บันทึกแล้ว และราคา แดง M เป็น 260", async () => {

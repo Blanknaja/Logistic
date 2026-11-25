@@ -15,9 +15,10 @@ import {
 } from "@/features/product-listing/server/product-rules";
 import { PRODUCT_STATUS } from "@/shared/statuses";
 import { settle, type Failed } from "@/shared/ui/timeout";
-import { canSaveImages, isDirty, normalizeValues } from "./form-state";
+import { canSaveImages, canSaveModel, isDirty, normalizeValues } from "./form-state";
 import { ImagePicker, savedImage } from "./image-picker";
 import { LeaveDialog } from "./leave-dialog";
+import { ModelPicker, savedModel } from "./model-picker";
 import { OptionEditor, type EditableOption } from "./option-editor";
 import styles from "./product-listing.module.css";
 
@@ -80,16 +81,19 @@ function useLeaveGuard(dirty: boolean, ask: (path: string) => void) {
  * หน้าฟอร์มสินค้า ใช้ได้ทั้งสร้างใหม่และแก้ไข: ส่ง initial เป็นข้อมูลที่บันทึกไว้ และ save เป็น server action
  * save ที่สำเร็จต้อง redirect ไปหน้าอื่น ถ้าไม่ผ่านให้คืนข้อความผิดของแต่ละช่อง
  * status คือสถานะของสินค้าที่เปิดมาแก้ สินค้าที่ ขายอยู่ หรือ ซ่อน มีปุ่ม "บันทึก" ปุ่มเดียว (PRD-007)
+ * modelFile คือชื่อและขนาดของไฟล์ 3 มิติใน initial.model (P3D-001)
  */
 export function ProductForm({
   categories,
   initial = EMPTY_PRODUCT,
   status,
+  modelFile = null,
   save,
 }: {
   categories: Category[];
   initial?: ProductValues;
   status?: ListedStatus;
+  modelFile?: { name: string; size: number } | null;
   save: (intent: SaveIntent, values: ProductValues) => Promise<SaveResult>;
 }) {
   const router = useRouter();
@@ -100,6 +104,7 @@ export function ProductForm({
   const [images, setImages] = useState(() => initial.images.map(savedImage));
   const [options, setOptions] = useState<EditableOption[]>(() => initial.options.map((option, i) => ({ ...option, id: i + 1 })));
   const [prices, setPrices] = useState(initial.prices);
+  const [model, setModel] = useState(() => (initial.model && modelFile ? savedModel(initial.model, modelFile) : null));
   const [leaveTo, setLeaveTo] = useState<string | null>(null);
   const [intent, setIntent] = useState<SaveIntent | null>(null);
 
@@ -110,9 +115,11 @@ export function ProductForm({
     images: images.flatMap((image) => (image.url ? [image.url] : [])),
     options: options.map((option) => ({ name: option.name, values: option.values })),
     prices,
+    model: model?.url ?? null,
   });
   const imagesReady = canSaveImages(images);
-  useLeaveGuard(isDirty(saved, values, images), setLeaveTo);
+  const filesReady = imagesReady && canSaveModel(model);
+  useLeaveGuard(isDirty(saved, values, images) || !canSaveModel(model), setLeaveTo);
 
   const [state, dispatch, pending] = useActionState<SaveResult | Failed, Payload>(
     (_previous, payload) => settle(save(payload.intent, payload.values)),
@@ -125,7 +132,7 @@ export function ProductForm({
   }, [pending]);
 
   const submit = (next: SaveIntent) => {
-    if (busy.current || !imagesReady) return;
+    if (busy.current || !filesReady) return;
     busy.current = true;
     setIntent(next);
     startTransition(() => dispatch({ intent: next, values }));
@@ -186,6 +193,7 @@ export function ProductForm({
       </div>
 
       <ImagePicker items={images} setItems={setImages} error={errors.images} />
+      <ModelPicker model={model} setModel={setModel} error={errors.model} />
       <OptionEditor options={options} setOptions={setOptions} prices={prices} setPrices={setPrices} errors={errors} />
 
       {"failed" in state && (
@@ -204,15 +212,15 @@ export function ProductForm({
       <div className={styles.actions}>
         {listed ? (
           // แก้สินค้าที่ลงขายแล้วต้องข้อมูลครบเหมือนเปิดขาย และสถานะคงเดิม
-          <button type="button" className="button" disabled={pending || !imagesReady} onClick={() => submit("publish")}>
+          <button type="button" className="button" disabled={pending || !filesReady} onClick={() => submit("publish")}>
             {label("publish", "บันทึก")}
           </button>
         ) : (
           <>
-            <button type="button" className="button button-secondary" disabled={pending || !imagesReady} onClick={() => submit("draft")}>
+            <button type="button" className="button button-secondary" disabled={pending || !filesReady} onClick={() => submit("draft")}>
               {label("draft", "บันทึกร่าง")}
             </button>
-            <button type="button" className="button" disabled={pending || !imagesReady} onClick={() => submit("publish")}>
+            <button type="button" className="button" disabled={pending || !filesReady} onClick={() => submit("publish")}>
               {label("publish", "บันทึกและเปิดขาย")}
             </button>
           </>

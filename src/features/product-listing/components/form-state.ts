@@ -14,6 +14,16 @@ export type ImageItem = {
   error?: string;
 };
 
+/** ไฟล์ 3 มิติที่ส่งไม่เสร็จใน 60 วินาทีถือว่าไม่สำเร็จ (P3D-001) */
+export const MODEL_UPLOAD_TIMEOUT_MS = 60_000;
+
+/** ไฟล์ 3 มิติในหน้าฟอร์ม url มีค่าเมื่อส่งขึ้นเซิร์ฟเวอร์เสร็จแล้ว */
+export type ModelItem = Omit<ImageItem, "id" | "preview"> & { name: string; size: number };
+
+export const canSaveModel = (model: ModelItem | null) => model === null || model.status === "done";
+
+export const formatFileSize = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+
 type PickedFile = { name: string; type: string; size: number };
 
 /** คัดรูปที่เลือกมา ตามลำดับที่เลือก โดยมีรูปในฟอร์มอยู่แล้ว count รูป */

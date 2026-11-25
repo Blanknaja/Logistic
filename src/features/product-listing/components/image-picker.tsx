@@ -11,12 +11,21 @@ const newId = () => `image-${++nextId}`;
 /** รูปที่มีที่อยู่แล้ว เช่นรูปเดิมของสินค้าที่เปิดมาแก้ */
 export const savedImage = (url: string): ImageItem => ({ id: newId(), preview: url, url, file: null, status: "done", progress: 100 });
 
-// fetch บอกความคืบหน้าตอนส่งไม่ได้ จึงใช้ XMLHttpRequest
-function uploadImage(file: File, onProgress: (percent: number) => void): Promise<string> {
+/**
+ * ส่งไฟล์ไปที่ path ได้ที่อยู่ของไฟล์กลับมา ไม่สำเร็จได้ข้อความจากเซิร์ฟเวอร์ หรือ failed เมื่อหลุดหรือเกิน timeoutMs
+ * fetch บอกความคืบหน้าตอนส่งไม่ได้ จึงใช้ XMLHttpRequest
+ */
+export function uploadFile(
+  path: string,
+  file: File,
+  timeoutMs: number,
+  failed: string,
+  onProgress: (percent: number) => void,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
-    request.open("POST", "/product-images");
-    request.timeout = UPLOAD_TIMEOUT_MS;
+    request.open("POST", path);
+    request.timeout = timeoutMs;
     request.responseType = "json";
     request.setRequestHeader("Content-Type", file.type);
     request.upload.onprogress = (event) => {
@@ -25,9 +34,9 @@ function uploadImage(file: File, onProgress: (percent: number) => void): Promise
     request.onload = () => {
       const body = request.response as { url?: string; error?: string } | null;
       if (request.status === 200 && body?.url) resolve(body.url);
-      else reject(new Error(body?.error ?? MESSAGES.uploadFailed));
+      else reject(new Error(body?.error ?? failed));
     };
-    request.onerror = request.ontimeout = request.onabort = () => reject(new Error(MESSAGES.uploadFailed));
+    request.onerror = request.ontimeout = request.onabort = () => reject(new Error(failed));
     request.send(file);
   });
 }
@@ -50,7 +59,7 @@ export function ImagePicker({
 
   const send = (id: string, file: File) => {
     update(id, { status: "uploading", progress: 0, error: undefined });
-    uploadImage(file, (progress) => update(id, { progress })).then(
+    uploadFile("/product-images", file, UPLOAD_TIMEOUT_MS, MESSAGES.uploadFailed, (progress) => update(id, { progress })).then(
       (url) => update(id, { status: "done", url, progress: 100 }),
       (failure: Error) => update(id, { status: "failed", error: failure.message }),
     );

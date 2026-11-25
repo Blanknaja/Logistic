@@ -304,3 +304,18 @@
 .rowActions form {
   margin: 0;
 }
+
+.modelFile {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.modelFile p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.modelFile progress {
+  width: 100%;
+}

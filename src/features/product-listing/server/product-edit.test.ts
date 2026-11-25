@@ -76,7 +76,9 @@ describe("PRD-006 เปิดหน้าฟอร์มเพื่อแก�
         images: ["/sample-images/a.svg", "/sample-images/b.svg", "/sample-images/c.svg"],
         options: colorSize,
         prices: { '["แดง","M"]': "250", '["แดง","L"]': "250", '["ดำ","M"]': "270", '["ดำ","L"]': "290" },
+        model: null,
       },
+      modelFile: null,
     });
     // หน้าเว็บส่งข้อมูลนี้ให้ component ฝั่งเบราว์เซอร์ จึงต้องเป็น object ธรรมดา
     expect(Object.getPrototypeOf(opened)).toBe(Object.prototype);
@@ -380,6 +382,7 @@ describe("PRD-013 กดซ้ำ และแก้พร้อมกันจ�
       images: [],
       options: [],
       prices: { "[]": "199" },
+      model: null,
     };
     const image = saveImageFile(db, shopId, new Uint8Array([0xff, 0xd8, 0xff, 0]));
     if (!image.ok) throw new Error(image.error);

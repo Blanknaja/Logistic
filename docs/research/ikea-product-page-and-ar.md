@@ -368,7 +368,7 @@ iPhone ไม่มีทาง port forwarding แบบ Android ตามเ�
 4. Scene Viewer รับที่อยู่ไฟล์แบบ `http://` ใน Wi-Fi หรือ `localhost` ผ่าน port forwarding ได้หรือไม่ (เอกสารบอกแค่ว่าโหลดไฟล์ผ่าน HTTPS)
 5. มือถือเปิด `next dev --experimental-https` แล้วใช้ AR ได้หรือไม่
 6. Quick Look กับ USDZ ที่สร้างในเบราว์เซอร์ บนหน้าแบบ http
-7. ชนิดข้อมูล TypeScript ของ `<model-viewer>` ใน B2 ยังไม่ได้คอมไพล์จริง และการ bundle `@google/model-viewer` ด้วย Turbopack ยังไม่ได้ลอง
+7. ~~ชนิดข้อมูล TypeScript ของ `<model-viewer>` ใน B2 ยังไม่ได้คอมไพล์จริง และการ bundle `@google/model-viewer` ด้วย Turbopack ยังไม่ได้ลอง~~ ยืนยันแล้วตอนทำ issue #21 (2026-11-25): `pnpm typecheck` ผ่านเมื่อประกาศชนิดในไฟล์ `.d.ts` (ESLint ไม่ยอมให้ใช้ `namespace` ในไฟล์ `.tsx`) และ `next build` ด้วย Turbopack แยก model-viewer กับ three เป็นไฟล์ราว 1 MB ที่โหลดเมื่อกด "ดูแบบ 3 มิติ" เท่านั้น
 8. หน้า IKEA: หัวเว็บบนมือถือซ่อนหรือโผล่ตอนเลื่อน ลิงก์ขนาดในกล่องซื้อพาไปไหน กดรูปบนมือถือแล้วเกิดอะไร เนื้อหาของ "Looks by you" และรายการใน "Related products"
 9. ภาพของโมเดลที่ใช้วัสดุพิเศษ (sheen, transmission) ใน Scene Viewer และ Quick Look
 

@@ -3,6 +3,7 @@ import { PAGE_SIZE, pageCount } from "@/shared/paging";
 import type { Checked } from "@/shared/result";
 import { PRODUCT_STATUS, type ProductStatus } from "@/shared/statuses";
 import { isShopUpload } from "./image-files";
+import { isShopModelUpload, modelFileInfo } from "./model-files";
 import {
   cartesian,
   MESSAGES,
@@ -28,7 +29,7 @@ export type ShopProductRow = {
   updatedAt: string;
 };
 
-/** ตรวจข้อมูลกับฐานข้อมูลเพิ่มจาก validateProduct() รูปต้องเป็นรูปที่ร้านส่งขึ้นมาเอง หรือรูปเดิมของสินค้านี้ */
+/** ตรวจข้อมูลกับฐานข้อมูลเพิ่มจาก validateProduct() รูปต้องเป็นรูปที่ร้านส่งขึ้นมาเอง หรือรูปเดิมของสินค้านี้ ไฟล์ 3 มิติต้องเป็นของร้านนี้ */
 function checkValues(db: Db, shopId: number, values: ProductValues, intent: SaveIntent, keptImages: string[] = []): ProductErrors {
   const errors = validateProduct(values, intent);
   if (values.categoryId !== null && !db.prepare("SELECT 1 FROM categories WHERE id = ?").get(values.categoryId)) {
@@ -37,6 +38,7 @@ function checkValues(db: Db, shopId: number, values: ProductValues, intent: Save
   if (!errors.images && !values.images.every((url) => keptImages.includes(url) || isShopUpload(db, shopId, url))) {
     errors.images = MESSAGES.imageNotFound;
   }
+  if (values.model !== null && !isShopModelUpload(db, shopId, values.model)) errors.model = MESSAGES.modelNotFound;
   return errors;
 }
 
@@ -88,8 +90,8 @@ export function createProduct(
     const id = Number(
       db
         .prepare(
-          `INSERT INTO products (shop_id, category_id, name, description, status, created_at, updated_at, published_at, create_token)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO products (shop_id, category_id, name, description, status, created_at, updated_at, published_at, create_token, model_url)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .run(
           shopId,
@@ -101,6 +103,7 @@ export function createProduct(
           at,
           intent === "publish" ? at : null,
           createToken,
+          values.model,
         ).lastInsertRowid,
     );
 
@@ -115,15 +118,34 @@ export function createProduct(
   });
 }
 
-/** สินค้าที่เปิดในหน้าฟอร์มเพื่อแก้ไข (PRD-006) updatedAt ใช้ตรวจว่ามีใครแก้ไปก่อนตอนบันทึก (PRD-013) */
-export type EditableProduct = { id: number; status: ListedStatus; updatedAt: string; values: ProductValues };
+/**
+ * สินค้าที่เปิดในหน้าฟอร์มเพื่อแก้ไข (PRD-006) updatedAt ใช้ตรวจว่ามีใครแก้ไปก่อนตอนบันทึก (PRD-013)
+ * modelFile คือชื่อและขนาดของไฟล์ 3 มิติใน values.model (P3D-001)
+ */
+export type EditableProduct = {
+  id: number;
+  status: ListedStatus;
+  updatedAt: string;
+  values: ProductValues;
+  modelFile: { name: string; size: number } | null;
+};
 
 /** สินค้าของร้านนี้ที่ยังไม่ถูกลบ หรือ null ทั้งตอนไม่มี ถูกลบแล้ว และเป็นของร้านอื่น (PRD-006 PRD-012) */
 export function getProductForEdit(db: Db, shopId: number, productId: number): EditableProduct | null {
   const product = db
-    .prepare("SELECT id, name, description, category_id, status, updated_at FROM products WHERE id = ? AND shop_id = ? AND status != ?")
+    .prepare(
+      "SELECT id, name, description, category_id, status, updated_at, model_url FROM products WHERE id = ? AND shop_id = ? AND status != ?",
+    )
     .get(productId, shopId, PRODUCT_STATUS.deleted) as
-    | { id: number; name: string; description: string; category_id: number | null; status: ListedStatus; updated_at: string }
+    | {
+        id: number;
+        name: string;
+        description: string;
+        category_id: number | null;
+        status: ListedStatus;
+        updated_at: string;
+        model_url: string | null;
+      }
     | undefined;
   if (!product) return null;
 
@@ -160,7 +182,9 @@ export function getProductForEdit(db: Db, shopId: number, productId: number): Ed
           row.price === null ? "" : String(row.price),
         ]),
       ),
+      model: product.model_url,
     },
+    modelFile: product.model_url === null ? null : modelFileInfo(db, product.model_url),
   };
 }
 
@@ -198,9 +222,18 @@ export function updateProduct(
     const status = draft && intent === "publish" ? PRODUCT_STATUS.onSale : current.status;
     db.prepare(
       `UPDATE products SET category_id = ?, name = ?, description = ?, status = ?, updated_at = ?,
-         published_at = coalesce(published_at, ?)
+         published_at = coalesce(published_at, ?), model_url = ?
        WHERE id = ?`,
-    ).run(values.categoryId, values.name.trim(), values.description.trim(), status, at, status === PRODUCT_STATUS.onSale ? at : null, productId);
+    ).run(
+      values.categoryId,
+      values.name.trim(),
+      values.description.trim(),
+      status,
+      at,
+      status === PRODUCT_STATUS.onSale ? at : null,
+      values.model,
+      productId,
+    );
 
     const oldVariants = db
       .prepare(

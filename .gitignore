@@ -1,3 +1,22 @@
 .DS_Store
-.env
+.env*
 .claude/settings.local.json
+
+# dependencies and build output
+/node_modules
+/.next/
+/out/
+/build
+/coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# database and uploaded files
+/data/
+
+# agent worktrees
+/.claude/worktrees/
+
+# playwright output
+/test-results/
+/playwright-report/

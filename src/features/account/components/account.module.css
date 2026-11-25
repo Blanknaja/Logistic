@@ -1,0 +1,46 @@
+.page {
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--space);
+}
+
+.notice {
+  margin: 0 0 var(--space);
+  padding: 12px var(--space);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.failed {
+  margin-bottom: var(--space);
+  color: var(--color-danger);
+}
+
+.failed p {
+  margin: 0 0 8px;
+}
+
+.profile {
+  margin: 0 0 var(--space);
+}
+
+.profile dt {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.profile dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 var(--space);
+}

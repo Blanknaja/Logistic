@@ -1,0 +1,27 @@
+import type { CurrentAccount } from "@/features/account/server/sessions";
+
+/** ลิงก์ในแถบนำทางด้านบนของทุกหน้า */
+export type HeaderLink = {
+  /** ใส่ฟังก์ชันเมื่อข้อความขึ้นกับคนที่ดู เช่น ชื่อที่แสดงของบัญชี */
+  label: string | ((viewer: CurrentAccount | null) => string);
+  href: string;
+  /** น้อยอยู่ซ้าย ดูเลขที่จองไว้ของแต่ละ feature ใน docs/architecture.md */
+  order: number;
+  /** ไม่ใส่ = ทุกคนเห็น viewer เป็น null เมื่อยังไม่เข้าสู่ระบบ */
+  visibleTo?: (viewer: CurrentAccount | null) => boolean;
+};
+
+/** ลิงก์ในเมนูหลังบ้านของร้าน */
+export type SellerMenuLink = {
+  /** ใส่ฟังก์ชันเมื่อข้อความขึ้นกับร้าน เช่น จำนวนคำสั่งซื้อที่รอจัดของ */
+  label: string | ((shopId: number) => string);
+  /** ใส่ฟังก์ชันเมื่อที่อยู่ต้องมีเลขร้าน เช่น หน้าร้านของตัวเอง */
+  href: string | ((shopId: number) => string);
+  order: number;
+};
+
+/** ลิงก์ทั้งหมดของหนึ่ง feature อยู่ในไฟล์ src/features/<feature>/nav.ts */
+export type FeatureNav = {
+  header: HeaderLink[];
+  sellerMenu: SellerMenuLink[];
+};

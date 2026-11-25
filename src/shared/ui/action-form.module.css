@@ -1,0 +1,16 @@
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--space);
+}
+
+.failed {
+  margin-bottom: var(--space);
+  color: var(--color-danger);
+}
+
+.failed p {
+  margin: 0 0 8px;
+}

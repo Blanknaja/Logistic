@@ -1,0 +1,233 @@
+/* สไตล์กลางของทั้งแอป สไตล์เฉพาะ feature ให้เขียนเป็น *.module.css ในโฟลเดอร์ของ feature */
+
+:root {
+  --color-bg: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-text: #1f2933;
+  --color-muted: #5f6b7a;
+  --color-border: #d9dee5;
+  --color-primary: #0f766e;
+  --color-primary-dark: #115e59;
+  --color-on-primary: #ffffff;
+  --color-danger: #b42318;
+  --color-warning: #b54708;
+  --radius: 8px;
+  --space: 16px;
+  --tap: 44px;
+  --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sukhumvit Set", "Leelawadee UI", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+a {
+  color: var(--color-primary);
+}
+
+h1 {
+  font-size: 1.5rem;
+  line-height: 1.3;
+  margin: 0 0 var(--space);
+}
+
+h2 {
+  font-size: 1.15rem;
+  line-height: 1.3;
+  margin: var(--space) 0 8px;
+}
+
+.container {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 var(--space);
+}
+
+.page {
+  padding-top: var(--space);
+  padding-bottom: 48px;
+}
+
+/* แถบนำทาง */
+
+.site-header {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.site-header-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 56px;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.nav-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 12px;
+  border-radius: var(--radius);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  background: var(--color-bg);
+}
+
+/* ปุ่มและฟอร์ม ทุกปุ่มสูงอย่างน้อย 44 จุดตาม BRW-Q03 */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  min-width: var(--tap);
+  /* min-width ข้างบนแทนค่า auto ปุ่มในแถว flex จึงหดจนคำในปุ่มขาดกลางคำ */
+  flex-shrink: 0;
+  padding: 0 var(--space);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--color-primary-dark);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.button-secondary {
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.button-secondary:hover {
+  background: var(--color-bg);
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+  margin-bottom: var(--space);
+}
+
+.input {
+  min-height: var(--tap);
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  font: inherit;
+}
+
+.field-error {
+  color: var(--color-danger);
+  font-size: 0.9rem;
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 var(--space);
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+}
+
+/* หน้าว่าง กำลังโหลด ผิดพลาด และไม่พบ */
+
+.state {
+  margin: var(--space) 0;
+  padding: 32px var(--space);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.state-title {
+  margin: 0;
+}
+
+.state-message {
+  margin: 8px 0 0;
+  color: var(--color-muted);
+}
+
+.state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: var(--space);
+}

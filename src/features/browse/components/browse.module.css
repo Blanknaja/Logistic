@@ -205,11 +205,6 @@
   transform: scale(0.98);
 }
 
-.card > .image {
-  background: none;
-  object-fit: contain;
-}
-
 .cardBody {
   display: grid;
   gap: var(--space-1);
@@ -310,25 +305,19 @@
   gap: var(--space-3);
 }
 
-/* กรอบรูปสูงคงที่ สลับรูปกับแบบ 3 มิติแล้วหน้าไม่กระโดด รูปไม่เต็มกรอบเหลือที่ว่างสีพื้น ไม่มีแถบสีข้างรูป */
+/* กรอบรูปสี่เหลี่ยมจัตุรัสสีกระดาษ สลับรูปกับแบบ 3 มิติแล้วหน้าไม่กระโดด รูปใหญ่แสดงทั้งรูป รูปแนวตั้งจึงอยู่บนพื้นกรอบ ไม่ลอยกลางพื้นขาว */
 .plate {
   display: flex;
   justify-content: center;
-  height: min(75vw, 640px);
+  aspect-ratio: 1;
   margin-inline: calc(-1 * var(--gutter));
   overflow: hidden;
+  background: var(--color-surface);
 }
 
 .plate > .image {
   height: 100%;
-  aspect-ratio: auto;
-  background: none;
   object-fit: contain;
-}
-
-.plate > .noImage {
-  width: auto;
-  height: 100%;
 }
 
 .thumbs {
@@ -599,6 +588,11 @@
 }
 
 @media (min-width: 600px) {
+  .plate {
+    width: min(100%, 640px);
+    margin-inline: 0;
+  }
+
   .thumb {
     width: 72px;
   }
@@ -654,12 +648,6 @@
 
   .purchase {
     grid-area: buy;
-  }
-
-  .plate {
-    height: auto;
-    aspect-ratio: 1;
-    margin-inline: 0;
   }
 }
 

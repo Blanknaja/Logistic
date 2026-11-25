@@ -47,8 +47,7 @@
 .thumb {
   width: 64px;
   height: 64px;
-  background: var(--color-bg);
-  object-fit: contain;
+  object-fit: cover;
 }
 
 span.thumb {
@@ -194,7 +193,7 @@ span.thumb {
 .item > span:first-child {
   width: 64px;
   height: 64px;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .item > span:first-child {

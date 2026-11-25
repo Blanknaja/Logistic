@@ -95,8 +95,7 @@
 .image {
   width: 64px;
   height: 64px;
-  background: var(--color-bg);
-  object-fit: contain;
+  object-fit: cover;
 }
 
 span.image {

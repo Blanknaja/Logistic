@@ -39,6 +39,10 @@
   height: 100%;
 }
 
+.cover > img {
+  object-fit: contain;
+}
+
 .status {
   position: absolute;
   left: 50%;

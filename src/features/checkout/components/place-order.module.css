@@ -50,7 +50,7 @@
   border-radius: var(--radius);
   box-shadow: inset 0 0 0 1px var(--color-border-strong);
   font-size: var(--text-label);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .hidden {
@@ -82,7 +82,7 @@
 }
 
 .line > div > div:first-child {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .line :global(.field-error) {
@@ -120,7 +120,7 @@
 .totals dt:last-of-type,
 .totals dd:last-of-type {
   font-size: var(--text-body);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .summary {
@@ -158,7 +158,7 @@
 
 .grandTotal {
   font-size: var(--text-heading);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .actions {
@@ -201,7 +201,7 @@
   }
 
   .grandTotal {
-    font-size: var(--text-price);
+    font-size: var(--text-heading);
     line-height: 1.1;
   }
 

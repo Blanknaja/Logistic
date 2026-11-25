@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { dynamic } from "@/app/layout";
 
 // ฟอนต์ของ next/font ถูกแทนที่ตอน build ของ Next.js นอกนั้นไม่มีค่า
-vi.mock("next/font/google", () => ({ Noto_Serif_Thai: () => ({ variable: "" }) }));
+vi.mock("next/font/google", () => ({ Noto_Sans_Thai_Looped: () => ({ variable: "" }), Noto_Serif_Thai: () => ({ variable: "" }) }));
 import { getProductDetail } from "@/features/browse/server/product-detail";
 import { parseBrowseParams, type RawSearchParams } from "@/features/browse/search-params";
 import { searchProducts } from "@/features/browse/server/search";

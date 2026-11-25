@@ -7,7 +7,7 @@
 
 .chipActive {
   box-shadow: inset 0 0 0 2px var(--color-text);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 @media (hover: hover) {
@@ -48,7 +48,7 @@
 
 .status {
   font-size: var(--text-label);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .muted {
@@ -65,7 +65,7 @@
   margin-top: var(--space-3);
   color: var(--color-warning);
   font-size: var(--text-label);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .failed {

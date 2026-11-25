@@ -40,7 +40,7 @@
 
 .statusNow dd {
   margin: 0;
-  font-size: var(--text-price);
+  font-size: var(--text-title);
   font-weight: 700;
   line-height: 1.2;
 }
@@ -233,7 +233,7 @@
 
 .skeletonBig {
   width: 50%;
-  height: var(--text-price);
+  height: var(--text-title);
 }
 
 .skeletonShort {

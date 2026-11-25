@@ -27,7 +27,7 @@
   min-width: 0;
   min-height: var(--tap);
   font-size: var(--text-heading);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.3;
 }
 
@@ -96,7 +96,7 @@
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.4;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -125,7 +125,7 @@
 
 .reason {
   color: var(--color-danger);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .controls {
@@ -175,7 +175,7 @@
 
 .lineTotal {
   margin-left: auto;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* ดึงกลับเท่า padding ตัวหนังสือจึงตรงขอบขวาของเนื้อหา */
@@ -258,7 +258,7 @@
 
 .grandTotal {
   font-size: var(--text-heading);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .totals .muted {
@@ -277,7 +277,7 @@
 
 .dialog p {
   margin: 0 0 var(--space-5);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .dialog::backdrop {
@@ -357,7 +357,7 @@
   }
 
   .grandTotal {
-    font-size: var(--text-price);
+    font-size: var(--text-heading);
     line-height: 1.1;
   }
 

@@ -7,6 +7,7 @@ import {
   type ParcelStatus,
   type ReceiptConfirmedBy,
 } from "@/shared/statuses";
+import { deliveryRoute, type DeliveryRoute } from "./route";
 
 export const PARCEL_NOT_FOUND = "ไม่พบพัสดุนี้";
 export const TRACKING_NO_FORMAT_ERROR = "เลขติดตามพัสดุต้องเป็น BS ตามด้วยตัวเลข 10 หลัก";
@@ -20,6 +21,8 @@ export type TrackingHistoryEntry = {
   status: ParcelStatus;
   at: string;
   location: string;
+  /** ว่างในรายการที่บันทึกก่อนมีช่องจังหวัด (MAP-007) */
+  province: string | null;
   receiverName: string | null;
   failureReason: string | null;
   /** ชื่อบัญชีที่เปลี่ยน เฉพาะผู้ขายและผู้ดูแลแพลตฟอร์มเห็น */
@@ -47,6 +50,8 @@ export type TrackingView = {
   /** วันที่ระบบจะยืนยันรับสินค้าให้ ถ้ายังรอผู้ซื้อกดอยู่ */
   autoConfirmAt: string | null;
   history: TrackingHistoryEntry[];
+  /** เส้นทางระดับจังหวัดของแผนที่การจัดส่งและข้อความเส้นทาง */
+  route: DeliveryRoute;
 };
 
 /** " bs0000000123 " → "BS0000000123" หรือ null ถ้ารูปแบบผิด */
@@ -74,6 +79,7 @@ type ParcelRow = {
   receipt_confirmed_by: ReceiptConfirmedBy | null;
   order_status: OrderStatus;
   buyer_account_id: number;
+  ship_province: string;
   shop_id: number;
   shop_name: string;
 };
@@ -86,7 +92,7 @@ export function findViewableParcel(db: Db, trackingNo: string, viewer: Viewer): 
   if (!parsed) return null;
   const row = db
     .prepare(
-      `SELECT p.*, o.status AS order_status, o.buyer_account_id, o.shop_id, s.name AS shop_name
+      `SELECT p.*, o.status AS order_status, o.buyer_account_id, o.ship_province, o.shop_id, s.name AS shop_name
        FROM parcels p
        JOIN orders o ON o.id = p.order_id
        JOIN shops s ON s.id = o.shop_id
@@ -107,17 +113,24 @@ export function getTrackingView(db: Db, trackingNo: string, viewer: Viewer): Tra
   const history = (
     db
       .prepare(
-        `SELECT h.status, h.location, h.created_at, a.display_name AS changed_by
+        `SELECT h.status, h.location, h.province, h.created_at, a.display_name AS changed_by
          FROM parcel_history h
          LEFT JOIN accounts a ON a.id = h.changed_by_account_id
          WHERE h.parcel_id = ?
          ORDER BY h.created_at DESC, h.id DESC`,
       )
-      .all(row.id) as { status: ParcelStatus; location: string; created_at: string; changed_by: string | null }[]
+      .all(row.id) as {
+      status: ParcelStatus;
+      location: string;
+      province: string | null;
+      created_at: string;
+      changed_by: string | null;
+    }[]
   ).map((entry) => ({
     status: entry.status,
     at: entry.created_at,
     location: entry.location,
+    province: entry.province,
     // ส่งสำเร็จ และ ส่งไม่สำเร็จ เป็นสถานะปลายทาง จึงมีได้รายการเดียวต่อพัสดุ
     receiverName: entry.status === PARCEL_STATUS.delivered ? row.receiver_name : null,
     failureReason: entry.status === PARCEL_STATUS.failed ? row.failure_reason : null,
@@ -152,6 +165,12 @@ export function getTrackingView(db: Db, trackingNo: string, viewer: Viewer): Tra
         ? new Date(new Date(row.delivered_at).getTime() + AUTO_CONFIRM_AFTER_MS).toISOString()
         : null,
     history,
+    route: deliveryRoute({
+      origin: row.origin_province,
+      history: history.map((entry) => entry.province).reverse(),
+      destination: row.ship_province,
+      status: row.status,
+    }),
   };
 }
 

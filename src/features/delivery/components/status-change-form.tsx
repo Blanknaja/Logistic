@@ -6,13 +6,24 @@ import { Field, SubmitButton } from "@/shared/ui/action-form";
 import { withTimeout, type Failed } from "@/shared/ui/timeout";
 import type { StatusChangeProblem } from "@/features/delivery/server/parcel-status";
 import { changeParcelStatusAction } from "@/features/delivery/status-actions";
+import { PROVINCES } from "@/shared/provinces";
 import { PARCEL_STATUS, type ParcelStatus } from "@/shared/statuses";
 import styles from "./status-change.module.css";
 
 export const SAVE_FAILED = "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง";
 
 /** ฟอร์มเปลี่ยนสถานะหนึ่งขั้น ข้อมูลที่กรอกอยู่ครบเมื่อบันทึกไม่ได้ ระหว่างรอผลกดซ้ำไม่ได้ (DLV-014) */
-export function StatusChangeForm({ trackingNo, from, to }: { trackingNo: string; from: ParcelStatus; to: ParcelStatus }) {
+export function StatusChangeForm({
+  trackingNo,
+  from,
+  to,
+  defaultProvince,
+}: {
+  trackingNo: string;
+  from: ParcelStatus;
+  to: ParcelStatus;
+  defaultProvince: string;
+}) {
   const [state, dispatch, pending] = useActionState<StatusChangeProblem | Failed, FormData>(
     withTimeout(changeParcelStatusAction),
     {},
@@ -47,6 +58,29 @@ export function StatusChangeForm({ trackingNo, from, to }: { trackingNo: string;
       <input type="hidden" name="from" value={from} />
       <input type="hidden" name="to" value={to} />
       <Field label="สถานที่" name="location" maxLength={100} error={errors.location} />
+      <div className="field">
+        <label htmlFor="field-province">จังหวัด</label>
+        <select
+          id="field-province"
+          name="province"
+          className="input"
+          defaultValue={defaultProvince}
+          aria-invalid={errors.province ? true : undefined}
+          aria-describedby={errors.province ? "field-province-error" : undefined}
+        >
+          <option value="">เลือกจังหวัด</option>
+          {PROVINCES.map((province) => (
+            <option key={province} value={province}>
+              {province}
+            </option>
+          ))}
+        </select>
+        {errors.province && (
+          <p id="field-province-error" className="field-error">
+            {errors.province}
+          </p>
+        )}
+      </div>
       {to === PARCEL_STATUS.delivered && (
         <Field label="ชื่อผู้รับ" name="receiverName" maxLength={100} error={errors.receiverName} />
       )}

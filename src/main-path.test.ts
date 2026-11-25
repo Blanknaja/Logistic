@@ -196,7 +196,16 @@ describe("การจัดส่งจนจบ (DLV → CHK และ INV)", 
     for (let i = 1; i < path.length; i++) {
       const result = changeParcelStatus(
         db,
-        { trackingNo, actor, from: path[i - 1], to: path[i], location: `จุดที่ ${i}`, receiverName: "สมหญิง", reason: "ไม่มีคนรับ" },
+        {
+          trackingNo,
+          actor,
+          from: path[i - 1],
+          to: path[i],
+          location: `จุดที่ ${i}`,
+          province: "กรุงเทพมหานคร",
+          receiverName: "สมหญิง",
+          reason: "ไม่มีคนรับ",
+        },
         later(60 + i),
       );
       expect(result).toEqual({ ok: true });

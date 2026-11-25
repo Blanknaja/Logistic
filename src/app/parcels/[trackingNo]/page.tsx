@@ -44,7 +44,12 @@ export default async function ParcelStatusPage({ params, searchParams }: PagePro
       </dl>
       {parcel.orderStatus === ORDER_STATUS.cancelled && <p className={styles.notice}>คำสั่งซื้อถูกยกเลิก</p>}
       {chosen ? (
-        <StatusChangeForm trackingNo={parcel.trackingNo} from={parcel.status} to={chosen} />
+        <StatusChangeForm
+          trackingNo={parcel.trackingNo}
+          from={parcel.status}
+          to={chosen}
+          defaultProvince={parcel.defaultProvince}
+        />
       ) : (
         <StatusChangeLinks trackingNo={parcel.trackingNo} nextStatuses={parcel.nextStatuses} />
       )}

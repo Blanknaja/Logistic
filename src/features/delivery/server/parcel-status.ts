@@ -2,6 +2,7 @@ import { randomInt } from "node:crypto";
 import type { CurrentAccount } from "@/features/account/server/sessions";
 import { releaseCancelledOrderStock } from "@/features/stock/server/reservation";
 import { transaction, type Db } from "@/shared/db";
+import { PROVINCES } from "@/shared/provinces";
 import { ORDER_STATUS, PARCEL_STATUS, type OrderStatus, type ParcelStatus } from "@/shared/statuses";
 
 export const NOT_ALLOWED = "คุณไม่มีสิทธิ์เปลี่ยนสถานะการจัดส่งของพัสดุนี้";
@@ -12,6 +13,7 @@ export const STALE = "สถานะถูกเปลี่ยนไปแล�
 export const LOCATION_ERROR = "กรอกสถานที่ 1 ถึง 100 ตัวอักษร";
 export const RECEIVER_ERROR = "กรอกชื่อผู้รับ 1 ถึง 100 ตัวอักษร";
 export const REASON_ERROR = "กรอกเหตุผล 1 ถึง 200 ตัวอักษร";
+export const PROVINCE_ERROR = "เลือกจังหวัด";
 
 const S = PARCEL_STATUS;
 
@@ -93,10 +95,11 @@ export function createParcelForPaidOrder(
           at,
         ).lastInsertRowid,
     );
-    db.prepare("INSERT INTO parcel_history (parcel_id, status, location, created_at) VALUES (?, ?, ?, ?)").run(
+    db.prepare("INSERT INTO parcel_history (parcel_id, status, location, province, created_at) VALUES (?, ?, ?, ?, ?)").run(
       id,
       S.awaitingPacking,
       order.name,
+      order.origin_province,
       at,
     );
     return { id, trackingNo };
@@ -112,12 +115,13 @@ type ParcelRow = {
   order_status: OrderStatus;
   shop_id: number;
   shop_name: string;
+  origin_province: string;
 };
 
 function findParcel(db: Db, trackingNo: string): ParcelRow | undefined {
   return db
     .prepare(
-      `SELECT p.id, p.tracking_no, p.status, o.id AS order_id, o.order_no, o.status AS order_status,
+      `SELECT p.id, p.tracking_no, p.status, p.origin_province, o.id AS order_id, o.order_no, o.status AS order_status,
               s.id AS shop_id, s.name AS shop_name
        FROM parcels p JOIN orders o ON o.id = p.order_id JOIN shops s ON s.id = o.shop_id
        WHERE p.tracking_no = ?`,
@@ -134,6 +138,8 @@ export type ParcelForStatusChange = {
   /** ปุ่ม "เปลี่ยนเป็น ..." ที่ควรแสดง ว่างเมื่อจบการจัดส่งแล้วหรือคำสั่งซื้อถูกยกเลิก */
   nextStatuses: ParcelStatus[];
   latest: { status: ParcelStatus; at: string; location: string };
+  /** MAP-002 จังหวัดของรายการล่าสุดที่มีจังหวัด หรือจังหวัดของที่อยู่ต้นทางของพัสดุ */
+  defaultProvince: string;
 };
 
 /**
@@ -152,6 +158,9 @@ export function getParcelForStatusChange(
       "SELECT status, created_at AS at, location FROM parcel_history WHERE parcel_id = ? ORDER BY id DESC LIMIT 1",
     )
     .get(parcel.id) as ParcelForStatusChange["latest"];
+  const lastProvince = db
+    .prepare("SELECT province FROM parcel_history WHERE parcel_id = ? AND province IS NOT NULL ORDER BY id DESC LIMIT 1")
+    .get(parcel.id) as { province: string } | undefined;
   return {
     trackingNo: parcel.tracking_no,
     status: parcel.status,
@@ -160,10 +169,11 @@ export function getParcelForStatusChange(
     orderStatus: parcel.order_status,
     nextStatuses: parcel.order_status === ORDER_STATUS.cancelled ? [] : NEXT[parcel.status],
     latest,
+    defaultProvince: lastProvince?.province ?? parcel.origin_province,
   };
 }
 
-export type StatusChangeErrors = { location?: string; receiverName?: string; reason?: string };
+export type StatusChangeErrors = { location?: string; province?: string; receiverName?: string; reason?: string };
 
 /** สิ่งที่หน้าต้องแสดงเมื่อบันทึกไม่ได้ */
 export type StatusChangeProblem = { error?: string; currentStatus?: ParcelStatus; fieldErrors?: StatusChangeErrors };
@@ -177,6 +187,8 @@ export type StatusChangeInput = {
   from: string;
   to: string;
   location: string;
+  /** MAP-001 ชื่อจังหวัดจาก PROVINCES */
+  province: string;
   receiverName?: string;
   reason?: string;
 };
@@ -198,6 +210,7 @@ export function changeParcelStatus(db: Db, input: StatusChangeInput, now: Date =
     const reason = to === S.failed ? (input.reason ?? "").trim() : null;
     const fieldErrors: StatusChangeErrors = {};
     if (length(location) < 1 || length(location) > 100) fieldErrors.location = LOCATION_ERROR;
+    if (!(PROVINCES as readonly string[]).includes(input.province)) fieldErrors.province = PROVINCE_ERROR;
     if (receiverName !== null && (length(receiverName) < 1 || length(receiverName) > 100)) {
       fieldErrors.receiverName = RECEIVER_ERROR;
     }
@@ -211,8 +224,8 @@ export function changeParcelStatus(db: Db, input: StatusChangeInput, now: Date =
        WHERE id = ?`,
     ).run(to, receiverName, reason, to === S.delivered ? 1 : 0, at, at, parcel.id);
     db.prepare(
-      "INSERT INTO parcel_history (parcel_id, status, location, changed_by_account_id, created_at) VALUES (?, ?, ?, ?, ?)",
-    ).run(parcel.id, to, location, input.actor.id, at);
+      "INSERT INTO parcel_history (parcel_id, status, location, province, changed_by_account_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+    ).run(parcel.id, to, location, input.province, input.actor.id, at);
 
     if (to === S.handedOver) {
       db.prepare("UPDATE orders SET status = ? WHERE id = ?").run(ORDER_STATUS.shipping, parcel.order_id);

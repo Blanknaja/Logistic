@@ -42,6 +42,7 @@ src/
     rules.ts              กฎตรวจที่หลาย feature ใช้ร่วมกัน isPhone detectImageType
     paging.ts             PAGE_SIZE (20) และ pageCount() ของทุกรายการที่แบ่งหน้า
     result.ts             Checked<ค่า, ข้อผิดพลาด> ผล { ok: true } หรือ { ok: false, errors } ของงานที่ตรวจข้อมูลที่กรอก
+    read-body.ts          readBodyUpTo() route ที่รับไฟล์อ่านเนื้อคำขอด้วยตัวนี้ หยุดทันทีที่เกินขนาด ไม่เชื่อ content-length
     ui/states.tsx         EmptyState LoadingState ErrorState NotFoundState
     ui/action-form.tsx    ActionForm Field SubmitButton ACTION_FAILED ฟอร์มที่ส่งไป server action
     ui/timeout.ts         settle() withTimeout() ACTION_TIMEOUT_MS รอผล server action ไม่เกิน 10 วินาที

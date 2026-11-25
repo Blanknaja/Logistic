@@ -10,7 +10,7 @@ import { createSession } from "@/features/account/server/sessions";
 import { updateProductAction } from "@/features/product-listing/actions";
 import { saveModelFile } from "@/features/product-listing/server/model-files";
 import { getProductForEdit } from "@/features/product-listing/server/products";
-import { fakeGlb } from "@/features/product-listing/server/testing";
+import { fakeGlb, streamedBody } from "@/features/product-listing/server/testing";
 import type { Db } from "@/shared/db";
 import { addAccount, addProduct, addShop } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
@@ -91,8 +91,10 @@ function signInSomchai() {
   return shop.id;
 }
 
-const post = (name: string, body: Uint8Array<ArrayBuffer> | string, headers: Record<string, string> = {}) =>
-  uploadModel(new Request(`http://localhost/product-models?name=${encodeURIComponent(name)}`, { method: "POST", body, headers }));
+const post = (name: string, body: BodyInit) =>
+  uploadModel(
+    new Request(`http://localhost/product-models?name=${encodeURIComponent(name)}`, { method: "POST", body, duplex: "half" } as RequestInit),
+  );
 
 const open3d = (url: string) =>
   getModel(new Request(`http://localhost${url}`), {
@@ -125,6 +127,25 @@ describe("P3D-001 ส่งไฟล์ 3 มิติขึ้นและเ�
     expect(large.status).toBeGreaterThanOrEqual(400);
     expect(await large.json()).toEqual({ error: "ไฟล์ 3 มิติต้องมีขนาดไม่เกิน 10 MB" });
     expect(count()).toBe(0);
+  });
+
+  test("P3D-001 ไฟล์เกิน 10 MB ที่ส่งมาทีละก้อนโดยไม่บอกขนาด ไม่ถูกรับ และเซิร์ฟเวอร์หยุดอ่านทันทีที่เกิน", async () => {
+    signInSomchai();
+    const { body, stats } = streamedBody(fakeGlb(30 * MB));
+    const response = await post("big.glb", body);
+
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({ error: "ไฟล์ 3 มิติต้องมีขนาดไม่เกิน 10 MB" });
+    expect(stats.sent).toBeLessThanOrEqual(12 * MB);
+    expect(count()).toBe(0);
+  });
+
+  test("P3D-001 ไฟล์ไม่เกิน 10 MB ที่ส่งมาทีละก้อนโดยไม่บอกขนาด ถูกรับครบทุกไบต์", async () => {
+    signInSomchai();
+    const response = await post("chair.glb", streamedBody(fakeGlb(4 * MB)).body);
+    expect(response.status).toBe(200);
+    const { url } = (await response.json()) as { url: string };
+    expect((await (await open3d(url)).arrayBuffer()).byteLength).toBe(4 * MB);
   });
 
   test("P3D-001 บัญชีที่ยังไม่มีร้าน หรือยังไม่เข้าสู่ระบบ ส่งไฟล์ไม่ได้ (PRD-012)", async () => {

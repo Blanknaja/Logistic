@@ -17,6 +17,7 @@ import { ProductForm } from "@/features/product-listing/components/product-form"
 import { listCategories } from "@/features/product-listing/server/categories";
 import { saveImageFile } from "@/features/product-listing/server/image-files";
 import { variantCombos, type ProductValues } from "@/features/product-listing/server/product-rules";
+import { streamedBody } from "@/features/product-listing/server/testing";
 import type { Db } from "@/shared/db";
 import { addAccount, addProduct, addShop } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
@@ -282,6 +283,17 @@ describe("PRD-003 ส่งรูปขึ้นและเปิดดูร�
 
     const gif = await post(new TextEncoder().encode("GIF89a"));
     expect(await gif.json()).toEqual({ error: "รูปต้องเป็นไฟล์ JPG หรือ PNG" });
+    expect(count("product_image_files")).toBe(0);
+  });
+
+  test("PRD-003 รูปเกิน 5 MB ที่ส่งมาทีละก้อนโดยไม่บอกขนาด ไม่ถูกรับ และเซิร์ฟเวอร์หยุดอ่านทันทีที่เกิน", async () => {
+    signInSeller();
+    const { body, stats } = streamedBody(jpgBody(30 * 1024 * 1024));
+    const large = await uploadImage(new Request("http://localhost/product-images", { method: "POST", body, duplex: "half" } as RequestInit));
+
+    expect(large.status).toBe(413);
+    expect(await large.json()).toEqual({ error: "รูปต้องมีขนาดไม่เกิน 5 MB" });
+    expect(stats.sent).toBeLessThanOrEqual(7 * 1024 * 1024);
     expect(count("product_image_files")).toBe(0);
   });
 

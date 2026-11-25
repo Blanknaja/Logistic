@@ -9,3 +9,17 @@ export function fakeGlb(size = 100): Uint8Array<ArrayBuffer> {
   view.setUint32(8, size, true);
   return bytes;
 }
+
+/** เนื้อคำขอที่ส่ง bytes มาทีละก้อน 1 MB โดยไม่บอก content-length และนับไบต์ที่เซิร์ฟเวอร์อ่านไป */
+export function streamedBody(bytes: Uint8Array) {
+  const stats = { sent: 0 };
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (stats.sent >= bytes.byteLength) return controller.close();
+      const chunk = bytes.slice(stats.sent, stats.sent + 1024 * 1024);
+      stats.sent += chunk.byteLength;
+      controller.enqueue(chunk);
+    },
+  });
+  return { body, stats };
+}

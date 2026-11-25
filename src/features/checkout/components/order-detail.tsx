@@ -31,7 +31,7 @@ export function OrderDetail({
   const others = order.group.filter((other) => other.orderNo !== order.orderNo);
 
   return (
-    <article>
+    <article className={styles.detail}>
       <h1>คำสั่งซื้อ {order.orderNo}</h1>
       {message && (
         <p role="alert" className={styles.notice}>
@@ -39,7 +39,7 @@ export function OrderDetail({
         </p>
       )}
 
-      <section className={`card ${styles.section}`} aria-label="สถานะ">
+      <section className={styles.summary} aria-label="สถานะ">
         <div className={styles.row}>
           <strong>{order.shopName}</strong>
           <span className={styles.status}>{order.status}</span>
@@ -85,7 +85,7 @@ export function OrderDetail({
         )}
       </section>
 
-      <section className={`card ${styles.section}`}>
+      <section className={styles.section}>
         <h2>สินค้า</h2>
         <ul className={styles.items}>
           {order.items.map((item) => (
@@ -118,7 +118,7 @@ export function OrderDetail({
         </dl>
       </section>
 
-      <section className={`card ${styles.section} ${styles.address}`}>
+      <section className={`${styles.section} ${styles.address}`}>
         <h2>ที่อยู่จัดส่ง</h2>
         <p>
           {order.shipTo.recipientName} {order.shipTo.phone}

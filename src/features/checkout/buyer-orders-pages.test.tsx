@@ -111,7 +111,7 @@ const count = (html: string | undefined, text: string) => html?.split(text).leng
 /** ปุ่ม "จ่ายเงิน" เป็นฟอร์มที่ส่งเลขกลุ่มคำสั่งซื้อ ไม่ใช่ลิงก์ไปหน้าจ่ายเงินตรงๆ (CHK-008) */
 const payButton = (groupId: number) => `<input type="hidden" name="groupId" value="${groupId}"/>`;
 const PAY_BUTTON = ">จ่ายเงิน</button>";
-const cards = (html: string | undefined) => count(html, '<li class="card">') - 1;
+const cards = (html: string | undefined) => html?.match(/<li class="_order_\w+">/g)?.length ?? 0;
 const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
 const statusOf = (orderNo: string) =>
   (db.prepare("SELECT status FROM orders WHERE order_no = ?").get(orderNo) as { status: string }).status;

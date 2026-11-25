@@ -13,11 +13,13 @@ import {
   NOT_ALLOWED,
   ONE_STEP,
   ORDER_CANCELLED,
+  PROVINCE_ERROR,
   REASON_ERROR,
   RECEIVER_ERROR,
   STALE,
   type StatusChanger,
 } from "./parcel-status";
+import { writeParcel } from "./tracking-fixtures";
 
 const S = PARCEL_STATUS;
 // 25/11/2026 09:00 เวลาไทย
@@ -59,6 +61,7 @@ function parcelAt(status: ParcelStatus) {
       from: path[i - 1],
       to,
       location: `จุดที่ ${i}`,
+      province: "กรุงเทพมหานคร",
       receiverName: "สมหญิง ใจดี",
       reason: "ไม่มีคนรับ",
     });
@@ -141,7 +144,7 @@ describe("DLV-002 สิทธิ์เปลี่ยนสถานะกา�
 
     const result = changeParcelStatus(
       db,
-      { trackingNo: parcel.trackingNo, actor: wichai, from: S.awaitingPacking, to: S.handedOver, location: "จุดรับพัสดุบางนา" },
+      { trackingNo: parcel.trackingNo, actor: wichai, from: S.awaitingPacking, to: S.handedOver, location: "จุดรับพัสดุบางนา", province: "กรุงเทพมหานคร" },
       at(25, "10:00"),
     );
 
@@ -160,6 +163,7 @@ describe("DLV-002 สิทธิ์เปลี่ยนสถานะกา�
         from: S.awaitingPacking,
         to: S.handedOver,
         location: "จุดรับพัสดุบางนา",
+        province: "กรุงเทพมหานคร",
       });
       expect(result).toEqual({ ok: false, error: NOT_ALLOWED });
     }
@@ -176,6 +180,7 @@ describe("DLV-002 สิทธิ์เปลี่ยนสถานะกา�
       from: S.awaitingPacking,
       to: S.handedOver,
       location: "ที่ไหนก็ได้",
+      province: "กรุงเทพมหานคร",
     });
     expect(result).toEqual({ ok: false, error: NOT_ALLOWED });
   });
@@ -203,6 +208,7 @@ describe("DLV-003 เดินหน้าทีละขั้น ไม่ย�
         from: S.handedOver,
         to,
         location: "ที่ไหนก็ได้",
+        province: "กรุงเทพมหานคร",
         receiverName: "สมหญิง ใจดี",
       });
       expect(result).toEqual({ ok: false, error: ONE_STEP, currentStatus: S.handedOver });
@@ -218,7 +224,7 @@ describe("DLV-004 บันทึกเวลา สถานที่ และ
 
     const result = changeParcelStatus(
       db,
-      { trackingNo: parcel.trackingNo, actor: somchai, from: S.handedOver, to: S.inTransit, location: "  ศูนย์คัดแยกลาดกระบัง " },
+      { trackingNo: parcel.trackingNo, actor: somchai, from: S.handedOver, to: S.inTransit, location: "  ศูนย์คัดแยกลาดกระบัง ", province: "กรุงเทพมหานคร" },
       at(25, "13:20"),
     );
 
@@ -248,6 +254,7 @@ describe("DLV-004 บันทึกเวลา สถานที่ และ
         from: S.handedOver,
         to: S.inTransit,
         location,
+        province: "กรุงเทพมหานคร",
       });
       expect(result).toEqual({ ok: false, fieldErrors: { location: LOCATION_ERROR } });
     }
@@ -263,6 +270,7 @@ describe("DLV-004 บันทึกเวลา สถานที่ และ
       from: S.handedOver,
       to: S.inTransit,
       location: "ก".repeat(100),
+      province: "กรุงเทพมหานคร",
     });
     expect(result).toEqual({ ok: true });
   });
@@ -281,6 +289,7 @@ describe("DLV-005 ส่งสำเร็จ ต้องมีชื่อผ�
         from: S.outForDelivery,
         to: S.delivered,
         location: "บ้านเลขที่ 12 ซอยอ่อนนุช 17",
+        province: "กรุงเทพมหานคร",
         receiverName: "สมหญิง ใจดี",
       },
       at(26, "15:30"),
@@ -305,6 +314,7 @@ describe("DLV-005 ส่งสำเร็จ ต้องมีชื่อผ�
         from: S.outForDelivery,
         to: S.delivered,
         location: "บ้านเลขที่ 12 ซอยอ่อนนุช 17",
+        province: "กรุงเทพมหานคร",
         receiverName,
       });
       expect(result).toEqual({ ok: false, fieldErrors: { receiverName: RECEIVER_ERROR } });
@@ -326,6 +336,7 @@ describe("DLV-006 ส่งไม่สำเร็จ ต้องมีเห�
         from: S.outForDelivery,
         to: S.failed,
         location: "หน้าบ้านผู้ซื้อ ซอยอ่อนนุช 17",
+        province: "กรุงเทพมหานคร",
         reason: "ไม่มีคนรับ โทรไม่ติด 2 ครั้ง",
       },
       at(25, "16:00"),
@@ -354,6 +365,7 @@ describe("DLV-006 ส่งไม่สำเร็จ ต้องมีเห�
         from: path[i - 1],
         to: path[i],
         location: "หน้าบ้านผู้ซื้อ ซอยอ่อนนุช 17",
+        province: "กรุงเทพมหานคร",
         reason: "ไม่มีคนรับ โทรไม่ติด 2 ครั้ง",
       });
     }
@@ -372,6 +384,7 @@ describe("DLV-006 ส่งไม่สำเร็จ ต้องมีเห�
         from: S.outForDelivery,
         to: S.failed,
         location: "หน้าบ้านผู้ซื้อ ซอยอ่อนนุช 17",
+        province: "กรุงเทพมหานคร",
         reason,
       });
       expect(result).toEqual({ ok: false, fieldErrors: { reason: REASON_ERROR } });
@@ -386,6 +399,7 @@ describe("DLV-006 ส่งไม่สำเร็จ ต้องมีเห�
       from: S.failed,
       to: S.delivered,
       location: "บ้านเลขที่ 12",
+      province: "กรุงเทพมหานคร",
       receiverName: "สมหญิง ใจดี",
     });
     expect(result).toEqual({ ok: false, error: FINISHED });
@@ -400,6 +414,7 @@ describe("DLV-006 ส่งไม่สำเร็จ ต้องมีเห�
       from: S.outForDelivery,
       to: S.failed,
       location: "หน้าบ้าน",
+      province: "กรุงเทพมหานคร",
       reason: "ก".repeat(200),
     });
     expect(result).toEqual({ ok: true });
@@ -413,7 +428,7 @@ describe("DLV-007 คำสั่งซื้อเป็นกำลังจ�
 
     changeParcelStatus(
       db,
-      { trackingNo: parcel.trackingNo, actor: somchai, from: S.awaitingPacking, to: S.handedOver, location: "จุดรับพัสดุบางนา" },
+      { trackingNo: parcel.trackingNo, actor: somchai, from: S.awaitingPacking, to: S.handedOver, location: "จุดรับพัสดุบางนา", province: "กรุงเทพมหานคร" },
       at(25, "10:00"),
     );
 
@@ -432,6 +447,7 @@ describe("DLV-007 คำสั่งซื้อเป็นกำลังจ�
         from: S.awaitingPacking,
         to: S.handedOver,
         location: "จุดรับพัสดุบางนา",
+        province: "กรุงเทพมหานคร",
       }),
     ).toThrow("จำลองบันทึกไม่สำเร็จ");
 
@@ -451,6 +467,7 @@ describe("DLV-008 เปลี่ยนพร้อมกัน กดซ้ำ 
         from: S.inTransit,
         to: S.outForDelivery,
         location: "ศูนย์กระจายสินค้าอ่อนนุช",
+        province: "กรุงเทพมหานคร",
       });
 
     expect(request(somchai)).toEqual({ ok: true });
@@ -467,6 +484,7 @@ describe("DLV-008 เปลี่ยนพร้อมกัน กดซ้ำ 
         from: S.outForDelivery,
         to: S.delivered,
         location: "บ้านเลขที่ 12 ซอยอ่อนนุช 17",
+        province: "กรุงเทพมหานคร",
         receiverName: "สมหญิง ใจดี",
       });
 
@@ -478,6 +496,7 @@ describe("DLV-008 เปลี่ยนพร้อมกัน กดซ้ำ 
       from: S.outForDelivery,
       to: S.failed,
       location: "หน้าบ้าน",
+      province: "กรุงเทพมหานคร",
       reason: "ไม่มีคนรับ",
     });
     expect(late).toEqual({ ok: false, error: STALE, currentStatus: S.delivered });
@@ -514,7 +533,7 @@ describe("DLV-009 พัสดุของคำสั่งซื้อที�
 
     const result = changeParcelStatus(
       db,
-      { trackingNo: parcel.trackingNo, actor: somchai, from: S.awaitingPacking, to: S.handedOver, location: "จุดรับพัสดุบางนา" },
+      { trackingNo: parcel.trackingNo, actor: somchai, from: S.awaitingPacking, to: S.handedOver, location: "จุดรับพัสดุบางนา", province: "กรุงเทพมหานคร" },
       at(25, "09:40"),
     );
 
@@ -522,6 +541,93 @@ describe("DLV-009 พัสดุของคำสั่งซื้อที�
     expect(parcelRow(parcel.id).status).toBe(S.awaitingPacking);
     expect(history(parcel.id)).toHaveLength(1);
     expect(orderRow(parcel.orderId).status).toBe(ORDER_STATUS.cancelled);
+  });
+});
+
+describe("MAP-001 เลือกจังหวัดตอนเปลี่ยนสถานะการจัดส่ง", () => {
+  test("MAP-001 บันทึกจังหวัดที่เลือกไว้กับรายการใหม่ในประวัติการจัดส่ง คู่กับสถานที่", () => {
+    const parcel = parcelAt(S.handedOver);
+
+    const result = changeParcelStatus(
+      db,
+      {
+        trackingNo: parcel.trackingNo,
+        actor: somchai,
+        from: S.handedOver,
+        to: S.inTransit,
+        location: "ศูนย์คัดแยกลำปาง",
+        province: "ลำปาง",
+      },
+      at(25, "13:20"),
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(parcelRow(parcel.id).status).toBe(S.inTransit);
+    const latest = history(parcel.id).at(-1);
+    expect(latest).toMatchObject({ status: S.inTransit, location: "ศูนย์คัดแยกลำปาง", province: "ลำปาง" });
+    expect(formatDateTime(String(latest?.created_at))).toBe("25/11/2026 13:20");
+  });
+
+  test("MAP-001 ไม่เลือกจังหวัด หรือส่งชื่อจังหวัดที่ไม่มีในรายชื่อ ได้ข้อความ เลือกจังหวัด และไม่มีอะไรเปลี่ยน", () => {
+    const parcel = parcelAt(S.handedOver);
+
+    for (const province of ["", "ลำปางใต้", " ลำปาง"]) {
+      const result = changeParcelStatus(db, {
+        trackingNo: parcel.trackingNo,
+        actor: somchai,
+        from: S.handedOver,
+        to: S.inTransit,
+        location: "ศูนย์คัดแยกลำปาง",
+        province,
+      });
+      expect(result).toEqual({ ok: false, fieldErrors: { province: PROVINCE_ERROR } });
+    }
+    expect(PROVINCE_ERROR).toBe("เลือกจังหวัด");
+    expect(parcelRow(parcel.id).status).toBe(S.handedOver);
+    expect(history(parcel.id)).toHaveLength(2);
+  });
+});
+
+describe("MAP-002 จังหวัดที่เลือกไว้ให้ก่อน", () => {
+  test("MAP-002 เลือกจังหวัดของรายการล่าสุดในประวัติการจัดส่งที่มีจังหวัดไว้ให้ก่อน", () => {
+    const parcel = parcelAt(S.handedOver);
+    changeParcelStatus(db, {
+      trackingNo: parcel.trackingNo,
+      actor: somchai,
+      from: S.handedOver,
+      to: S.inTransit,
+      location: "ศูนย์คัดแยกลำปาง",
+      province: "ลำปาง",
+    });
+
+    expect(getParcelForStatusChange(db, parcel.trackingNo, somchai)?.defaultProvince).toBe("ลำปาง");
+  });
+
+  test("MAP-002 พัสดุที่สร้างก่อนมีช่องจังหวัด ไม่มีรายการไหนมีจังหวัด เลือกจังหวัดของที่อยู่ต้นทางของพัสดุไว้ให้ก่อน", () => {
+    db.prepare("UPDATE shops SET origin_province = 'เชียงใหม่' WHERE id = ?").run(somchai.shopId);
+    const order = paidOrder();
+    writeParcel(db, {
+      orderId: order.id,
+      trackingNo: "BS0000000777",
+      history: [
+        { status: S.awaitingPacking, at: at(24, "09:00").toISOString(), location: "สมชายการช่าง" },
+        { status: S.handedOver, at: at(24, "10:00").toISOString(), location: "จุดรับพัสดุบางนา" },
+      ],
+    });
+
+    expect(getParcelForStatusChange(db, "BS0000000777", somchai)?.defaultProvince).toBe("เชียงใหม่");
+  });
+});
+
+describe("MAP-003 จังหวัดของรายการแรกในประวัติการจัดส่ง", () => {
+  test("MAP-003 สร้างพัสดุแล้วรายการแรกมีจังหวัดของที่อยู่ต้นทางของร้าน และแก้ที่อยู่ร้านทีหลังไม่เปลี่ยน", () => {
+    db.prepare("UPDATE shops SET origin_province = 'เชียงใหม่' WHERE id = ?").run(somchai.shopId);
+    const parcel = createParcelForPaidOrder(db, paidOrder().id, at(25, "09:00"));
+
+    expect(history(parcel.id)[0]).toMatchObject({ location: "สมชายการช่าง", province: "เชียงใหม่" });
+
+    db.prepare("UPDATE shops SET origin_province = 'ลำพูน' WHERE id = ?").run(somchai.shopId);
+    expect(history(parcel.id)[0].province).toBe("เชียงใหม่");
   });
 });
 
@@ -537,6 +643,7 @@ describe("DLV-Q02 ไม่มีรายการซ้ำเมื่อเ�
           from: S.awaitingPacking,
           to: S.handedOver,
           location: "จุดรับพัสดุบางนา",
+          province: "กรุงเทพมหานคร",
         }),
       );
       expect(results.filter((result) => result.ok)).toHaveLength(1);
@@ -561,6 +668,7 @@ describe("DLV-Q02 ไม่มีรายการซ้ำเมื่อเ�
       from: S.awaitingPacking,
       to: S.handedOver,
       location: "จุดรับพัสดุบางนา",
+      province: "กรุงเทพมหานคร",
     });
 
     const result = changeParcelStatus(db, {
@@ -569,6 +677,7 @@ describe("DLV-Q02 ไม่มีรายการซ้ำเมื่อเ�
       from: S.awaitingPacking,
       to: S.inTransit,
       location: "ศูนย์คัดแยก",
+      province: "กรุงเทพมหานคร",
     });
 
     expect(result).toEqual({ ok: false, error: STALE, currentStatus: S.handedOver });

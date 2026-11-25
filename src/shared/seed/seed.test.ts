@@ -2,6 +2,8 @@ import { readdirSync, readFileSync } from "node:fs";
 import { beforeAll, describe, expect, test } from "vitest";
 import { verifyPassword } from "@/features/account/server/password";
 import { getProductDetail } from "@/features/browse/server/product-detail";
+import { routeText } from "@/features/delivery/server/route";
+import { getTrackingView } from "@/features/delivery/server/tracking";
 import { getImageFile, IMAGE_URL_PREFIX, isShopUpload } from "@/features/product-listing/server/image-files";
 import { getModelFile } from "@/features/product-listing/server/model-files";
 import { modelFileError } from "@/features/product-listing/server/product-rules";
@@ -11,6 +13,7 @@ import { createTestDb } from "@/shared/db/testing";
 import { detectImageType } from "@/shared/rules";
 import { ADMIN_PASSWORD, DEMO_PASSWORD, seed } from "@/shared/seed";
 import { SAMPLE_PHOTOS } from "@/shared/seed/catalog";
+import { ORDER_STATUS } from "@/shared/statuses";
 
 let db: Db;
 
@@ -86,6 +89,43 @@ describe("ข้อมูลตัวอย่าง", () => {
     expect(Object.fromEntries(statuses)).toEqual({ จ่ายแล้ว: 2, กำลังจัดส่ง: 2, สำเร็จ: 2, ยกเลิก: 2 });
     expect(count("SELECT count(*) AS n FROM orders o WHERE o.status <> 'ยกเลิก' AND NOT EXISTS (SELECT 1 FROM parcels p WHERE p.order_id = o.id)")).toBe(0);
     expect(count("SELECT count(*) AS n FROM parcels WHERE status = 'ส่งสำเร็จ' AND receipt_confirmed_at IS NULL")).toBe(1);
+  });
+
+  test("MAP-010 มีพัสดุอย่างน้อย 2 ชิ้นที่ประวัติการจัดส่งผ่านอย่างน้อย 3 จังหวัด และพัสดุของคำสั่งซื้อที่กำลังจัดส่งของผู้ซื้อตัวอย่างมีหมุดอย่างน้อย 3 จังหวัดกับเส้นระหว่างหมุด", () => {
+    expect(
+      count("SELECT count(*) AS n FROM (SELECT parcel_id FROM parcel_history GROUP BY parcel_id HAVING count(DISTINCT province) >= 3)"),
+    ).toBeGreaterThanOrEqual(2);
+
+    for (const email of ["buyer1@example.com", "buyer2@example.com"]) {
+      const buyer = db.prepare("SELECT id FROM accounts WHERE email = ?").get(email) as { id: number };
+      const shipping = db
+        .prepare("SELECT p.tracking_no FROM parcels p JOIN orders o ON o.id = p.order_id WHERE o.buyer_account_id = ? AND o.status = ?")
+        .get(buyer.id, ORDER_STATUS.shipping) as { tracking_no: string };
+      const route = getTrackingView(db, shipping.tracking_no, { id: buyer.id, isAdmin: false, shopId: null })?.route;
+      expect(route?.pins.length, email).toBeGreaterThanOrEqual(3);
+      expect(route?.passed.length, email).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  test("MAP-010 พัสดุตัวอย่างทุกรายการในประวัติการจัดส่งมีจังหวัด", () => {
+    expect(count("SELECT count(*) AS n FROM parcel_history WHERE province IS NULL")).toBe(0);
+  });
+
+  test("MAP-Q04 พัสดุตัวอย่างทุกชิ้น ข้อความเส้นทางมีชื่อจังหวัดครบทุกจังหวัดที่มีหมุด", () => {
+    const admin = db.prepare("SELECT id FROM accounts WHERE is_admin = 1").get() as { id: number };
+    const parcels = db.prepare("SELECT tracking_no FROM parcels").all() as { tracking_no: string }[];
+    expect(parcels.length).toBeGreaterThan(0);
+    for (const { tracking_no } of parcels) {
+      const route = getTrackingView(db, tracking_no, { id: admin.id, isAdmin: true, shopId: null })!.route;
+      for (const pin of route.pins) expect(routeText(route), tracking_no).toContain(pin.province);
+    }
+  });
+
+  test("MAP-010 สร้างข้อมูลตัวอย่างซ้ำโดยไม่ล้างฐานข้อมูล ประวัติการจัดส่งไม่เพิ่มหรือซ้ำ", async () => {
+    const before = count("SELECT count(*) AS n FROM parcel_history");
+
+    expect((await seed(db)).created).toBe(false);
+    expect(count("SELECT count(*) AS n FROM parcel_history")).toBe(before);
   });
 
   test("P3D-006 มีสินค้า 2 ชิ้นที่ README บอกว่ามีไฟล์ 3 มิติ เปิดหน้าสินค้าได้ และไฟล์เป็น GLB ที่ไม่เกิน 5 MB", () => {

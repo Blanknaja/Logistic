@@ -1,0 +1,88 @@
+/* แผนที่การจัดส่ง (MAP-004 MAP-005) กรอบสีพื้นขนาดเท่าแผนที่อยู่ตั้งแต่หน้าแรกขึ้น หน้าจึงไม่กระโดดตอนแผนที่มา */
+
+.map {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--color-surface);
+}
+
+.map .canvas {
+  position: absolute;
+  inset: 0;
+  background: var(--color-surface);
+  font-family: inherit;
+  font-size: var(--text-label);
+}
+
+.map :global(.state) {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0;
+}
+
+/* ปุ่มซูมสูงเท่าสิ่งที่กดได้ทั้งแอป มุมเหลี่ยม ไม่มีเงา */
+.map :global(.leaflet-bar) {
+  border: 1px solid var(--color-border-strong);
+  box-shadow: none;
+}
+
+.map :global(.leaflet-bar a) {
+  width: var(--tap);
+  height: var(--tap);
+  line-height: var(--tap);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.solid {
+  stroke: var(--color-text);
+  stroke-width: 3;
+}
+
+.dashed {
+  stroke: var(--color-text);
+  stroke-width: 2;
+  stroke-dasharray: 6 8;
+}
+
+.pin {
+  fill: var(--color-bg);
+  fill-opacity: 1;
+  stroke: var(--color-text);
+  stroke-width: 2;
+}
+
+.latest {
+  fill: var(--color-text);
+  fill-opacity: 1;
+  stroke: var(--color-bg);
+  stroke-width: 3;
+}
+
+.map .label {
+  padding: 0 var(--space-1);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: none;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--text-label);
+}
+
+.map .label::before {
+  content: none;
+}
+
+.map .labelLatest {
+  border-color: var(--color-text);
+  font-weight: 700;
+}
+
+@media (min-width: 600px) {
+  .map {
+    aspect-ratio: 16 / 9;
+  }
+}

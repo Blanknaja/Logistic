@@ -13,6 +13,7 @@ import TrackSearchPage from "@/app/track/page";
 import { createSession } from "@/features/account/server/sessions";
 import { LOADING_TIMEOUT_MS } from "@/shared/ui/loading-timeout";
 import { SAVE_FAILED } from "@/features/delivery/components/confirm-receipt";
+import { MAP_TIMEOUT_MS } from "@/features/delivery/components/delivery-map";
 import { nav } from "@/features/delivery/nav";
 import { confirmReceiptAction } from "@/features/delivery/receipt-actions";
 import {
@@ -197,6 +198,7 @@ describe("DLV-010 หน้าติดตามพัสดุ", () => {
       status: PARCEL_STATUS.delivered,
       at: thai("2026-11-26T15:30"),
       location: "บ้านเลขที่ 12 ซอยอ่อนนุช 17",
+      province: null,
       receiverName: "สมหญิง ใจดี",
       failureReason: null,
       changedBy: null,
@@ -601,6 +603,107 @@ describe("DLV-014 หน้ากำลังโหลดและหน้า�
     signInAs(people.somying.id);
     db.close();
     await expect(openTracking()).rejects.toThrow();
+  });
+});
+
+describe("MAP แผนที่การจัดส่งบนหน้าติดตามพัสดุ", () => {
+  // พัสดุ BS0000000123 ของ delivery-map.md: ร้านอยู่เชียงใหม่ ผ่านลำปาง ที่อยู่จัดส่งอยู่กรุงเทพมหานคร
+  const LAMPANG_HISTORY: HistoryEntry[] = [
+    { status: PARCEL_STATUS.awaitingPacking, at: thai("2026-11-25T09:00"), location: "สมชายการช่าง", province: "เชียงใหม่" },
+    { status: PARCEL_STATUS.handedOver, at: thai("2026-11-25T10:00"), location: "ไปรษณีย์ช้างเผือก", province: "เชียงใหม่" },
+    { status: PARCEL_STATUS.inTransit, at: thai("2026-11-25T13:20"), location: "ศูนย์คัดแยกลำปาง", province: "ลำปาง" },
+  ];
+  const ROUTE_TEXT = "เชียงใหม่ → ลำปาง (ล่าสุด) → กรุงเทพมหานคร (ปลายทาง)";
+  const NOTICE = "แผนที่แสดงจังหวัดที่พัสดุผ่านมาแล้ว ไม่ใช่ตำแหน่งปัจจุบัน";
+
+  beforeEach(() => {
+    db.prepare("UPDATE shops SET origin_province = 'เชียงใหม่' WHERE name = 'สมชายการช่าง'").run();
+  });
+
+  test("MAP-004 ผู้ซื้อเห็นแผนที่การจัดส่งที่มีหมุด 3 จังหวัด เส้นทึบ เส้นประ หมุดล่าสุด และข้อความว่าไม่ใช่ตำแหน่งปัจจุบัน", async () => {
+    addTrackedParcel({ history: LAMPANG_HISTORY });
+    const route = getTrackingView(db, "BS0000000123", people.somying)?.route;
+
+    expect(route?.pins.map((pin) => pin.province)).toEqual(["เชียงใหม่", "ลำปาง", "กรุงเทพมหานคร"]);
+    expect(route?.passed.map((stop) => stop.province)).toEqual(["เชียงใหม่", "ลำปาง"]);
+    expect(route?.latest.province).toBe("ลำปาง");
+    expect(route?.dashed).toBe(true);
+
+    signInAs(people.somying.id);
+    const { html } = await openTracking();
+    const text = textOf(html);
+    expect(text).toContain("แผนที่การจัดส่ง");
+    expect(text).toContain(NOTICE);
+    expect(html).toContain("data-delivery-map");
+  });
+
+  test("MAP-004 ผู้ขายร้านอื่นเห็นหน้า ไม่พบ และไม่เห็นแผนที่หรือชื่อจังหวัดใดของพัสดุนี้", async () => {
+    addTrackedParcel({ history: LAMPANG_HISTORY });
+    signInAs(people.mana.id);
+
+    expect(await openTracking()).toEqual({ redirect: "not-found" });
+    expect(getTrackingView(db, "BS0000000123", people.mana)).toBeNull();
+    const notFound = renderToStaticMarkup(<ParcelNotFound />);
+    for (const province of ["เชียงใหม่", "ลำปาง", "กรุงเทพมหานคร"]) expect(notFound).not.toContain(province);
+    expect(notFound).not.toContain("data-delivery-map");
+  });
+
+  test("MAP-006 ข้อความเส้นทางมาจากเซิร์ฟเวอร์พร้อมหน้า จึงอ่านได้แม้ปิด JavaScript หรือแผนที่ไม่ขึ้น", async () => {
+    addTrackedParcel({ history: LAMPANG_HISTORY });
+    signInAs(people.somying.id);
+    const { html } = await openTracking();
+
+    expect(textOf(html)).toContain(ROUTE_TEXT);
+    // ข้อความเส้นทางอยู่ใต้แผนที่
+    expect(html!.indexOf("data-delivery-map")).toBeLessThan(html!.indexOf("เชียงใหม่ → ลำปาง"));
+    // แต่ละรายการในประวัติบอกจังหวัดคู่กับสถานที่
+    expect(textOf(html)).toContain("อยู่ระหว่างขนส่ง 25/11/2026 13:20 · ศูนย์คัดแยกลำปาง · ลำปาง");
+  });
+
+  test("MAP-005 ระหว่างแผนที่ยังโหลด ที่ของแผนที่เป็นกรอบสีพื้น ส่วนสถานะ ประวัติ และข้อความเส้นทางแสดงแล้ว", async () => {
+    addTrackedParcel({ history: LAMPANG_HISTORY });
+    signInAs(people.somying.id);
+    const { html } = await openTracking();
+
+    expect(html).toMatch(/<div[^>]*data-delivery-map="loading"/);
+    expect(textOf(html)).not.toContain("แสดงแผนที่ไม่ได้");
+    for (const expected of ["สถานะการจัดส่ง อยู่ระหว่างขนส่ง", "ศูนย์คัดแยกลำปาง", ROUTE_TEXT]) expect(textOf(html)).toContain(expected);
+    expect(MAP_TIMEOUT_MS).toBe(10_000);
+    const css = readFileSync(join(process.cwd(), "src/features/delivery/components/delivery-map.module.css"), "utf8");
+    expect(css).toMatch(/\.map \{[^}]*background: var\(--color-surface\)/);
+    expect(css).toMatch(/\.map \{[^}]*aspect-ratio/);
+  });
+
+  test("MAP-007 สองรายการแรกไม่มีจังหวัด ถูกข้ามบนแผนที่และข้อความเส้นทาง แต่ยังอยู่ในประวัติครบ 3 รายการ", async () => {
+    addTrackedParcel({
+      trackingNo: "BS0000000777",
+      history: LAMPANG_HISTORY.map((entry, i) => (i < 2 ? { ...entry, province: undefined } : entry)),
+    });
+    signInAs(people.somying.id);
+    const view = getTrackingView(db, "BS0000000777", people.somying);
+
+    expect(view?.history).toHaveLength(3);
+    expect(view?.route.pins.map((pin) => pin.province)).toEqual(["เชียงใหม่", "ลำปาง", "กรุงเทพมหานคร"]);
+    const text = textOf((await openTracking("BS0000000777")).html);
+    expect(text).toContain(ROUTE_TEXT);
+    expect(text).toContain("รอร้านจัดของ 25/11/2026 09:00 · สมชายการช่าง ");
+  });
+
+  test("MAP-009 พัสดุ ส่งไม่สำเร็จ ข้อความเส้นทางบอกปลายทางแยกต่างหาก และแผนที่ไม่มีเส้นประ", async () => {
+    addTrackedParcel({
+      trackingNo: "BS0000000999",
+      orderStatus: ORDER_STATUS.cancelled,
+      history: [
+        ...LAMPANG_HISTORY,
+        { status: PARCEL_STATUS.outForDelivery, at: thai("2026-11-26T09:00"), location: "ศูนย์กระจายพัสดุลำปาง", province: "ลำปาง" },
+        { status: PARCEL_STATUS.failed, at: thai("2026-11-26T16:00"), location: "หน้าบ้านผู้ซื้อ", province: "ลำปาง" },
+      ],
+      failureReason: "ไม่มีคนรับ",
+    });
+    signInAs(people.somying.id);
+
+    expect(getTrackingView(db, "BS0000000999", people.somying)?.route.dashed).toBe(false);
+    expect(textOf((await openTracking("BS0000000999")).html)).toContain("เชียงใหม่ → ลำปาง (ล่าสุด) · ปลายทาง กรุงเทพมหานคร");
   });
 });
 

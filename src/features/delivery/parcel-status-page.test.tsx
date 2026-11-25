@@ -17,6 +17,7 @@ import { changeParcelStatusAction } from "@/features/delivery/status-actions";
 import type { Db } from "@/shared/db";
 import { addAccount, addOrder, addProduct, addShop } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
+import { PROVINCES } from "@/shared/provinces";
 import { SESSION_COOKIE } from "@/shared/session";
 import { ORDER_STATUS, PARCEL_STATUS, type ParcelStatus } from "@/shared/statuses";
 
@@ -94,6 +95,7 @@ function parcelAt(status: ParcelStatus) {
       from: path[i - 1],
       to: status === S.failed && i === 4 ? S.failed : path[i],
       location: `จุดที่ ${i}`,
+      province: "กรุงเทพมหานคร",
       receiverName: "สมหญิง ใจดี",
       reason: "ไม่มีคนรับ",
     });
@@ -140,6 +142,7 @@ describe("DLV-002 สิทธิ์เปลี่ยนสถานะกา�
       from: S.awaitingPacking,
       to: S.handedOver,
       location: "จุดรับพัสดุบางนา",
+      province: "กรุงเทพมหานคร",
     });
     expect(result.redirect).toBe(`/parcels/${parcel.trackingNo}?saved=1`);
     expect(historyCount(parcel.id)).toBe(2);
@@ -156,6 +159,7 @@ describe("DLV-002 สิทธิ์เปลี่ยนสถานะกา�
         from: S.awaitingPacking,
         to: S.handedOver,
         location: "จุดรับพัสดุบางนา",
+        province: "กรุงเทพมหานคร",
       });
       expect(result.state?.error).toBe(NOT_ALLOWED);
     }
@@ -166,7 +170,7 @@ describe("DLV-002 สิทธิ์เปลี่ยนสถานะกา�
     const parcel = parcelAt(S.awaitingPacking);
 
     expect((await open(parcel.trackingNo)).redirect).toBe(`/login?next=${encodeURIComponent(`/parcels/${parcel.trackingNo}`)}`);
-    const result = await submit({ trackingNo: parcel.trackingNo, from: S.awaitingPacking, to: S.handedOver, location: "ที่ไหน" });
+    const result = await submit({ trackingNo: parcel.trackingNo, from: S.awaitingPacking, to: S.handedOver, location: "ที่ไหน", province: "กรุงเทพมหานคร" });
     expect(result.redirect).toContain("/login?next=");
     expect(historyCount(parcel.id)).toBe(1);
   });
@@ -188,7 +192,7 @@ describe("DLV-003 เดินหน้าทีละขั้น ไม่ย�
     signInAs(somchai.id);
 
     for (const to of [S.delivered, S.awaitingPacking]) {
-      const result = await submit({ trackingNo: parcel.trackingNo, from: S.handedOver, to, location: "ที่ไหน", receiverName: "สมหญิง" });
+      const result = await submit({ trackingNo: parcel.trackingNo, from: S.handedOver, to, location: "ที่ไหน", receiverName: "สมหญิง", province: "กรุงเทพมหานคร" });
       expect(result.state).toMatchObject({ error: ONE_STEP, currentStatus: S.handedOver });
     }
     const { html } = await open(parcel.trackingNo, { to: S.delivered });
@@ -212,6 +216,7 @@ describe("DLV-004 บันทึกเวลา สถานที่ และ
       from: S.handedOver,
       to: S.inTransit,
       location: "ศูนย์คัดแยกลาดกระบัง",
+      province: "กรุงเทพมหานคร",
     });
     expect(result.redirect).toBe(`/parcels/${parcel.trackingNo}?saved=1`);
 
@@ -227,7 +232,7 @@ describe("DLV-004 บันทึกเวลา สถานที่ และ
     signInAs(somchai.id);
 
     await open(parcel.trackingNo, { to: S.inTransit });
-    const result = await submit({ trackingNo: parcel.trackingNo, from: S.handedOver, to: S.inTransit, location: "     " });
+    const result = await submit({ trackingNo: parcel.trackingNo, from: S.handedOver, to: S.inTransit, location: "     ", province: "กรุงเทพมหานคร" });
 
     expect(result.state?.fieldErrors).toEqual({ location: LOCATION_ERROR });
     expect(historyCount(parcel.id)).toBe(2);
@@ -262,9 +267,62 @@ describe("DLV-007 บันทึกไม่สำเร็จ", () => {
     db.exec("CREATE TRIGGER fail_order_update BEFORE UPDATE ON orders BEGIN SELECT RAISE(ABORT, 'จำลองบันทึกไม่สำเร็จ'); END");
 
     await expect(
-      submit({ trackingNo: parcel.trackingNo, from: S.awaitingPacking, to: S.handedOver, location: "จุดรับพัสดุบางนา" }),
+      submit({ trackingNo: parcel.trackingNo, from: S.awaitingPacking, to: S.handedOver, location: "จุดรับพัสดุบางนา", province: "กรุงเทพมหานคร" }),
     ).rejects.toThrow("จำลองบันทึกไม่สำเร็จ");
     expect(historyCount(parcel.id)).toBe(1);
+  });
+});
+
+describe("MAP-001 MAP-002 ช่องจังหวัดของฟอร์มเปลี่ยนสถานะ", () => {
+  const provinceOf = (parcelId: number) =>
+    db.prepare("SELECT province FROM parcel_history WHERE parcel_id = ? ORDER BY id DESC LIMIT 1").get(parcelId)?.province;
+
+  test("MAP-002 ฟอร์มมีช่องจังหวัดครบทุกจังหวัด เลือกจังหวัดของรายการล่าสุดไว้ให้ก่อน และเปลี่ยนเป็นจังหวัดอื่นได้", async () => {
+    const parcel = parcelAt(S.handedOver);
+    changeParcelStatus(db, {
+      trackingNo: parcel.trackingNo,
+      actor: somchai,
+      from: S.handedOver,
+      to: S.inTransit,
+      location: "ศูนย์คัดแยกลำปาง",
+      province: "ลำปาง",
+    });
+    signInAs(somchai.id);
+
+    const { html = "" } = await open(parcel.trackingNo, { to: S.outForDelivery });
+    const select = html.match(/<select[^>]*name="province"[^>]*>([^]*?)<\/select>/);
+    expect(select).not.toBeNull();
+    expect(html).toContain('<label for="field-province">จังหวัด</label>');
+    expect(select?.[1].match(/<option value="[^"]+"/g)).toHaveLength(PROVINCES.length);
+    expect(select?.[1].match(/<option[^>]*selected=""[^>]*>([^<]*)</)?.[1]).toBe("ลำปาง");
+    expect(select?.[1]).toContain(">กรุงเทพมหานคร<");
+  });
+
+  test("MAP-001 กดบันทึกพร้อมจังหวัดที่เลือก รายการใหม่มีจังหวัดนั้น", async () => {
+    const parcel = parcelAt(S.handedOver);
+    signInAs(somchai.id);
+
+    const result = await submit({
+      trackingNo: parcel.trackingNo,
+      from: S.handedOver,
+      to: S.inTransit,
+      location: "ศูนย์คัดแยกลำปาง",
+      province: "ลำปาง",
+    });
+    expect(result.redirect).toBe(`/parcels/${parcel.trackingNo}?saved=1`);
+    expect(provinceOf(parcel.id)).toBe("ลำปาง");
+  });
+
+  test("MAP-001 ไม่เลือกจังหวัด ได้ข้อความ เลือกจังหวัด ใต้ช่อง และพัสดุไม่เปลี่ยน", async () => {
+    const parcel = parcelAt(S.handedOver);
+    signInAs(somchai.id);
+
+    for (const province of [undefined, "", "ไม่มีจังหวัดนี้"]) {
+      const values: Record<string, string> = { trackingNo: parcel.trackingNo, from: S.handedOver, to: S.inTransit, location: "ศูนย์คัดแยกลำปาง" };
+      if (province !== undefined) values.province = province;
+      expect((await submit(values)).state?.fieldErrors).toEqual({ province: "เลือกจังหวัด" });
+    }
+    expect(historyCount(parcel.id)).toBe(2);
   });
 });
 

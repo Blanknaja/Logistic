@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
+import { routeText } from "@/features/delivery/server/route";
 import type { TrackingView } from "@/features/delivery/server/tracking";
 import { formatDateTime } from "@/shared/format";
 import { ORDER_STATUS, RECEIPT_CONFIRMED_BY } from "@/shared/statuses";
 import { ConfirmReceipt } from "./confirm-receipt";
+import { DeliveryMap } from "./delivery-map";
 import styles from "./tracking.module.css";
 
 type ConfirmAction = (formData: FormData) => Promise<{ error: string | null }>;
@@ -60,6 +62,15 @@ export function TrackingDetails({
         </div>
       </div>
 
+      <section className={styles.section} aria-labelledby="tracking-map">
+        <h2 id="tracking-map">แผนที่การจัดส่ง</h2>
+        <div className={styles.route}>
+          <DeliveryMap route={view.route} />
+          <p>{routeText(view.route)}</p>
+          <p className={styles.meta}>แผนที่แสดงจังหวัดที่พัสดุผ่านมาแล้ว ไม่ใช่ตำแหน่งปัจจุบัน</p>
+        </div>
+      </section>
+
       <section className={styles.section} aria-labelledby="tracking-history">
         <h2 id="tracking-history">ประวัติการจัดส่ง</h2>
         <div>
@@ -69,6 +80,7 @@ export function TrackingDetails({
                 <span className={styles.status}>{entry.status}</span>
                 <p className={styles.meta}>
                   <time dateTime={entry.at}>{formatDateTime(entry.at)}</time> · {entry.location}
+                  {entry.province && ` · ${entry.province}`}
                 </p>
                 {entry.receiverName && <p className={styles.meta}>ผู้รับ {entry.receiverName}</p>}
                 {entry.failureReason && <p className={styles.meta}>เหตุผล {entry.failureReason}</p>}

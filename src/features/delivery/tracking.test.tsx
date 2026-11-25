@@ -479,7 +479,8 @@ describe("DLV-010 หน้าติดตามพัสดุ ผ่านห�
   });
 
   test("DLV-010 สไตล์ของหน้าไม่มีความกว้างตายตัวที่เกินจอ 360 จุด และปุ่มใช้สไตล์ปุ่มสูง 44 จุด", async () => {
-    const css = readFileSync(join(process.cwd(), "src/features/delivery/components/tracking.module.css"), "utf8");
+    // เงื่อนไขของ @media คือความกว้างจอ ไม่ใช่ความกว้างของชิ้นในหน้า
+    const css = readFileSync(join(process.cwd(), "src/features/delivery/components/tracking.module.css"), "utf8").replace(/@media[^{]*/g, "");
     const fixed = [...css.matchAll(/(?<!max-)width:\s*(\d+)px/g)].map((match) => Number(match[1]));
     expect(fixed.filter((px) => px > 328)).toEqual([]);
 

@@ -48,7 +48,7 @@ export default async function ParcelStatusPage({ params, searchParams }: PagePro
       ) : (
         <StatusChangeLinks trackingNo={parcel.trackingNo} nextStatuses={parcel.nextStatuses} />
       )}
-      <p>
+      <p className={styles.more}>
         <Link href={`/track/${encodeURIComponent(parcel.trackingNo)}`}>ดูประวัติการจัดส่ง</Link>
       </p>
     </div>

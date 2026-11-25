@@ -1,62 +1,129 @@
+/* หน้าติดตามพัสดุ: สถานะตอนนี้ตัวใหญ่ แล้วประวัติการจัดส่งเป็นเส้นเวลา จอกว้างแบ่ง 4:8 แบบหน้าสินค้า */
+
 .page {
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-.summary {
   display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 4px var(--space-4);
-  margin: 0 0 var(--space-4);
+  gap: var(--space-6);
 }
 
-.summary dt {
-  color: var(--color-muted);
-}
-
-.summary dd {
+.page > h1 {
   margin: 0;
-  font-weight: 600;
+}
+
+/* ส่วนสถานะเปิดด้วยเส้นเข้มแบบแถบซื้อของหน้าสินค้า ส่วนอื่นคั่นด้วยเส้นบาง */
+.now,
+.section {
+  display: grid;
+  gap: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+}
+
+.now {
+  border-top-color: var(--color-text);
+}
+
+.section h2 {
+  margin: 0;
+}
+
+.statusNow {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  margin: 0;
+}
+
+.statusNow dt {
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.statusNow dd {
+  margin: 0;
+  font-size: var(--text-price);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.detail {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--space-1) var(--space-5);
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.facts dd {
+  margin: 0;
 }
 
 .notice {
-  margin: 0 0 var(--space-4);
-  padding: 12px var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
+  margin: 0;
+  padding-inline-start: var(--space-4);
+  border-inline-start: 2px solid var(--color-text);
 }
 
 .cancelled {
+  border-inline-start-color: var(--color-danger);
   color: var(--color-danger);
-  font-weight: 600;
+  font-weight: 700;
 }
 
+/* ปุ่มได้รับสินค้าแล้วและปุ่มเปลี่ยนสถานะ จอแคบกว้างเต็มแถว */
 .receipt {
-  margin: 0 0 var(--space-4);
+  display: grid;
+  gap: var(--space-3);
 }
 
 .receipt p {
-  margin: 8px 0;
+  margin: 0;
+}
+
+.receipt > :global(.button) {
+  min-height: var(--control-main);
+  font-size: var(--text-body);
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-3);
 }
 
 .dialog {
-  width: min(400px, calc(100vw - 2 * var(--space-4)));
-  border: 1px solid var(--color-border);
+  width: min(440px, calc(100vw - 2 * var(--gutter)));
+  padding: var(--space-5);
+  border: 1px solid var(--color-text);
   border-radius: var(--radius);
-  padding: var(--space-4);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.dialog::backdrop {
+  background: color-mix(in srgb, var(--color-text) 40%, transparent);
 }
 
 .dialog h2 {
   margin-top: 0;
 }
 
+.dialog p {
+  margin: 0 0 var(--space-5);
+}
+
+/* เส้นเวลา: จุดของแต่ละรายการต่อกันด้วยเส้นตั้ง จุดทึบคือรายการล่าสุด */
 .history {
   margin: 0;
   padding: 0;
@@ -64,29 +131,74 @@
 }
 
 .history li {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--color-border);
+  --dot: var(--space-3);
+  /* กลางบรรทัดแรก ซึ่งสูง 1.7 เท่าของตัวอักษร */
+  --dot-top: calc(0.85em - var(--dot) / 2);
+  position: relative;
+  padding: 0 0 var(--space-5) var(--space-6);
+}
+
+.history li:last-child {
+  padding-bottom: 0;
+}
+
+.history li::before {
+  content: "";
+  position: absolute;
+  top: var(--dot-top);
+  bottom: calc(-1 * var(--dot-top));
+  inset-inline-start: calc(var(--dot) / 2 - 0.5px);
+  border-inline-start: 1px solid var(--color-border-strong);
+}
+
+.history li:last-child::before {
+  content: none;
+}
+
+.history li::after {
+  content: "";
+  position: absolute;
+  top: var(--dot-top);
+  inset-inline-start: 0;
+  width: var(--dot);
+  height: var(--dot);
+  border: 1px solid var(--color-text);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+.history li:first-child::after {
+  background: var(--color-text);
 }
 
 .history li:first-child .status {
-  color: var(--color-primary);
-}
-
-.status {
   font-weight: 700;
 }
 
 .meta {
   margin: 0;
   color: var(--color-muted);
-  font-size: 0.95rem;
+  font-size: var(--text-label);
 }
 
+.hint {
+  margin: var(--space-4) 0 0;
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.address {
+  max-width: var(--measure);
+  font-style: normal;
+}
+
+/* หน้าค้นหาพัสดุ: ช่องกรอกกับปุ่มอยู่แถวเดียวกัน สูงเท่ากัน */
 .search {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
   align-items: flex-end;
+  gap: var(--space-3);
+  max-width: var(--measure);
 }
 
 .searchField {
@@ -94,17 +206,55 @@
   margin: 0;
 }
 
-.hint {
-  color: var(--color-muted);
+.search :global(.input),
+.search > :global(.button) {
+  min-height: var(--control-main);
 }
 
+.search > :global(.button) {
+  font-size: var(--text-body);
+}
+
+/* คำแนะนำหรือข้อผิดพลาดอยู่ติดช่องกรอก */
+.searchBlock {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.searchBlock > p {
+  margin: 0;
+}
+
+/* โครงหน้าระหว่างรอข้อมูล */
 .skeleton {
   height: 1.2em;
-  margin: 8px 0;
-  border-radius: var(--radius);
-  background: var(--color-border);
+  background: var(--color-surface);
+}
+
+.skeletonBig {
+  width: 50%;
+  height: var(--text-price);
 }
 
 .skeletonShort {
   width: 40%;
+}
+
+@media (min-width: 600px) {
+  .receipt > :global(.button) {
+    justify-self: start;
+    padding-inline: var(--space-7);
+  }
+}
+
+@media (min-width: 900px) {
+  .now,
+  .section {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    column-gap: var(--space-7);
+  }
+
+  .now {
+    padding-block: var(--space-6);
+  }
 }

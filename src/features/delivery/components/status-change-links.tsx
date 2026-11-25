@@ -10,11 +10,11 @@ export function StatusChangeLinks({ trackingNo, nextStatuses }: { trackingNo: st
   if (nextStatuses.length === 0) return null;
   return (
     <div className={styles.actions}>
-      {nextStatuses.map((status) => (
+      {nextStatuses.map((status, index) => (
         <Link
           key={status}
           href={{ pathname: `/parcels/${encodeURIComponent(trackingNo)}`, query: { to: status } }}
-          className="button"
+          className={index === 0 ? "button" : "button button-secondary"}
         >
           เปลี่ยนเป็น {status}
         </Link>

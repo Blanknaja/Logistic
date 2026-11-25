@@ -32,7 +32,7 @@ export function StatusChangeForm({ trackingNo, from, to }: { trackingNo: string;
       ref={form}
       method="post"
       noValidate
-      className="card"
+      className={styles.form}
       onSubmit={(event) => {
         // ไม่ใช้ prop action ของ form เพราะ React จะล้างทุกช่องหลังส่งเสร็จ
         event.preventDefault();

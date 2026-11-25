@@ -9,10 +9,14 @@ export function TrackingSkeleton() {
   return (
     <div className={styles.page} data-skeleton>
       <h1>ติดตามพัสดุ</h1>
-      <div className={styles.skeleton} />
-      <div className={`${styles.skeleton} ${styles.skeletonShort}`} />
-      <h2>ประวัติการจัดส่ง</h2>
-      <LoadingState />
+      <div className={styles.now}>
+        <div className={`${styles.skeleton} ${styles.skeletonBig}`} />
+        <div className={`${styles.skeleton} ${styles.skeletonShort}`} />
+      </div>
+      <section className={styles.section}>
+        <h2>ประวัติการจัดส่ง</h2>
+        <LoadingState />
+      </section>
     </div>
   );
 }

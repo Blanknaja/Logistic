@@ -46,6 +46,7 @@ export function DeliveryMap({ route }: { route: DeliveryRoute }) {
           // บนมือถือ นิ้วเดียวเลื่อนหน้าผ่านแผนที่ได้ (MAP-Q03) ซูมด้วยสองนิ้วหรือปุ่ม
           dragging: !L.Browser.mobile,
         });
+        map.attributionControl.setPrefix(false);
         L.control.zoom({ zoomInTitle: "ซูมเข้า", zoomOutTitle: "ซูมออก" }).addTo(map);
         if (route.passed.length > 1) {
           L.polyline(route.passed.map(at), { className: styles.solid, interactive: false }).addTo(map);

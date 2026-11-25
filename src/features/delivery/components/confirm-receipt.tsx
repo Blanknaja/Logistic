@@ -27,7 +27,7 @@ export function ConfirmReceipt({
   };
 
   return (
-    <div className={styles.receipt}>
+    <div className={styles.action}>
       <button type="button" className="button" disabled={pending} onClick={() => dialog.current?.showModal()}>
         {pending ? "กำลังบันทึก" : "ได้รับสินค้าแล้ว"}
       </button>

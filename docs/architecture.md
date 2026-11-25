@@ -157,7 +157,7 @@ export function cancelExpiredOrders(db: Db, now: Date = new Date()): number {
 
 - เขียนหลายแถวที่ต้องสำเร็จพร้อมกัน ให้ห่อด้วย `transaction(db, fn)` ซ้อนกันได้ ถ้า `fn` โยน error จะย้อนทั้งหมด `fn` ห้ามเป็น async
 - `node:sqlite` ทำงานแบบ sync และแอปมีการเชื่อมต่อเดียว งานใน transaction เดียวจึงไม่มีคำขออื่นแทรก ใช้กันการแย่งสต็อกชิ้นสุดท้ายได้ และฐานข้อมูลมี `CHECK (stock >= 0)` กันไว้อีกชั้น
-- เวลาเก็บเป็นข้อความ ISO แบบ UTC จาก `date.toISOString()` แสดงผลด้วย `formatThaiDate` ("25 พ.ย.") หรือ `formatThaiDateTime` ("25 พ.ย. 13:07") ซึ่งใช้เวลาประเทศไทยและใส่ปี ค.ศ. เมื่อไม่ใช่ปีนี้ ฟังก์ชันที่รับ `now` ให้ส่ง `now` ต่อไปด้วย ส่วน `formatDateTime` แบบเดิม "25/11/2026 13:07" เหลือใช้แค่ใน `src/features/delivery`
+- เวลาเก็บเป็นข้อความ ISO แบบ UTC จาก `date.toISOString()` แสดงผลด้วย `formatThaiDate` ("25 พ.ย.") หรือ `formatThaiDateTime` ("25 พ.ย. 13:07") ซึ่งใช้เวลาประเทศไทยและใส่ปี ค.ศ. เมื่อไม่ใช่ปีนี้ ฟังก์ชันที่รับ `now` ให้ส่ง `now` ต่อไปด้วย ห่อด้วย `<time dateTime={ค่า ISO}>`
 - เงินเก็บเป็นจำนวนเต็มบาท แสดงด้วย `formatBaht(1290)` ได้ `฿1,290`
 - สถานะใช้ค่าจาก `@/shared/statuses` ฐานข้อมูลมี CHECK ที่รับเฉพาะคำเหล่านี้
 - ตารางทั้งหมดอยู่ใน `src/shared/db/migrations/0001-initial-schema.sql` อ่านไฟล์นี้ก่อนเขียน SQL

@@ -1,9 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import {
   formatBaht,
-  formatDateTime,
   formatNumber,
   formatThaiDate,
   formatThaiDateTime,
@@ -75,18 +72,5 @@ describe("formatTimeOrDateTime", () => {
     expect(formatTimeOrDateTime("2026-11-24T16:59:00.000Z", now)).toBe("24 พ.ย. 23:59");
     expect(formatTimeOrDateTime("2026-11-24T17:00:00.000Z", now)).toBe("00:00");
     expect(formatTimeOrDateTime("2025-11-25T03:15:00.000Z", now)).toBe("25 พ.ย. 2025 10:15");
-  });
-});
-
-describe("formatDateTime รูปแบบเดิม", () => {
-  test("แสดง วัน/เดือน/ปี ค.ศ. กับเวลา ตามเวลาประเทศไทย", () => {
-    expect(formatDateTime("2026-11-24T17:30:00.000Z")).toBe("25/11/2026 00:30");
-  });
-
-  test("ใช้ได้แค่ใน src/features/delivery ที่เหลือใช้ formatThaiDateTime", () => {
-    const users = readdirSync(join(process.cwd(), "src"), { recursive: true, encoding: "utf8" })
-      .filter((file) => /\.tsx?$/.test(file) && !file.startsWith(join("features", "delivery")) && !file.startsWith(join("shared", "format")))
-      .filter((file) => /\bformatDateTime\b/.test(readFileSync(join(process.cwd(), "src", file), "utf8")));
-    expect(users).toEqual([]);
   });
 });

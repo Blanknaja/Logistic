@@ -1,45 +1,84 @@
-/* หน้าเปลี่ยนสถานะการจัดส่ง: คอลัมน์แคบชิดขอบซ้าย ข้อมูลพัสดุ แล้วฟอร์ม */
+/* หน้าเปลี่ยนสถานะการจัดส่ง: สถานะตอนนี้เป็นหัวเรื่อง ข้อมูลพัสดุ แล้วปุ่มขั้นถัดไปหรือฟอร์ม ในคอลัมน์แคบชิดซ้าย */
 
 .page {
   display: grid;
   gap: var(--space-5);
-  max-width: 560px;
+  max-width: var(--measure);
 }
 
-.page > h1,
 .page > p {
   margin: 0;
 }
 
-.more {
+.title {
+  margin: 0;
+}
+
+/* เลขติดตามพัสดุเป็นข้อมูลรองเหนือสถานะ อยู่ใน h1 เพื่อให้โปรแกรมอ่านจอได้ยินว่าเป็นพัสดุไหน */
+.eyebrow {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--color-muted);
   font-size: var(--text-label);
+  font-weight: 400;
+  line-height: var(--line-height);
 }
 
-.more a {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--tap);
+.cancelled {
+  color: var(--color-danger);
 }
 
-/* ปุ่มเปลี่ยนสถานะ บันทึก และยกเลิก สูงเท่าปุ่มหลักของหน้า */
+.facts {
+  display: grid;
+  margin: 0;
+}
+
+.facts > div {
+  display: flex;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.facts dt {
+  flex: none;
+  width: 6.5em;
+  color: var(--color-muted);
+  font-size: var(--text-label);
+  line-height: calc(var(--text-body) * var(--line-height));
+}
+
+.facts dd {
+  margin: 0;
+  min-width: 0;
+}
+
+/* ปุ่มขั้นถัดไปและปุ่มบันทึกสูงเท่าปุ่มหลักของหน้า ปุ่มแรกคือสีเน้นปุ่มเดียว */
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
 }
 
 .actions > :global(.button) {
+  flex: 1 1 auto;
   min-height: var(--control-main);
+  padding-inline: var(--space-7);
   font-size: var(--text-body);
 }
 
-.form .actions > :global(.button) {
-  flex: 1;
+.form {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-text);
 }
 
-.notice {
-  padding-inline-start: var(--space-4);
-  border-inline-start: 2px solid var(--color-text);
+.formTitle {
+  margin: 0 0 var(--space-4);
+}
+
+.form :global(.field-error) {
+  margin: 0;
 }
 
 .problem {
@@ -52,30 +91,21 @@
   margin: 0 0 var(--space-2);
 }
 
-.form {
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--color-text);
-}
+/* จังหวัดยาวสุดราว 15 ตัวอักษร จอ 600 ขึ้นไปจึงวางช่องจังหวัดข้างช่องสถานที่ จอแคบเรียงกันเต็มแถว */
+@media (min-width: 600px) {
+  .actions > :global(.button) {
+    flex: none;
+  }
 
-.formTitle {
-  margin: 0 0 var(--space-4);
-}
+  /* ช่องกรอกกับ select สูงไม่เท่ากันเองเมื่ออยู่แถวเดียวกัน */
+  .where :global(.input) {
+    height: var(--tap);
+  }
 
-.facts {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  align-items: baseline;
-  gap: var(--space-1) var(--space-5);
-  margin: 0;
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border);
-}
-
-.facts dt {
-  color: var(--color-muted);
-  font-size: var(--text-label);
-}
-
-.facts dd {
-  margin: 0;
+  .where {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 14em;
+    column-gap: var(--space-3);
+    align-items: start;
+  }
 }

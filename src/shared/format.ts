@@ -18,7 +18,6 @@ function bangkok(value: Date | string) {
   const parts = Object.fromEntries(partsFormat.formatToParts(new Date(value)).map((part) => [part.type, part.value]));
   return {
     day: Number(parts.day),
-    monthNumber: Number(parts.month),
     month: THAI_MONTHS[Number(parts.month) - 1],
     year: parts.year,
     time: `${parts.hour}:${parts.minute}`,
@@ -58,13 +57,4 @@ export function formatTimeOrDateTime(value: Date | string, now: Date = new Date(
   const today = bangkok(now);
   const sameDay = date.day === today.day && date.month === today.month && date.year === today.year;
   return sameDay ? date.time : formatThaiDateTime(value, now);
-}
-
-/**
- * รูปแบบเดิม "24/11/2026 09:15" ตามเวลาประเทศไทย
- * @deprecated ใช้ formatThaiDateTime test ใน format.test.ts ห้ามใช้นอก src/features/delivery
- */
-export function formatDateTime(value: Date | string): string {
-  const { day, monthNumber, year, time } = bangkok(value);
-  return `${String(day).padStart(2, "0")}/${String(monthNumber).padStart(2, "0")}/${year} ${time}`;
 }

@@ -187,6 +187,25 @@ describe("DLV-003 เดินหน้าทีละขั้น ไม่ย�
     ]);
   });
 
+  test("DLV-003 หัวเรื่องคือสถานะตอนนี้ ขั้นถัดไปเป็นปุ่มสีเน้นปุ่มเดียว และไม่มีสถานะคำสั่งซื้อที่อ่านแล้วขัดกัน", async () => {
+    const parcel = parcelAt(S.outForDelivery);
+    signInAs(somchai.id);
+
+    const { html = "" } = await open(parcel.trackingNo);
+    const heading = html.match(/<h1[^>]*>([^]*?)<\/h1>/)?.[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    expect(heading).toBe(`เปลี่ยนสถานะการจัดส่ง ${parcel.trackingNo} ${S.outForDelivery}`);
+    expect(html.match(/class="button"/g)).toHaveLength(1);
+    expect(html).toMatch(/<a[^>]*class="button"[^>]*>เปลี่ยนเป็น ส่งสำเร็จ<\/a>/);
+    expect(html).not.toContain("สถานะคำสั่งซื้อ");
+    expect(html).not.toContain(ORDER_STATUS.shipping);
+
+    // เปิดฟอร์มแล้ว ปุ่มสีเน้นคือบันทึก ยกเลิกเป็นลิงก์ข้อความ
+    const form = (await open(parcel.trackingNo, { to: S.delivered })).html ?? "";
+    expect(form.match(/class="button"/g)).toHaveLength(1);
+    expect(form).toMatch(/<button[^>]*class="button"[^>]*>บันทึก<\/button>/);
+    expect(form).toMatch(/<a[^>]*class="link-action"[^>]*>ยกเลิก<\/a>/);
+  });
+
   test("DLV-003 ส่งคำขอข้ามขั้นหรือย้อนกลับ ได้ข้อความพร้อมสถานะปัจจุบัน และ ?to= ที่ไม่ใช่ขั้นถัดไปไม่เปิดฟอร์ม", async () => {
     const parcel = parcelAt(S.handedOver);
     signInAs(somchai.id);

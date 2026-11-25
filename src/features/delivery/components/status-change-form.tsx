@@ -57,29 +57,31 @@ export function StatusChangeForm({
       <input type="hidden" name="trackingNo" value={trackingNo} />
       <input type="hidden" name="from" value={from} />
       <input type="hidden" name="to" value={to} />
-      <Field label="สถานที่" name="location" maxLength={100} error={errors.location} />
-      <div className="field">
-        <label htmlFor="field-province">จังหวัด</label>
-        <select
-          id="field-province"
-          name="province"
-          className="input"
-          defaultValue={defaultProvince}
-          aria-invalid={errors.province ? true : undefined}
-          aria-describedby={errors.province ? "field-province-error" : undefined}
-        >
-          <option value="">เลือกจังหวัด</option>
-          {PROVINCES.map((province) => (
-            <option key={province} value={province}>
-              {province}
-            </option>
-          ))}
-        </select>
-        {errors.province && (
-          <p id="field-province-error" className="field-error">
-            {errors.province}
-          </p>
-        )}
+      <div className={styles.where}>
+        <Field label="สถานที่" name="location" maxLength={100} error={errors.location} />
+        <div className="field">
+          <label htmlFor="field-province">จังหวัด</label>
+          <select
+            id="field-province"
+            name="province"
+            className="input"
+            defaultValue={defaultProvince}
+            aria-invalid={errors.province ? true : undefined}
+            aria-describedby={errors.province ? "field-province-error" : undefined}
+          >
+            <option value="">เลือกจังหวัด</option>
+            {PROVINCES.map((province) => (
+              <option key={province} value={province}>
+                {province}
+              </option>
+            ))}
+          </select>
+          {errors.province && (
+            <p id="field-province-error" className="field-error">
+              {errors.province}
+            </p>
+          )}
+        </div>
       </div>
       {to === PARCEL_STATUS.delivered && (
         <Field label="ชื่อผู้รับ" name="receiverName" maxLength={100} error={errors.receiverName} />
@@ -108,7 +110,7 @@ export function StatusChangeForm({
       )}
       <div className={styles.actions}>
         <SubmitButton pending={pending} label="บันทึก" pendingLabel="กำลังบันทึก" />
-        <Link href={`/parcels/${encodeURIComponent(trackingNo)}`} className="button button-secondary">
+        <Link href={`/parcels/${encodeURIComponent(trackingNo)}`} className="link-action">
           ยกเลิก
         </Link>
       </div>

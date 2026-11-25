@@ -22,27 +22,23 @@ export default async function ParcelStatusPage({ params, searchParams }: PagePro
 
   return (
     <div className={styles.page}>
-      <h1>เปลี่ยนสถานะการจัดส่ง</h1>
-      {saved && !chosen && (
-        <p role="status" className={styles.notice}>
-          บันทึกแล้ว
-        </p>
-      )}
+      <h1 className={styles.title}>
+        <span className={styles.eyebrow}>เปลี่ยนสถานะการจัดส่ง {parcel.trackingNo}</span> {parcel.status}
+      </h1>
+      {saved && !chosen && <p role="status">บันทึกแล้ว</p>}
+      {parcel.orderStatus === ORDER_STATUS.cancelled && <p className={styles.cancelled}>คำสั่งซื้อถูกยกเลิก</p>}
       <dl className={styles.facts}>
-        <dt>เลขติดตามพัสดุ</dt>
-        <dd>{parcel.trackingNo}</dd>
-        <dt>ร้าน</dt>
-        <dd>{parcel.shopName}</dd>
-        <dt>สถานะการจัดส่ง</dt>
-        <dd>{parcel.status}</dd>
-        <dt>สถานะคำสั่งซื้อ</dt>
-        <dd>{parcel.orderStatus}</dd>
-        <dt>รายการล่าสุด</dt>
-        <dd>
-          {parcel.latest.status} {formatThaiDateTime(parcel.latest.at)} {parcel.latest.location}
-        </dd>
+        <div>
+          <dt>ร้าน</dt>
+          <dd>{parcel.shopName}</dd>
+        </div>
+        <div>
+          <dt>รายการล่าสุด</dt>
+          <dd>
+            <time dateTime={parcel.latest.at}>{formatThaiDateTime(parcel.latest.at)}</time> · {parcel.latest.location}
+          </dd>
+        </div>
       </dl>
-      {parcel.orderStatus === ORDER_STATUS.cancelled && <p className={styles.notice}>คำสั่งซื้อถูกยกเลิก</p>}
       {chosen ? (
         <StatusChangeForm
           trackingNo={parcel.trackingNo}
@@ -53,8 +49,10 @@ export default async function ParcelStatusPage({ params, searchParams }: PagePro
       ) : (
         <StatusChangeLinks trackingNo={parcel.trackingNo} nextStatuses={parcel.nextStatuses} />
       )}
-      <p className={styles.more}>
-        <Link href={`/track/${encodeURIComponent(parcel.trackingNo)}`}>ดูประวัติการจัดส่ง</Link>
+      <p>
+        <Link href={`/track/${encodeURIComponent(parcel.trackingNo)}`} className="link-action">
+          ดูประวัติการจัดส่ง
+        </Link>
       </p>
     </div>
   );

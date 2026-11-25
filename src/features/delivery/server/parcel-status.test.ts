@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import type { Db } from "@/shared/db";
 import { addAccount, addOrder, addProduct, addShop, SAMPLE_ADDRESS } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
-import { formatDateTime } from "@/shared/format";
+import { formatThaiDateTime } from "@/shared/format";
 import { ORDER_STATUS, PARCEL_STATUS, type ParcelStatus } from "@/shared/statuses";
 import {
   changeParcelStatus,
@@ -96,7 +96,7 @@ describe("DLV-001 สร้างพัสดุและเลขติดต�
     expect(first.status).toBe(S.awaitingPacking);
     expect(first.location).toBe("สมชายการช่าง");
     expect(first.changed_by_account_id).toBeNull();
-    expect(formatDateTime(String(first.created_at))).toBe("25/11/2026 09:00");
+    expect(formatThaiDateTime(String(first.created_at), at(25, "09:00"))).toBe("25 พ.ย. 09:00");
   });
 
   test("DLV-001 ร้านแก้ที่อยู่ต้นทางทีหลัง พัสดุที่สร้างแล้วยังเก็บที่อยู่เดิม (SHP-009)", () => {
@@ -236,7 +236,7 @@ describe("DLV-004 บันทึกเวลา สถานที่ และ
     expect(latest.status).toBe(S.inTransit);
     expect(latest.location).toBe("ศูนย์คัดแยกลาดกระบัง");
     expect(latest.changed_by_account_id).toBe(somchai.id);
-    expect(formatDateTime(String(latest.created_at))).toBe("25/11/2026 13:20");
+    expect(formatThaiDateTime(String(latest.created_at), at(25, "13:20"))).toBe("25 พ.ย. 13:20");
     expect(getParcelForStatusChange(db, parcel.trackingNo, somchai)?.latest).toEqual({
       status: S.inTransit,
       at: at(25, "13:20").toISOString(),
@@ -565,7 +565,7 @@ describe("MAP-001 เลือกจังหวัดตอนเปลี่�
     expect(parcelRow(parcel.id).status).toBe(S.inTransit);
     const latest = history(parcel.id).at(-1);
     expect(latest).toMatchObject({ status: S.inTransit, location: "ศูนย์คัดแยกลำปาง", province: "ลำปาง" });
-    expect(formatDateTime(String(latest?.created_at))).toBe("25/11/2026 13:20");
+    expect(formatThaiDateTime(String(latest?.created_at), at(25, "13:20"))).toBe("25 พ.ย. 13:20");
   });
 
   test("MAP-001 ไม่เลือกจังหวัด หรือส่งชื่อจังหวัดที่ไม่มีในรายชื่อ ได้ข้อความ เลือกจังหวัด และไม่มีอะไรเปลี่ยน", () => {

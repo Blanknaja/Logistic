@@ -219,7 +219,7 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
       if (status === "ส่งสำเร็จ") await shot(page, "parcel-delivered-form");
       await page.getByRole("button", { name: "บันทึก" }).click();
       await expect(page.getByRole("status")).toHaveText("บันทึกแล้ว");
-      await expect(page.getByRole("definition").filter({ hasText: status }).first()).toBeVisible();
+      await expect(page.getByRole("heading", { level: 1 })).toContainText(status);
     }
     await shot(page, "parcel-delivered");
   });

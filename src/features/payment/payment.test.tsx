@@ -281,6 +281,17 @@ describe("หน้าจ่ายเงินให้ข้อมูลที�
     expect(html).toMatch(/<div class="_pair_\w+">.*class="input _short_\w+"[^>]*name="expiry".*class="input _short_\w+"[^>]*name="securityCode"/);
     expect(Number(css.match(/\.short \{\s*max-width: (\d+)ch/)?.[1])).toBeLessThanOrEqual(12);
   });
+
+  test("เวลาที่เหลือเป็นสถานะปกติ และเป็นสีเตือนเมื่อเหลือไม่เกิน 5 นาที", async () => {
+    const group = addGroup("14:00");
+    signInAs(group.buyerId);
+    const deadline = /<p class="([^"]*)">เหลือเวลาจ่าย/;
+
+    setNow("14:24");
+    expect((await payPage(group.groupId)).match(deadline)?.[1]).not.toMatch(/deadlineSoon/);
+    setNow("14:25");
+    expect((await payPage(group.groupId)).match(deadline)?.[1]).toMatch(/deadlineSoon/);
+  });
 });
 
 describe("PAY-002 เครื่องหมายเงินทดลอง", () => {

@@ -20,6 +20,12 @@ export type PayPageProps = {
   simulator?: { mode: SimulatorMode; canSwitchMode: boolean; waiting: PaymentView[] } | null;
 };
 
+/** เหลือเวลาจ่ายไม่เกินนี้ (นาที) บรรทัดเวลาที่เหลือเป็นสีเตือน ก่อนหน้านั้นเป็นสถานะปกติ */
+export const DEADLINE_WARNING_MINUTES = 5;
+
+const deadlineClass = (minutesLeft: number) =>
+  minutesLeft <= DEADLINE_WARNING_MINUTES ? `${styles.deadline} ${styles.deadlineSoon}` : styles.deadline;
+
 /** "ด้วยบัตรลงท้าย 4242" หรือ "ด้วย PromptPay" คำไทยติดกันได้ คำอังกฤษต้องเว้นวรรค */
 const paidWith = (payment: PaymentView) =>
   payment.method === PAYMENT_METHOD.card ? `ด้วยบัตรลงท้าย ${payment.cardLast4 ?? ""}` : `ด้วย ${payment.method}`;
@@ -51,7 +57,7 @@ function ChooseMethod({ page, method }: { page: PayPage; method: "card" | "promp
   return (
     <>
       <h1>จ่ายเงิน</h1>
-      <p className={styles.deadline}>{minutesLeftText(page.minutesLeft)}</p>
+      <p className={deadlineClass(page.minutesLeft)}>{minutesLeftText(page.minutesLeft)}</p>
       <Orders page={page} />
       <section className={styles.section}>
         <h2>เลือกวิธีจ่าย</h2>
@@ -93,7 +99,7 @@ function Waiting({ page, pending, notice, simulated }: { page: PayPage; pending:
       <p className={styles.total}>
         ยอด {formatBaht(pending.amount)} ด้วย {pending.method}
       </p>
-      <p className={styles.deadline}>กำลังรอผลการจ่ายเงิน {minutesLeftText(page.minutesLeft)}</p>
+      <p className={deadlineClass(page.minutesLeft)}>กำลังรอผลการจ่ายเงิน {minutesLeftText(page.minutesLeft)}</p>
       {promptPay && (
         <p className={styles.hint}>
           ในโหมดทดลอง ระบบรู้ผลเมื่อมีคนกดทำเครื่องหมายในหน้าจัดการของ Omise{simulated && " หรือที่ตัวจำลองด้านล่าง"}
@@ -130,7 +136,7 @@ function Failed({ page }: { page: PayPage }) {
       <p role="alert" className={styles.reason}>
         {page.lastFailed?.failureReason ?? "จ่ายเงินไม่สำเร็จ"}
       </p>
-      <p className={styles.deadline}>{minutesLeftText(page.minutesLeft)}</p>
+      <p className={deadlineClass(page.minutesLeft)}>{minutesLeftText(page.minutesLeft)}</p>
       <div className={`${styles.submit} ${styles.payBar}`}>
         <p className={styles.due}>ยอดที่ต้องจ่าย {formatBaht(page.amount)}</p>
         <Link href={`/pay/${page.groupId}?retry=1`} className="button">

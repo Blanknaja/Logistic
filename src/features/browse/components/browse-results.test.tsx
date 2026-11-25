@@ -61,6 +61,24 @@ describe("BRW-001 หน้าแรก", () => {
     const html = render({}, { items: [card(1, { soldOut: true })], total: 1, totalPages: 1 });
     expect(html).toContain("สินค้าหมด");
   });
+
+  test("สโลแกนเหลือเป็นหัวเรื่องที่โปรแกรมอ่านจอได้ยิน หมวดหมู่เป็นแถบนำทาง และไม่มีช่องค้นหาซ้ำกับแถบด้านบน", () => {
+    const html = render({}, { items: [card(1)], total: 1, totalPages: 1 });
+
+    expect(html).toContain('<h1 class="visually-hidden">ซื้อของจากหลายร้านในที่เดียว</h1>');
+    expect(html).toMatch(/<nav aria-label="หมวดหมู่"/);
+    expect(html).not.toContain('name="q" value=""');
+    expect(html).not.toContain('type="search"');
+  });
+
+  test("การ์ดสินค้ามีแค่รูป ชื่อ ราคา และชื่อร้าน", () => {
+    const html = render({}, { items: [card(7, { name: "แก้วน้ำ", price: 59 })], total: 1, totalPages: 1 });
+    const cardHtml = html.match(/<a[^>]*href="\/products\/7"[^>]*>(.*?)<\/a>/)?.[1] ?? "";
+    const texts = cardHtml.replace(/<[^>]+>/g, "|").split("|").map((t) => t.trim()).filter(Boolean);
+
+    expect(texts).toEqual(["แก้วน้ำ", "฿59", "บ้านสวนผ้าไทย"]);
+    expect(cardHtml).toContain('src="/sample-images/p7-1.svg"');
+  });
 });
 
 describe("BRW-003 กรองตามหมวดหมู่", () => {
@@ -93,19 +111,37 @@ describe("BRW-004 กรองตามช่วงราคา", () => {
     expect(html).toMatch(/inputMode="numeric"[^>]*name="max" value="500"/);
   });
 
-  test("ช่วงราคาผิด แสดงข้อความใต้ช่องราคา", () => {
+  test("ช่วงราคาผิด แสดงข้อความใต้ช่องราคา และตัวกรองที่พับไว้กางออกให้เห็นข้อความ", () => {
     const html = render(
       { min: "500", max: "100" },
       { items: [card(1)], total: 3, totalPages: 1, priceError: "ราคาต่ำสุดต้องไม่มากกว่าราคาสูงสุด" },
     );
     expect(html).toContain("ราคาต่ำสุดต้องไม่มากกว่าราคาสูงสุด");
+    expect(html).toMatch(/<details[^>]*open=""/);
+    expect(html).not.toContain("ราคา ฿500");
+  });
+
+  test("ช่วงราคาและการเรียงพับไว้หลังปุ่ม ตัวกรอง และบรรทัดจำนวนผลลัพธ์บอกคำค้นกับตัวกรองที่ใช้อยู่", () => {
+    const html = render(
+      { q: "กระเป๋า", category: "2", min: "100", max: "500" },
+      { items: [card(1)], total: 3, totalPages: 1, category: categories[1] },
+    );
+    const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+
+    expect(html).toMatch(/<details[^>]*><summary[^>]*>.*ตัวกรอง<\/summary>/);
+    expect(html).not.toMatch(/<details[^>]*open=""/);
+    expect(text).toContain("พบ 3 รายการ สำหรับ &quot;กระเป๋า&quot;");
+    expect(text).toContain("กระเป๋าและรองเท้า · ราคา ฿100 ถึง ฿500 ล้างตัวกรอง");
+    expect(render({ max: "500" }, { items: [card(1)], total: 1, totalPages: 1 })).toContain("ราคาไม่เกิน ฿500");
+    expect(render({ min: "250" }, { items: [card(1)], total: 1, totalPages: 1 })).toContain("ราคาตั้งแต่ ฿250");
   });
 });
 
 describe("BRW-005 เรียงลำดับ", () => {
   test("ช่องเลือกการเรียงแสดงแบบที่เลือกอยู่ ค่าที่ไม่รู้จักแสดงใหม่ล่าสุด", () => {
-    expect(render({ sort: "price-asc" }, {})).toMatch(/<option value="price-asc" selected="">ราคาต่ำไปสูง/);
-    expect(render({ sort: "oops" }, {})).toMatch(/<option value="newest" selected="">ใหม่ล่าสุด/);
+    const some = { items: [card(1)], total: 1, totalPages: 1 };
+    expect(render({ sort: "price-asc" }, some)).toMatch(/<option value="price-asc" selected="">ราคาต่ำไปสูง/);
+    expect(render({ sort: "oops" }, some)).toMatch(/<option value="newest" selected="">ใหม่ล่าสุด/);
   });
 });
 
@@ -124,15 +160,23 @@ describe("BRW-006 แบ่งหน้าผลลัพธ์", () => {
 });
 
 describe("BRW-011 หน้าว่าง", () => {
-  test("ค้นหาไม่เจอ แสดงพบ 0 รายการ ข้อความ คำค้นที่ใช้ ปุ่มล้างตัวกรอง และลิงก์กลับหน้าแรก โดยไม่มีเลขหน้า", () => {
+  test("ค้นหาไม่เจอ แสดงพบ 0 รายการ ข้อความ คำค้นที่ใช้ และปุ่มเดียวที่พากลับหน้าแรก โดยไม่มีเลขหน้า", () => {
     const html = render({ q: "ยานอวกาศ" }, {});
 
     expect(html).toContain("พบ 0 รายการ");
     expect(html).toContain("ไม่พบสินค้าที่ตรงกับที่ค้นหา");
     expect(html).toContain("ยานอวกาศ");
-    expect(html).toContain("ล้างตัวกรอง");
-    expect(html).toMatch(/href="\/"[^>]*>กลับหน้าแรก</);
+    expect(html).toMatch(/<a class="button" href="\/">ดูสินค้าทั้งหมด<\/a>/);
+    expect(html).not.toContain("ล้างตัวกรอง");
     expect(html).not.toContain("หน้าถัดไป");
+  });
+
+  test("ค้นหาไม่เจอขณะเลือกหมวดหมู่ไว้ ปุ่มเดียวคือล้างตัวกรองที่คงคำค้นไว้", () => {
+    const html = render({ q: "ยานอวกาศ", category: "1" }, { category: categories[0] });
+
+    expect(html).toMatch(/<a class="button" href="\/\?q=[^"]+">ล้างตัวกรอง<\/a>/);
+    expect(html.match(/ล้างตัวกรอง/g)).toHaveLength(1);
+    expect(html).not.toContain("ดูสินค้าทั้งหมด");
   });
 
   test("ระบบไม่มีสินค้าเลย แสดงหมวดหมู่และข้อความว่ายังไม่มีสินค้า ไม่ใช่ข้อความผิดพลาด", () => {

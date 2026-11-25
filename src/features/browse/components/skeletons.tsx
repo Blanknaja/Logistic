@@ -20,17 +20,15 @@ export function ResultsSkeleton() {
   return (
     <div role="status" aria-label="กำลังโหลด">
       <div className={styles.categories}>
-        <div className={box(styles.skeletonLine, styles.skeletonShort)} />
         <div className="chips">
           {Array.from({ length: 6 }, (_, i) => (
             <div key={i} className={box(styles.skeletonChip)} />
           ))}
         </div>
       </div>
-      <div className={styles.filters}>
-        <div className={box(styles.skeletonButton)} />
+      <div className={styles.toolbar}>
+        <div className={box(styles.skeletonLine, styles.skeletonShort)} />
       </div>
-      <div className={box(styles.skeletonLine, styles.skeletonShort)} />
       <ul className={styles.grid}>
         {Array.from({ length: PAGE_SIZE }, (_, i) => (
           <CardSkeleton key={i} />

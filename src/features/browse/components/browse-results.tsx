@@ -5,17 +5,17 @@ import type { Category } from "@/features/product-listing/server/categories";
 import { formatBaht, formatNumber } from "@/shared/format";
 import { EmptyState } from "@/shared/ui/states";
 import { FilterForm } from "./filter-form";
-import { ProductImage } from "./product-image";
+import { ProductCard } from "./product-card";
 import styles from "./browse.module.css";
 
 type Props = { params: BrowseParams; result: SearchResult; categories: Category[] };
 
-/** หมวดหมู่ ตัวกรอง และรายการสินค้าของหน้าแรกกับหน้าผลการค้นหา */
+/** หมวดหมู่ ตัวกรอง และรายการสินค้าของหน้าแรกกับหน้าผลการค้นหา สินค้าเริ่มในจอแรก */
 export function BrowseResults({ params, result, categories }: Props) {
   return (
     <>
-      <section aria-labelledby="categories-title" className={styles.categories}>
-        <h2 id="categories-title">หมวดหมู่</h2>
+      <h1 className="visually-hidden">ซื้อของจากหลายร้านในที่เดียว</h1>
+      <nav aria-label="หมวดหมู่" className={styles.categories}>
         <ul className="chips">
           {categories.map((category) => {
             const active = result.category?.id === category.id;
@@ -23,7 +23,7 @@ export function BrowseResults({ params, result, categories }: Props) {
               <li key={category.id}>
                 <Link
                   href={browseHref({ ...params, category: String(category.id), page: 1 })}
-                  className={`chip ${styles.chipLink} ${active ? styles.chipActive : ""}`}
+                  className={`chip ${styles.chipLink}`}
                   aria-current={active ? "page" : undefined}
                 >
                   {category.name}
@@ -32,18 +32,25 @@ export function BrowseResults({ params, result, categories }: Props) {
             );
           })}
         </ul>
-      </section>
+      </nav>
 
       {result.categoryNotFound ? (
         <EmptyState title="ไม่พบหมวดหมู่นี้" message="เลือกหมวดหมู่ใหม่จากรายชื่อด้านบน" />
       ) : (
-        <>
-          <FilterForm key={browseHref(params)} params={params} initialError={result.priceError} />
-          <Results params={params} result={result} />
-        </>
+        <Results params={params} result={result} />
       )}
     </>
   );
+}
+
+/** ตัวกรองที่ใช้อยู่ เป็นคำสั้นๆ ช่วงราคาที่ผิดไม่ได้ถูกใช้กรอง จึงไม่บอก */
+function activeFilters(params: BrowseParams, result: SearchResult): string[] {
+  const active = result.category ? [result.category.name] : [];
+  const { min, max } = result.priceError ? { min: null, max: null } : params;
+  if (min !== null && max !== null) active.push(`ราคา ${formatBaht(min)} ถึง ${formatBaht(max)}`);
+  else if (min !== null) active.push(`ราคาตั้งแต่ ${formatBaht(min)}`);
+  else if (max !== null) active.push(`ราคาไม่เกิน ${formatBaht(max)}`);
+  return active;
 }
 
 function Results({ params, result }: Omit<Props, "categories">) {
@@ -52,41 +59,49 @@ function Results({ params, result }: Omit<Props, "categories">) {
   // ล้างตัวกรองคงคำค้นและการเรียงไว้
   const clearHref = browseHref({ q: params.q, sort: params.sort });
   const filtered = params.category !== null || params.min !== null || params.max !== null;
+  const active = activeFilters(params, result);
 
   return (
     <section aria-label="รายการสินค้า">
-      <div className={styles.summary}>
-        <p>พบ {formatNumber(result.total)} รายการ</p>
-        {filtered && result.total > 0 && (
-          <Link href={clearHref} className="button button-secondary">
-            ล้างตัวกรอง
-          </Link>
-        )}
+      <div className={styles.toolbar}>
+        <div className={styles.count}>
+          <p>
+            พบ {formatNumber(result.total)} รายการ{params.q && ` สำหรับ "${params.q}"`}
+          </p>
+          {filtered && (active.length > 0 || result.total > 0) && (
+            <p className={styles.active}>
+              {active.length > 0 && <span>{active.join(" · ")}</span>}
+              {/* ไม่พบสินค้า ปุ่มล้างตัวกรองอยู่ในหน้าว่างแล้ว */}
+              {result.total > 0 && (
+                <Link href={clearHref} className="link-action">
+                  ล้างตัวกรอง
+                </Link>
+              )}
+            </p>
+          )}
+        </div>
+        <FilterForm key={browseHref(params)} params={params} initialError={result.priceError} />
       </div>
 
       {result.total === 0 ? (
-        <EmptyState title="ไม่พบสินค้าที่ตรงกับที่ค้นหา" message={params.q ? `คำค้น "${params.q}"` : undefined}>
-          <Link href={clearHref} className="button button-secondary">
-            ล้างตัวกรอง
-          </Link>
-          <Link href="/" className="button button-secondary">
-            กลับหน้าแรก
-          </Link>
+        <EmptyState title="ไม่พบสินค้าที่ตรงกับที่ค้นหา" message={filtered ? undefined : "ลองคำที่สั้นลง หรือคำอื่น"}>
+          {/* ถ้ามีแค่คำค้น ล้างตัวกรองได้ผลเดิม จึงพาไปดูสินค้าทั้งหมดแทน */}
+          {filtered ? (
+            <Link href={clearHref} className="button">
+              ล้างตัวกรอง
+            </Link>
+          ) : (
+            <Link href="/" className="button">
+              ดูสินค้าทั้งหมด
+            </Link>
+          )}
         </EmptyState>
       ) : (
         <>
           <ul className={styles.grid}>
             {result.items.map((item) => (
               <li key={item.id}>
-                <Link href={`/products/${item.id}`} className={styles.card}>
-                  <ProductImage src={item.coverUrl} alt="" />
-                  <span className={styles.cardBody}>
-                    <span className={styles.cardName}>{item.name}</span>
-                    <span className={styles.priceText}>{formatBaht(item.price)}</span>
-                    <span className={styles.muted}>{item.shopName}</span>
-                    {item.soldOut && <span className={styles.soldOut}>สินค้าหมด</span>}
-                  </span>
-                </Link>
+                <ProductCard item={item} />
               </li>
             ))}
           </ul>

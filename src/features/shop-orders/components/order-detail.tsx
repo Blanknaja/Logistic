@@ -44,7 +44,7 @@ export function OrderDetailView({ order, parcel, backHref, version }: Props) {
 
       <div className={styles.detail}>
         <section aria-labelledby="order-items">
-          <h2 id="order-items" className={styles.label}>
+          <h2 id="order-items" className={styles.sectionHeading}>
             สินค้า
           </h2>
           <ul className={styles.items}>
@@ -75,7 +75,7 @@ export function OrderDetailView({ order, parcel, backHref, version }: Props) {
 
         <div className={styles.aside}>
           <section aria-labelledby="order-recipient">
-            <h2 id="order-recipient" className={styles.label}>
+            <h2 id="order-recipient" className={styles.sectionHeading}>
               ที่อยู่จัดส่ง
             </h2>
             <p className={styles.address}>
@@ -89,14 +89,14 @@ export function OrderDetailView({ order, parcel, backHref, version }: Props) {
           </section>
 
           <section aria-labelledby="order-payment">
-            <h2 id="order-payment" className={styles.label}>
+            <h2 id="order-payment" className={styles.sectionHeading}>
               การจ่ายเงิน
             </h2>
             <p>{order.payment ? `จ่ายแล้ว ${order.payment.method} ${formatThaiDateTime(order.payment.paidAt)}` : "ยังไม่จ่าย"}</p>
           </section>
 
           <section aria-labelledby="order-parcel">
-            <h2 id="order-parcel" className={styles.label}>
+            <h2 id="order-parcel" className={styles.sectionHeading}>
               การจัดส่ง
             </h2>
             <ParcelInfo parcel={parcel} cancelled={cancelled} />

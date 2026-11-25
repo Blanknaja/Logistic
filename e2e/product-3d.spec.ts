@@ -175,7 +175,7 @@ test.describe("P3D-005 บนมือถือ Android ที่วางขอ
   });
 });
 
-/** เข้าสู่ระบบเป็นผู้ขายของร้านแรกในข้อมูลตัวอย่าง แล้วเปิดหน้ารายการสินค้าของร้าน คืนแถวของสินค้าชิ้นแรก */
+/** เข้าสู่ระบบเป็นผู้ขายของร้านแรกในข้อมูลตัวอย่าง แล้วเปิดหน้ารายการสินค้าของร้าน คืนลิงก์ชื่อสินค้าชิ้นแรกที่พาไปหน้าแก้ไข */
 async function openSellerProducts(page: Page) {
   await page.goto("/login");
   await page.getByLabel("อีเมล").fill("seller01@example.com");
@@ -183,7 +183,7 @@ async function openSellerProducts(page: Page) {
   await page.getByRole("button", { name: "เข้าสู่ระบบ" }).click();
   await expect(page.getByRole("navigation", { name: "เมนูหลัก" }).getByRole("link", { name: "ร้านของฉัน" })).toBeVisible();
   await page.goto("/seller/products");
-  return page.getByRole("listitem").filter({ has: page.getByRole("link", { name: "แก้ไข" }) }).first();
+  return page.getByRole("list", { name: "สินค้าของร้าน" }).getByRole("link").first();
 }
 
 const modelInput = (page: Page) => page.getByLabel(/^(เลือก|เปลี่ยน)ไฟล์ 3 มิติ$/);
@@ -192,9 +192,9 @@ const chairGlb = () => ({ name: "chair.glb", mimeType: "model/gltf-binary", buff
 
 test("P3D-001 P3D-002 ผู้ขายเพิ่ม เปลี่ยน และเอาไฟล์ 3 มิติออกจากสินค้าของร้าน", async ({ page }) => {
   const row = await openSellerProducts(page);
-  const name = (await row.locator("p").first().textContent())!;
+  const name = (await row.textContent())!;
   const startedAt = Date.now();
-  await row.getByRole("link", { name: "แก้ไข" }).click();
+  await row.click();
   await expect(page.getByRole("heading", { name: "แก้ไขสินค้า" })).toBeVisible();
   const productId = page.url().match(/\/seller\/products\/(\d+)/)![1];
   const fileInput = () => modelInput(page);
@@ -266,8 +266,8 @@ test("P3D-001 P3D-002 ผู้ขายเพิ่ม เปลี่ยน �
 test("P3D-001 ไฟล์ที่ส่งไม่เสร็จใน 60 วินาที เห็น ส่งไฟล์ไม่สำเร็จ พร้อมปุ่ม ลองใหม่ และ เอาออก ข้อมูลอื่นยังอยู่ และบันทึกไม่ได้", async ({ page }) => {
   await page.clock.install();
   const row = await openSellerProducts(page);
-  const name = (await row.locator("p").first().textContent())!;
-  await row.getByRole("link", { name: "แก้ไข" }).click();
+  const name = (await row.textContent())!;
+  await row.click();
   await expect(page.getByRole("heading", { name: "แก้ไขสินค้า" })).toBeVisible();
   // สัญญาณช้าจนไฟล์ส่งไม่เสร็จ คำขอค้างไว้จนจบ test
   const sending = new Promise<void>((resolve) => void page.route(isModelUpload, () => resolve()));

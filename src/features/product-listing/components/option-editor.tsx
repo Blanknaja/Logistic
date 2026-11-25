@@ -59,7 +59,7 @@ function OptionRow({
         <label htmlFor={nameId}>ชื่อตัวเลือกที่ {index + 1}</label>
         <input
           id={nameId}
-          className="input"
+          className={`input ${styles.short}`}
           maxLength={LIMITS.label}
           placeholder="เช่น สี หรือ ขนาด"
           value={option.name}
@@ -93,7 +93,7 @@ function OptionRow({
         <div className={styles.inline}>
           <input
             id={valueId}
-            className="input"
+            className={`input ${styles.short}`}
             maxLength={LIMITS.label}
             placeholder="เช่น แดง หรือ M"
             value={draft}
@@ -115,7 +115,7 @@ function OptionRow({
       </div>
 
       <div>
-        <button type="button" className="button button-secondary" onClick={onRemove}>
+        <button type="button" className="link-action" onClick={onRemove}>
           ลบตัวเลือกนี้
         </button>
       </div>

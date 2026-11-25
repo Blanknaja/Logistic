@@ -9,6 +9,7 @@ import EditProductPage from "@/app/seller/products/[productId]/page";
 import SellerProductsPage from "@/app/seller/products/(list)/page";
 import { createSession } from "@/features/account/server/sessions";
 import { createProductAction, deleteProductAction, setHiddenAction, updateProductAction } from "@/features/product-listing/actions";
+import { DeleteDialog } from "@/features/product-listing/components/delete-button";
 import { ConflictAlert } from "@/features/product-listing/components/product-form";
 import { saveImageFile } from "@/features/product-listing/server/image-files";
 import type { ProductValues } from "@/features/product-listing/server/product-rules";
@@ -83,8 +84,11 @@ async function submit<T>(action: Promise<T>): Promise<{ redirect?: string; state
 
 const listPage = (searchParams: Record<string, string> = {}) =>
   SellerProductsPage({ params: Promise.resolve({}), searchParams: Promise.resolve(searchParams) } as PageProps<"/seller/products">);
-const editPage = (productId: number) =>
-  EditProductPage({ params: Promise.resolve({ productId: String(productId) }) } as PageProps<"/seller/products/[productId]">);
+const editPage = (productId: number, searchParams: Record<string, string> = {}) =>
+  EditProductPage({
+    params: Promise.resolve({ productId: String(productId) }),
+    searchParams: Promise.resolve(searchParams),
+  } as PageProps<"/seller/products/[productId]">);
 
 function signInSeller() {
   const account = addAccount(db);
@@ -264,7 +268,7 @@ describe("PRD-007 บันทึกการแก้ไขสินค้า",
 });
 
 describe("PRD-008 ซ่อนและเลิกซ่อนสินค้า", () => {
-  test("PRD-008 กด ซ่อน ตัวกรองเปลี่ยนเป็น ขายอยู่ 17 ซ่อน 4 และกด เลิกซ่อน กลับเป็น ขายอยู่", async () => {
+  test("PRD-008 กด ซ่อน ในหน้าแก้ไข ตัวกรองเปลี่ยนเป็น ขายอยู่ 17 ซ่อน 4 และกด เลิกซ่อน กลับเป็น ขายอยู่", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(at("10:00")));
     const shopId = signInSeller();
@@ -274,50 +278,66 @@ describe("PRD-008 ซ่อนและเลิกซ่อนสินค้�
     const product = tshirt(shopId);
     vi.setSystemTime(new Date(at("11:00")));
 
-    const before = (await open(listPage())).html;
-    expect(text(before)).toContain("ขายอยู่ 18");
-    expect(row(before, "เสื้อยืดคอกลม")).toContain("ซ่อน");
+    expect(text((await open(listPage())).html)).toContain("ขายอยู่ 18");
+    expect(text((await open(editPage(product.id))).html)).toContain("ซ่อนสินค้านี้");
 
-    expect((await submit(setHiddenAction(product.id, true, "/seller/products?q=%E0%B9%80"))).redirect).toBe("/seller/products?q=%E0%B9%80");
+    const back = `/seller/products/${product.id}?notice=hidden`;
+    expect((await submit(setHiddenAction(product.id, true, back))).redirect).toBe(back);
     const hidden = (await open(listPage())).html;
     expect(text(hidden)).toContain("ขายอยู่ 17");
     expect(text(hidden)).toContain("ซ่อน 4");
-    expect(row(hidden, "เสื้อยืดคอกลม")).toContain("เลิกซ่อน");
+    expect(row(hidden, "เสื้อยืดคอกลม")).toContain("ซ่อน");
+    const form = text((await open(editPage(product.id, { notice: "hidden" }))).html);
+    expect(form).toContain("ซ่อนสินค้าแล้ว");
+    expect(form).toContain("ซ่อน แก้ล่าสุด 10:15");
+    expect(form).toContain("เลิกซ่อนสินค้านี้");
 
-    await submit(setHiddenAction(product.id, false, "/seller/products"));
+    await submit(setHiddenAction(product.id, false, "/seller/products?q=%E0%B9%80"));
     expect(statusOf(product.id)).toBe(PRODUCT_STATUS.onSale);
     vi.useRealTimers();
   });
 
-  test("PRD-008 ร่างไม่มีปุ่ม ซ่อน และ เลิกซ่อน มีเฉพาะ แก้ไข และ ลบ และยังเป็นร่าง", async () => {
+  test("PRD-008 ร่างไม่มีปุ่ม ซ่อน และ เลิกซ่อน มีเฉพาะ ลบ และยังเป็นร่าง", async () => {
     const shopId = signInSeller();
     const cap = addProduct(db, { shopId, name: "หมวกแก๊ป", status: PRODUCT_STATUS.draft });
 
-    const line = row((await open(listPage())).html, "หมวกแก๊ป");
-    expect(line).toContain("แก้ไข");
-    expect(line).toContain("ลบ");
-    expect(line).not.toContain("ซ่อน");
+    const form = text((await open(editPage(cap.id))).html);
+    expect(form).toContain("ลบสินค้านี้");
+    expect(form).not.toContain("ซ่อน");
 
     await submit(setHiddenAction(cap.id, true, "/seller/products"));
     expect(statusOf(cap.id)).toBe(PRODUCT_STATUS.draft);
   });
 
-  test("PRD-008 ซ่อนสินค้าของร้านอื่นไม่ได้ และที่อยู่กลับที่ไม่ใช่หน้ารายการถูกแทนด้วยหน้ารายการ", async () => {
+  test("PRD-008 ซ่อนสินค้าของร้านอื่นไม่ได้ และที่อยู่กลับที่ไม่ใช่หน้าของสินค้าถูกแทนด้วยหน้ารายการ", async () => {
     const other = addProduct(db, { shopId: addShop(db).id });
     signInSeller();
     expect((await submit(setHiddenAction(other.id, true, "https://example.com/"))).redirect).toBe("/seller/products");
+    expect((await submit(setHiddenAction(other.id, true, "/seller/products/1/../../orders"))).redirect).toBe("/seller/products");
     expect(statusOf(other.id)).toBe(PRODUCT_STATUS.onSale);
+  });
+
+  test("PRD-001 แต่ละแถวในหน้ารายการมีลิงก์เดียวไปหน้าแก้ไข ไม่มีปุ่มซ่อนหรือลบ", async () => {
+    const shopId = signInSeller();
+    const cap = addProduct(db, { shopId, name: "หมวกแก๊ป" });
+
+    const html = (await open(listPage())).html;
+    const line = html.split("<li").find((part) => part.includes(">หมวกแก๊ป<")) ?? "";
+    expect(line.match(/<a /g)).toHaveLength(1);
+    expect(line).toContain(`href="/seller/products/${cap.id}"`);
+    expect(line).not.toMatch(/<button|<form/);
   });
 });
 
 describe("PRD-009 ลบสินค้า", () => {
-  test("PRD-009 กด ลบ แล้วยืนยัน เห็น ลบสินค้าแล้ว รายการเหลือ 22 ชิ้น ไม่มี ถุงเท้า", async () => {
+  test("PRD-009 กด ลบสินค้านี้ ในหน้าแก้ไขแล้วยืนยัน เห็น ลบสินค้าแล้ว รายการเหลือ 22 ชิ้น ไม่มี ถุงเท้า", async () => {
     const shopId = signInSeller();
     for (let i = 0; i < 22; i++) addProduct(db, { shopId });
     const socks = addProduct(db, { shopId, name: "ถุงเท้า" });
 
-    const line = row((await open(listPage())).html, "ถุงเท้า");
-    expect(line).toContain("ลบ ถุงเท้า ใช่ไหม ลบแล้วกู้กลับไม่ได้");
+    expect(text((await open(editPage(socks.id))).html)).toContain("ลบสินค้านี้");
+    const dialog = text(renderToStaticMarkup(<DeleteDialog name="ถุงเท้า" action={async () => {}} onCancel={() => {}} />));
+    expect(dialog).toContain("ลบ ถุงเท้า ใช่ไหม ลบแล้วกู้กลับไม่ได้");
 
     expect((await submit(deleteProductAction(socks.id))).redirect).toBe("/seller/products?notice=deleted");
     const page = text((await open(listPage({ notice: "deleted" }))).html);
@@ -327,11 +347,12 @@ describe("PRD-009 ลบสินค้า", () => {
     expect(statusOf(socks.id)).toBe(PRODUCT_STATUS.deleted);
   });
 
-  test("PRD-009 หน้าต่างยืนยันมีปุ่ม ยกเลิก ที่ไม่ส่งการลบ สินค้ายังอยู่ด้วยสถานะเดิม", async () => {
+  test("PRD-009 หน้าต่างยืนยันมีปุ่ม ยกเลิก ที่ไม่ส่งการลบ และยังไม่อยู่ในหน้าจนกว่าจะกด ลบสินค้านี้", async () => {
     const shopId = signInSeller();
     const cap = addProduct(db, { shopId, name: "หมวกแก๊ป", status: PRODUCT_STATUS.draft });
 
-    const html = (await open(listPage())).html;
+    expect((await open(editPage(cap.id))).html).not.toContain("<dialog");
+    const html = renderToStaticMarkup(<DeleteDialog name="หมวกแก๊ป" action={async () => {}} onCancel={() => {}} />);
     expect(html).toContain('<button type="button" class="button" autofocus="">ยกเลิก</button>');
     expect(html.match(/<button type="submit" class="button button-secondary">ลบ<\/button>/g)).toHaveLength(1);
     expect(statusOf(cap.id)).toBe(PRODUCT_STATUS.draft);

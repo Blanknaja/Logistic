@@ -1,27 +1,50 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./product-listing.module.css";
 
-/** ปุ่ม "ลบ" ที่ถามยืนยันก่อน กด "ยกเลิก" แล้วไม่มีอะไรเปลี่ยน (PRD-009) */
-export function DeleteButton({ name, action }: { name: string; action: () => Promise<void> }) {
+/** หน้าต่างถามยืนยันก่อนลบ กด "ยกเลิก" หรือ Escape แล้วไม่มีอะไรเปลี่ยน (PRD-009) */
+export function DeleteDialog({ name, action, onCancel }: { name: string; action: () => Promise<void>; onCancel: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    dialog.current?.showModal();
+  }, []);
+
+  return (
+    <dialog
+      ref={dialog}
+      className={styles.dialog}
+      aria-labelledby="delete-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onCancel();
+      }}
+    >
+      <p id="delete-title" className={styles.dialogTitle}>
+        ลบ {name} ใช่ไหม
+      </p>
+      <p className={styles.dialogText}>ลบแล้วกู้กลับไม่ได้</p>
+      <form action={action} className={styles.actions}>
+        <button type="button" className="button" onClick={onCancel} autoFocus>
+          ยกเลิก
+        </button>
+        <button type="submit" className="button button-secondary">
+          ลบ
+        </button>
+      </form>
+    </dialog>
+  );
+}
+
+/** ลิงก์ "ลบสินค้านี้" ในหน้าแก้ไข เปิดหน้าต่างถามยืนยันก่อนลบ */
+export function DeleteButton({ name, action }: { name: string; action: () => Promise<void> }) {
+  const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" className="button button-secondary" onClick={() => dialog.current?.showModal()}>
-        ลบ
+      <button type="button" className="link-action" onClick={() => setOpen(true)}>
+        ลบสินค้านี้
       </button>
-      <dialog ref={dialog} className={styles.dialog} aria-label={`ลบ ${name}`}>
-        <p>ลบ {name} ใช่ไหม ลบแล้วกู้กลับไม่ได้</p>
-        <form action={action} className={styles.actions}>
-          <button type="button" className="button" onClick={() => dialog.current?.close()} autoFocus>
-            ยกเลิก
-          </button>
-          <button type="submit" className="button button-secondary">
-            ลบ
-          </button>
-        </form>
-      </dialog>
+      {open && <DeleteDialog name={name} action={action} onCancel={() => setOpen(false)} />}
     </>
   );
 }

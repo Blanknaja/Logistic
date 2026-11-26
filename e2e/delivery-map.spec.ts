@@ -210,8 +210,15 @@ test("MAP-001 MAP-002 ผู้ขายเลือกจังหวัดต�
 });
 
 test("MAP-Q04 พัสดุตัวอย่างทุกชิ้น ข้อความเส้นทางมีชื่อจังหวัดครบทุกหมุดบนแผนที่", async ({ page }) => {
-  const trackingNos = sampleTrackingNos();
+  // พัสดุของคำสั่งซื้อของรีวิวตัวอย่าง (REV-019) มีหลายร้อยชิ้นที่เส้นทางซ้ำกัน หน้าเว็บจึงเปิดชิ้นเดียวต่อคู่จังหวัดต้นทางกับปลายทาง
+  // ส่วนพัสดุทุกชิ้นตรวจข้อความเส้นทางใน src/shared/seed/seed.test.ts
+  const recent = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const trackingNos = sampleTrackingNos(
+    `o.ordered_at > '${recent}' OR p.id IN (
+       SELECT min(p2.id) FROM parcels p2 JOIN orders o2 ON o2.id = p2.order_id GROUP BY p2.origin_province, o2.ship_province)`,
+  );
   expect(trackingNos.length).toBeGreaterThanOrEqual(7);
+  expect(trackingNos.length).toBeLessThan(100);
   await stubTiles(page);
   await signIn(page, "admin@example.com", "admin1234");
 

@@ -114,7 +114,15 @@ test("REV ผู้ซื้อเขียนรีวิวพร้อมร�
     await expect(buyer.locator("progress")).toHaveCount(0);
     await expectFits360(buyer, "หน้าเขียนรีวิว");
 
+    // REV-018 เน็ตหลุดตอนกดส่ง เห็น "บันทึกไม่สำเร็จ" โดยดาว ข้อความ และรูปยังอยู่ครบ แล้วกด "ลองใหม่" ได้รีวิวเดียว
+    await buyer.route("**/orders/**", (route) => (route.request().method() === "POST" ? route.abort("internetdisconnected") : route.continue()));
     await buyer.getByRole("button", { name: "ส่งรีวิว" }).click();
+    await expect(buyer.getByText("บันทึกไม่สำเร็จ")).toBeVisible();
+    await expect(buyer.getByRole("radio", { name: "1 ดาว" })).toBeChecked();
+    await expect(buyer.getByLabel("ข้อความ (ไม่บังคับ)")).toHaveValue(REVIEW_TEXT);
+    await expect(buyer.getByText("1/3")).toBeVisible();
+    await buyer.unroute("**/orders/**");
+    await buyer.getByRole("button", { name: "ลองใหม่" }).click();
     await expect(buyer.getByText("ส่งรีวิวแล้ว")).toBeVisible();
     await expect(buyer.getByRole("heading", { name: "รีวิวของฉัน" })).toBeVisible();
     await expect(buyer.getByText(REVIEW_TEXT)).toBeVisible();
@@ -130,6 +138,7 @@ test("REV ผู้ซื้อเขียนรีวิวพร้อมร�
     const top = reviews(buyer).locator("li", { hasText: REVIEW_TEXT }).first();
     await expect(top).toContainText("ผ***");
     await expect(top).toContainText("1 ดาว");
+    await expect(reviews(buyer).getByText(REVIEW_TEXT)).toHaveCount(1);
     await expect(top.locator('img[src^="/review-images/"]')).toBeVisible();
     expect(await top.locator('img[src^="/review-images/"]').evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(320);
     afterReview = await ratingSummary(buyer);

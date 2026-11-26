@@ -12,8 +12,11 @@ import { getCurrentAccount, requireAccount } from "@/shared/session";
 export type ReviewFormState = { errors: ReviewErrors };
 export type ModerationState = { error: string | null };
 
+// ทุก action ของฟอร์มรีวิวรับผลครั้งก่อนเป็นตัวแรกแบบ useActionState เพื่อให้เบราว์เซอร์ส่งฟอร์มได้เองเมื่อสคริปต์ของหน้าไม่ทำงาน
+// แล้วหน้าที่ตอบกลับแสดงผลของ action ในฟอร์มเดิม ผลครั้งก่อนไม่ถูกใช้
+
 /** ผู้ซื้อส่งรีวิวใหม่หรือบันทึกรีวิวที่แก้ สำเร็จแล้วกลับไปหน้าเดิมที่แสดงรีวิวของตัวเอง (REV-001 REV-004) */
-export async function saveReviewAction(formData: FormData): Promise<ReviewFormState> {
+export async function saveReviewAction(_previous: ReviewFormState, formData: FormData): Promise<ReviewFormState> {
   const path = reviewHref(String(formData.get("orderNo") ?? ""), Number(formData.get("itemId")));
   const viewer = await requireAccount(path);
   const editing = formData.get("mode") === "edit";
@@ -43,7 +46,7 @@ function moderationState(outcome: Outcome): ModerationState {
 }
 
 /** ร้านตอบรีวิวหรือแก้คำตอบ รีวิวของร้านอื่นได้หน้า "ไม่พบหน้านี้" (REV-015) */
-export async function replyAction(formData: FormData): Promise<ModerationState> {
+export async function replyAction(_previous: ModerationState, formData: FormData): Promise<ModerationState> {
   const viewer = await requireShopInAction("/seller/reviews");
   return moderationState(
     replyToReview(getDb(), {
@@ -62,7 +65,7 @@ async function requireAdmin() {
 }
 
 /** ผู้ดูแลแพลตฟอร์มซ่อนรีวิวพร้อมเหตุผล (REV-016) */
-export async function hideReviewAction(formData: FormData): Promise<ModerationState> {
+export async function hideReviewAction(_previous: ModerationState, formData: FormData): Promise<ModerationState> {
   const viewer = await requireAdmin();
   return moderationState(
     hideReview(getDb(), { adminAccountId: viewer.id, reviewId: Number(formData.get("reviewId")), reason: String(formData.get("reason") ?? "") }),
@@ -70,7 +73,7 @@ export async function hideReviewAction(formData: FormData): Promise<ModerationSt
 }
 
 /** ผู้ดูแลแพลตฟอร์มเลิกซ่อนรีวิว (REV-016) */
-export async function unhideReviewAction(formData: FormData): Promise<ModerationState> {
+export async function unhideReviewAction(_previous: ModerationState, formData: FormData): Promise<ModerationState> {
   const viewer = await requireAdmin();
   return moderationState(unhideReview(getDb(), { adminAccountId: viewer.id, reviewId: Number(formData.get("reviewId")) }));
 }

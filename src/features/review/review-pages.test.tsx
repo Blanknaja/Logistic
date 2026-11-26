@@ -25,6 +25,7 @@ import { createSession } from "@/features/account/server/sessions";
 import { hideReviewAction, replyAction, saveReviewAction, unhideReviewAction } from "@/features/review/actions";
 import { ProductRating, ProductReviews } from "@/features/review/components/product-reviews";
 import { ReviewsFailed } from "@/features/review/components/reviews-boundary";
+import { SaveForm } from "@/features/review/components/save-form";
 import { nav, reviewsMenuLabel } from "@/features/review/nav";
 import { screenReviewFiles } from "@/features/review/rules";
 import { writeReview } from "@/features/review/server/fixtures";
@@ -151,7 +152,7 @@ function reviewed(variantId: number, rating: number, input: Partial<Parameters<t
 
 const reviewPage = (orderNo: string, itemId: number | string, searchParams: Record<string, string> = {}) =>
   open(ReviewPage(props(searchParams, { orderNo, itemId: String(itemId) })));
-const save = (values: Record<string, string | string[]>) => submit(saveReviewAction(form(values)));
+const save = (values: Record<string, string | string[]>) => submit(saveReviewAction({ errors: {} }, form(values)));
 const productReviews = (productId: number, query: Record<string, string> = {}) =>
   renderToStaticMarkup(<ProductReviews productId={productId} query={query} />);
 const countReviews = () => Number(db.prepare("SELECT count(*) AS n FROM reviews").get()?.n);
@@ -277,7 +278,7 @@ describe("REV-002 รูปในรีวิว", () => {
 
     expect(await status(null)).toBe(200);
     signInAs(wichai);
-    await submit(hideReviewAction(form({ reviewId: String(reviewId), reason: "ใช้คำหยาบ" })));
+    await submit(hideReviewAction({ error: null }, form({ reviewId: String(reviewId), reason: "ใช้คำหยาบ" })));
     expect(await status(null)).toBe(404);
     expect(await status(somying)).toBe(404);
     expect(await status(somchai.accountId)).toBe(404);
@@ -315,6 +316,21 @@ describe("REV-003 หนึ่งรายการในคำสั่งซ�
     expect(html).toContain("ครั้งแรก");
     expect(html).not.toContain("หน้าต่างที่สอง");
     expect(countReviews()).toBe(1);
+  });
+
+  test("REV-003 กดส่งรีวิวสองครั้งในเวลาเดียวกัน มีรีวิวเดียว ร้านได้แจ้งเตือนเดียว และฐานข้อมูลไม่รับรีวิวที่สองของรายการเดิม", async () => {
+    const mine = order(somying, [screwdriver.variantIds[0]]);
+    signInAs(somying);
+    vi.useFakeTimers({ now: at("2026-11-26T18:10"), toFake: ["Date"] });
+    const values = { orderNo: mine.orderNo, itemId: String(mine.itemIds[0]), mode: "new", rating: "4", body: "ใช้ดี" };
+
+    const results = await Promise.all([save(values), save(values)]);
+
+    expect(results.map((result) => result.redirect?.split("notice=")[1]).sort()).toEqual(["reviewed", "sent"]);
+    expect(countReviews()).toBe(1);
+    expect(Number(db.prepare("SELECT count(*) AS n FROM notifications WHERE account_id = ?").get(somchai.accountId)?.n)).toBe(1);
+    expect(() => writeReview(db, { orderItemId: mine.itemIds[0], rating: 1 })).toThrow(/UNIQUE/);
+    expect(db.prepare("SELECT rating, body FROM reviews").get()).toEqual({ rating: 4, body: "ใช้ดี" });
   });
 
   test("REV-003 คำสั่งซื้อที่กำลังจัดส่งเห็นว่ารีวิวได้หลังคำสั่งซื้อสำเร็จ และคำสั่งซื้อของมานีเห็นไม่พบคำสั่งซื้อโดยไม่มีข้อมูลของมานี", async () => {
@@ -623,7 +639,7 @@ describe("REV-014 หน้ารีวิวของร้าน", () => {
 });
 
 describe("REV-015 ร้านตอบรีวิว", () => {
-  const reply = (reviewId: number, body: string, editing = "") => submit(replyAction(form({ reviewId: String(reviewId), body, editing })));
+  const reply = (reviewId: number, body: string, editing = "") => submit(replyAction({ error: null }, form({ reviewId: String(reviewId), body, editing })));
 
   test("REV-015 ตอบรีวิวแล้วตัวเลขยังไม่ตอบลดลง คำตอบขึ้นใต้รีวิวบนหน้าสินค้าพร้อมวันที่ แก้คำตอบแล้วมีคำว่าแก้ไขแล้ว และหน้ารีวิวของร้านมีปุ่มแก้ไขคำตอบ", async () => {
     vi.useFakeTimers({ now: at("2026-11-26T19:10"), toFake: ["Date"] });
@@ -667,8 +683,8 @@ describe("REV-015 ร้านตอบรีวิว", () => {
 
 describe("REV-016 ผู้ดูแลแพลตฟอร์มซ่อนและเลิกซ่อนรีวิว", () => {
   const adminPage = (searchParams: Record<string, string> = {}) => open(AdminReviewsPage(props(searchParams)));
-  const hide = (reviewId: number, reason: string) => submit(hideReviewAction(form({ reviewId: String(reviewId), reason })));
-  const unhide = (reviewId: number) => submit(unhideReviewAction(form({ reviewId: String(reviewId) })));
+  const hide = (reviewId: number, reason: string) => submit(hideReviewAction({ error: null }, form({ reviewId: String(reviewId), reason })));
+  const unhide = (reviewId: number) => submit(unhideReviewAction({ error: null }, form({ reviewId: String(reviewId) })));
 
   test("REV-016 หน้าจัดการรีวิวแสดงรีวิวทุกร้านพร้อมชื่อเต็มของผู้ซื้อ ซ่อนพร้อมเหตุผลแล้วรีวิวเป็นถูกซ่อนและหายจากหน้าสินค้า เลิกซ่อนแล้วกลับมา", async () => {
     vi.useFakeTimers({ now: at("2026-11-26T20:00"), toFake: ["Date"] });
@@ -768,7 +784,7 @@ describe("REV-017 รีวิวที่ถูกซ่อน", () => {
       errors: { form: message },
     });
     signInAs(mana.accountId);
-    expect((await submit(replyAction(form({ reviewId: String(hers.id), body: "ขอโทษครับ", editing: "" })))).state).toEqual({ error: message });
+    expect((await submit(replyAction({ error: null }, form({ reviewId: String(hers.id), body: "ขอโทษครับ", editing: "" })))).state).toEqual({ error: message });
     expect(db.prepare("SELECT rating, body, reply_body FROM reviews WHERE id = ?").get(hers.id)).toEqual({ rating: 1, body: "", reply_body: null });
   });
 });
@@ -808,6 +824,44 @@ describe("REV-018 หน้าว่าง หน้ากำลังโหล�
     expect(SAVE_FAILED).toBe("บันทึกไม่สำเร็จ");
   });
 
+  test("REV-018 บันทึกไม่สำเร็จ ไม่มีอะไรถูกบันทึกค้าง รูปที่ส่งไว้ยังใช้ได้ กดลองใหม่ด้วยข้อมูลเดิมได้รีวิวเดียว และส่งซ้ำอีกครั้งไม่เพิ่ม", async () => {
+    const mine = order(somying, [screwdriver.variantIds[0]]);
+    signInAs(somying);
+    const { url } = (await (await postReviewImage(new Request("http://localhost/review-images", { method: "POST", body: PNG }))).json()) as { url: string };
+    const values = { orderNo: mine.orderNo, itemId: String(mine.itemIds[0]), mode: "new", rating: "4", body: "ก".repeat(120), image: [url] };
+
+    // เซิร์ฟเวอร์พังกลางการบันทึก หลังเขียนรีวิวแล้วแต่ก่อนแจ้งร้าน
+    const prepare = db.prepare.bind(db);
+    const broken = vi.spyOn(db, "prepare").mockImplementation((sql: string) => {
+      if (sql.includes("INSERT INTO notifications")) throw new Error("ฐานข้อมูลเขียนไม่ได้");
+      return prepare(sql);
+    });
+    await expect(save(values)).rejects.toThrow("ฐานข้อมูลเขียนไม่ได้");
+    broken.mockRestore();
+    expect(countReviews()).toBe(0);
+    expect(Number(db.prepare("SELECT count(*) AS n FROM review_images").get()?.n)).toBe(0);
+    expect((await reviewPage(mine.orderNo, mine.itemIds[0])).html).toContain("เขียนรีวิว");
+
+    expect((await save(values)).redirect).toContain("notice=sent");
+    expect((await save(values)).redirect).toContain("notice=reviewed");
+    expect(countReviews()).toBe(1);
+    expect(db.prepare("SELECT r.rating, r.body, i.url FROM reviews r JOIN review_images i ON i.review_id = r.id").all()).toEqual([
+      { rating: 4, body: "ก".repeat(120), url },
+    ]);
+    expect(Number(db.prepare("SELECT count(*) AS n FROM notifications WHERE account_id = ?").get(somchai.accountId)?.n)).toBe(1);
+  });
+
+  test("REV-018 ฟอร์มที่บันทึกไม่สำเร็จแสดงบันทึกไม่สำเร็จกับปุ่มลองใหม่ โดยช่องที่กรอกและปุ่มส่งยังอยู่", () => {
+    const html = renderToStaticMarkup(
+      <SaveForm save={{ state: { failed: true }, formAction: () => {}, dispatch: () => {}, pending: false }} label="ส่งรีวิว" pendingLabel="กำลังส่ง">
+        {() => <textarea name="body" defaultValue="ข้อความที่กรอกไว้" />}
+      </SaveForm>,
+    );
+    expect(html).toContain("ข้อความที่กรอกไว้</textarea>");
+    expect(html).toMatch(/<div role="alert"[^>]*><p>บันทึกไม่สำเร็จ<\/p><button type="button"[^>]*>ลองใหม่<\/button>/);
+    expect(html).toMatch(/<button type="submit" class="button">ส่งรีวิว<\/button>/);
+  });
+
   test("REV-018 เมนูหลังบ้านนับรีวิวที่ยังไม่ตอบไม่ได้ ลิงก์รีวิวยังอยู่โดยไม่มีตัวเลข", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     request.db = undefined;
@@ -835,8 +889,8 @@ describe("NTF-009 NTF-012 แจ้งเตือนที่เกิดจา
       href: string;
       created_at: string;
     }[];
-  const reply = (reviewId: number, body: string, editing = "") => submit(replyAction(form({ reviewId: String(reviewId), body, editing })));
-  const hide = (reviewId: number, reason: string) => submit(hideReviewAction(form({ reviewId: String(reviewId), reason })));
+  const reply = (reviewId: number, body: string, editing = "") => submit(replyAction({ error: null }, form({ reviewId: String(reviewId), body, editing })));
+  const hide = (reviewId: number, reason: string) => submit(hideReviewAction({ error: null }, form({ reviewId: String(reviewId), reason })));
 
   test("NTF-012 ผู้ซื้อส่งรีวิว 4 ดาว ผู้ขายได้แจ้งเตือน 1 รายการที่พาไปหน้ารีวิวของร้านซึ่งรีวิวนั้นอยู่บนสุดพร้อมปุ่มตอบรีวิว แก้รีวิวหรือส่งไม่ผ่านไม่มีแจ้งเตือนใหม่", async () => {
     vi.useFakeTimers({ now: at("2026-11-26T18:10"), toFake: ["Date"] });
@@ -896,7 +950,7 @@ describe("NTF-009 NTF-012 แจ้งเตือนที่เกิดจา
     await reply(first.id, "ขอบคุณครับ มีปัญหาแจ้งได้", "1");
     expect((await reply(third.id, "")).state).toEqual({ error: "กรอกคำตอบ 1 ถึง 500 ตัวอักษร" });
     signInAs(wichai);
-    await submit(unhideReviewAction(form({ reviewId: String(second.id) })));
+    await submit(unhideReviewAction({ error: null }, form({ reviewId: String(second.id) })));
     await hide(second.id, "ซ่อนอีกครั้ง");
     expect(notes(somying)).toHaveLength(2);
     expect(notes(somchai.accountId)).toEqual([]);

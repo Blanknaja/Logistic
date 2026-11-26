@@ -3,9 +3,9 @@
 import { useState, type ReactNode } from "react";
 import type { ModerationState } from "@/features/review/actions";
 import styles from "./review.module.css";
-import { SaveForm } from "./save-form";
+import { SaveForm, useSave, type SaveAction } from "./save-form";
 
-type Action = (formData: FormData) => Promise<ModerationState>;
+type Action = SaveAction<ModerationState>;
 
 const NOTHING: ModerationState = { error: null };
 
@@ -23,17 +23,18 @@ function DisclosureForm({
   pendingLabel: string;
   children: (error: string | null) => ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
-  const save: Action = async (formData) => {
-    const result = await action(formData);
-    if (result.error === null) setOpen(false);
-    return result;
-  };
+  const [toggled, setToggled] = useState<boolean>();
+  const save = useSave(action, NOTHING, (result) => {
+    if (result.error === null) setToggled(false);
+  });
+  const error = "error" in save.state ? save.state.error : null;
+  // หน้าที่ตอบกลับฟอร์มที่เบราว์เซอร์ส่งเองต้องกางไว้ให้เห็นข้อความที่ไม่ผ่าน
+  const open = toggled ?? error !== null;
   return (
-    <details className={styles.disclosure} open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
+    <details className={styles.disclosure} open={open} onToggle={(event) => setToggled(event.currentTarget.open)}>
       <summary className="button button-secondary">{summary}</summary>
-      <SaveForm action={save} initialState={NOTHING} label={label} pendingLabel={pendingLabel}>
-        {(state) => children("error" in state ? state.error : null)}
+      <SaveForm save={save} label={label} pendingLabel={pendingLabel}>
+        {() => children(error)}
       </SaveForm>
     </details>
   );
@@ -102,8 +103,9 @@ export function HideForm({ action, reviewId }: { action: Action; reviewId: numbe
 
 /** ผู้ดูแลแพลตฟอร์มเลิกซ่อนรีวิว (REV-016) */
 export function UnhideForm({ action, reviewId }: { action: Action; reviewId: number }) {
+  const save = useSave(action, NOTHING);
   return (
-    <SaveForm action={action} initialState={NOTHING} label="เลิกซ่อน" pendingLabel="กำลังเลิกซ่อน" secondary>
+    <SaveForm save={save} label="เลิกซ่อน" pendingLabel="กำลังเลิกซ่อน" secondary>
       {() => <input type="hidden" name="reviewId" value={reviewId} />}
     </SaveForm>
   );

@@ -7,7 +7,7 @@ import { uploadFile } from "@/features/product-listing/components/upload-file";
 import type { ReviewFormState } from "@/features/review/actions";
 import { LIMITS, MESSAGES, screenReviewFiles, textLength } from "@/features/review/rules";
 import styles from "./review.module.css";
-import { SaveForm } from "./save-form";
+import { SaveForm, useSave, type SaveAction } from "./save-form";
 
 let nextId = 0;
 const newId = () => `review-image-${++nextId}`;
@@ -15,6 +15,7 @@ const newId = () => `review-image-${++nextId}`;
 const savedImage = (url: string): ImageItem => ({ id: newId(), preview: url, url, file: null, status: "done", progress: 100 });
 
 const STARS = [1, 2, 3, 4, 5];
+const NO_ERRORS: ReviewFormState = { errors: {} };
 
 /**
  * ฟอร์มเขียนและแก้รีวิว: ดาว 5 ดวง ข้อความพร้อมตัวนับ และรูปไม่เกิน 3 รูปที่ส่งขึ้นเซิร์ฟเวอร์ทันทีที่เลือก (REV-001 REV-002 REV-004)
@@ -28,7 +29,7 @@ export function ReviewForm({
   initial,
   cancelHref,
 }: {
-  action: (formData: FormData) => Promise<ReviewFormState>;
+  action: SaveAction<ReviewFormState>;
   orderNo: string;
   itemId: number;
   editing: boolean;
@@ -39,6 +40,7 @@ export function ReviewForm({
   const [body, setBody] = useState(initial.body);
   const [items, setItems] = useState<ImageItem[]>(() => initial.images.map(savedImage));
   const [rejected, setRejected] = useState<{ name: string; error: string }[]>([]);
+  const save = useSave(action, NO_ERRORS);
 
   const update = (id: string, patch: Partial<ImageItem>) =>
     setItems((list) => list.map((item) => (item.id === id ? { ...item, ...patch } : item)));
@@ -73,8 +75,7 @@ export function ReviewForm({
 
   return (
     <SaveForm
-      action={action}
-      initialState={{ errors: {} } as ReviewFormState}
+      save={save}
       label={editing ? "บันทึก" : "ส่งรีวิว"}
       pendingLabel={editing ? "กำลังบันทึก" : "กำลังส่ง"}
       disabled={items.some((item) => item.status === "uploading")}

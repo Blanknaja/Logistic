@@ -256,3 +256,57 @@ test("REV-009 REV-010 REV-011 หน้าแรกมีการ์ดที�
   await expect(page.getByText(/^พบ [\d,]+ รายการ$/)).toHaveText(filteredCount ?? "");
   await expectFits360(page, "หน้าผลลัพธ์ที่กรองคะแนน");
 });
+
+test("REV-001 REV-015 REV-016 JavaScript ของแอปโหลดไม่ได้: ผู้ซื้อส่งรีวิว ร้านตอบ ผู้ดูแลแพลตฟอร์มซ่อนและเลิกซ่อนได้ และข้อความผิดพลาดยังขึ้น", async ({ browser }) => {
+  const TEXT = "รีวิวจากหน้าที่สคริปต์ไม่ทำงาน";
+  const REPLY = "ร้านตอบจากหน้าที่สคริปต์ไม่ทำงาน";
+  // React ไม่เริ่มทำงาน แต่สคริปต์ที่ฝังในหน้ายังสลับเนื้อหาเข้าที่หลังหน้ากำลังโหลด
+  const withoutAppScripts = (page: Page) => page.route("**/_next/static/**/*.js", (route) => route.abort());
+
+  const buyer = await signIn(browser, "buyer1@example.com");
+  await withoutAppScripts(buyer);
+  await buyer.goto("/orders");
+  await buyer.getByRole("link", { name: /^รอรีวิว \d+$/ }).click();
+  await buyer.getByRole("main").locator('a[href^="/orders/"]').first().click();
+  await buyer.getByRole("link", { name: "เขียนรีวิว" }).first().click();
+  await expect(buyer.getByRole("heading", { name: "เขียนรีวิว" })).toBeVisible();
+  const productPath = (await buyer.getByRole("main").locator('a[href^="/products/"]').first().getAttribute("href")) ?? "";
+
+  await buyer.getByRole("button", { name: "ส่งรีวิว" }).click();
+  await expect(buyer.getByText("เลือกคะแนน 1 ถึง 5 ดาว")).toBeVisible();
+  await buyer.locator("label", { has: buyer.getByRole("radio", { name: "5 ดาว" }) }).click();
+  await buyer.getByLabel("ข้อความ (ไม่บังคับ)").fill(TEXT);
+  await buyer.getByRole("button", { name: "ส่งรีวิว" }).click();
+  await expect(buyer.getByText("ส่งรีวิวแล้ว")).toBeVisible();
+  await expect(buyer.getByText(TEXT)).toBeVisible();
+
+  await buyer.goto(productPath);
+  const shopPath = (await buyer.getByRole("main").locator('a[href^="/shops/"]').first().getAttribute("href")) ?? "";
+  await buyer.context().close();
+
+  const seller = await signIn(browser, `seller${shopPath.split("/").pop()!.padStart(2, "0")}@example.com`);
+  await withoutAppScripts(seller);
+  await seller.goto("/seller/reviews");
+  const asked = seller.getByRole("main").locator("li", { hasText: TEXT }).first();
+  await asked.getByText("ตอบรีวิว", { exact: true }).click();
+  await asked.getByRole("button", { name: "ส่งคำตอบ" }).click();
+  await expect(asked.getByText("กรอกคำตอบ 1 ถึง 500 ตัวอักษร")).toBeVisible();
+  await asked.getByLabel("คำตอบของร้าน").fill(REPLY);
+  await asked.getByRole("button", { name: "ส่งคำตอบ" }).click();
+  await expect(asked).toContainText(`คำตอบจากร้าน: ${REPLY}`);
+  await seller.context().close();
+
+  const admin = await signIn(browser, "admin@example.com", "admin1234");
+  await withoutAppScripts(admin);
+  await admin.goto("/admin/reviews");
+  const item = admin.getByRole("main").locator("li", { hasText: TEXT }).first();
+  await item.getByText("ซ่อนรีวิว", { exact: true }).click();
+  await item.getByRole("button", { name: "ยืนยัน" }).click();
+  await expect(item.getByText("กรอกเหตุผล 1 ถึง 200 ตัวอักษร")).toBeVisible();
+  await item.getByLabel("เหตุผลที่ซ่อน").fill("ซ่อนจากหน้าที่สคริปต์ไม่ทำงาน");
+  await item.getByRole("button", { name: "ยืนยัน" }).click();
+  await expect(item).toContainText("ถูกซ่อนโดยผู้ดูแลแพลตฟอร์ม เหตุผล: ซ่อนจากหน้าที่สคริปต์ไม่ทำงาน");
+  await item.getByRole("button", { name: "เลิกซ่อน" }).click();
+  await expect(item.getByText("ซ่อนรีวิว", { exact: true })).toBeVisible();
+  await admin.context().close();
+});

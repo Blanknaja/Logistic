@@ -219,6 +219,30 @@ h3 {
   cursor: pointer;
 }
 
+/* แถบใต้แถบด้านบน บอกว่าระบบจะทำอะไรกับข้อความในช่องค้นหา (SNT-011) */
+.search-preview {
+  position: absolute;
+  z-index: 2;
+  inset: 100% 0 auto;
+  display: none;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: var(--text-label);
+}
+
+.header-search:focus-within + .search-preview:not(:empty) {
+  display: block;
+}
+
+.search-preview p {
+  margin-block: 0;
+  padding-block: var(--space-3);
+}
+
+.search-preview span {
+  color: var(--color-muted);
+}
+
 .header-search-button {
   position: absolute;
   inset-block: 0;

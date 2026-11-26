@@ -20,7 +20,7 @@
 | `pnpm check` | ตรวจชนิดข้อมูล ตรวจรูปแบบโค้ด และรัน test ทั้งหมด ต้องผ่านก่อน commit ใช้เวลาราว 20 วินาที |
 | `pnpm test:full` | รัน test ทั้งหมดโดยให้ผู้ซื้อ 20 คนแย่งชิ้นสุดท้ายครบ 100 รอบตาม CHK-Q02 (`pnpm check` รัน 10 รอบ) ต้องผ่านก่อน merge งานที่แตะการสั่งซื้อหรือการจองสต็อก |
 | `pnpm test:omise` | ลองการจ่ายเงินกับ Omise โหมดทดลองจริง (`src/features/payment/payment.omise.test.ts`) ทั้งบัตร PromptPay การทำเครื่องหมายผล webhook และการรอไม่ทัน ต้องมี `OMISE_PUBLIC_KEY` และ `OMISE_SECRET_KEY` แบบ `_test_` ใน `.env.local` ไม่มีแล้วข้ามพร้อมบอกเหตุ ต้องต่ออินเทอร์เน็ต ราว 30 วินาที ไม่อยู่ใน `pnpm check` ให้รันเมื่อแก้ `src/features/payment/server/` |
-| `pnpm e2e` | เดินเส้นทางหลักผ่านหน้าเว็บจริงด้วย Playwright (`e2e/main-path.spec.ts`) ลองภาพ 3 มิติของสินค้าพร้อมวัด P3D-Q01 P3D-Q02 (`e2e/product-3d.spec.ts`) และลองแผนที่การจัดส่งพร้อมวัด MAP-Q01 ถึง MAP-Q04 (`e2e/delivery-map.spec.ts`) build แอปแล้วเปิดที่พอร์ต 3300 กับฐานข้อมูล `data/e2e.db` ที่ล้างใหม่ทุกครั้ง ใช้ตัวจำลองการจ่ายเงินเสมอแม้มีกุญแจของ Omise ใน `.env.local` ใช้ Google Chrome ในเครื่อง ราว 3 นาที ไม่อยู่ใน `pnpm check` แต่ต้องผ่านก่อน merge งานที่แตะหน้าในเส้นทางหลัก วิธีใช้อื่นอยู่ใน README |
+| `pnpm e2e` | เดินเส้นทางหลักผ่านหน้าเว็บจริงด้วย Playwright (`e2e/main-path.spec.ts`) ลองภาพ 3 มิติของสินค้าพร้อมวัด P3D-Q01 P3D-Q02 (`e2e/product-3d.spec.ts`) ลองแผนที่การจัดส่งพร้อมวัด MAP-Q01 ถึง MAP-Q04 (`e2e/delivery-map.spec.ts`) และลองค้นหาด้วยประโยคพร้อมวัด SNT-Q02 SNT-Q03 (`e2e/sentence-search.spec.ts`) build แอปแล้วเปิดที่พอร์ต 3300 กับฐานข้อมูล `data/e2e.db` ที่ล้างใหม่ทุกครั้ง ใช้ตัวจำลองการจ่ายเงินเสมอแม้มีกุญแจของ Omise ใน `.env.local` ใช้ Google Chrome ในเครื่อง ราว 3 นาที ไม่อยู่ใน `pnpm check` แต่ต้องผ่านก่อน merge งานที่แตะหน้าในเส้นทางหลัก วิธีใช้อื่นอยู่ใน README |
 
 ถ้าทำงานหลาย worktree พร้อมกัน ให้แต่ละ worktree ใช้พอร์ตของตัวเอง ฐานข้อมูลอยู่ที่ `data/blanksong.db` ของแต่ละ worktree จึงไม่ชนกัน
 
@@ -60,6 +60,8 @@ src/main-path.test.ts     test รอยต่อระหว่าง feature �
 ```
 
 feature ทั้ง 10: `account` `shop` `product-listing` `stock` `browse` `cart` `checkout` `payment` `shop-orders` `delivery`
+
+requirement `sentence-search.md` (SNT) อยู่ในโฟลเดอร์ `browse` ตัวอ่านประโยคคือ `src/features/browse/sentence.ts` เป็นฟังก์ชันล้วนที่ใช้ทั้งในหน้าแรก (ค่าที่อ่านได้แทนที่คำค้นและตัวกรองก่อนค้นหา ลิงก์ในหน้าจึงใช้ค่าที่แยกแล้ว) และในช่องค้นหาของแถบด้านบน (บอกก่อนกดค้นหา) จะเพิ่มรูปแบบคำ ให้เพิ่มที่ไฟล์นี้พร้อมประโยคตัวอย่างใน `sentence.test.ts`
 
 requirement `delivery-map.md` (MAP) อยู่ในโฟลเดอร์ `delivery` เพราะเพิ่มแค่ช่องจังหวัดในฟอร์มเปลี่ยนสถานะกับแผนที่บนหน้าติดตามพัสดุ
 

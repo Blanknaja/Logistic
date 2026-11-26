@@ -37,34 +37,58 @@
   }
 }
 
+/* แถวแรกคือจำนวนผลลัพธ์กับตัวกรอง แถวสองคือตัวกรองที่ใช้อยู่ เต็มความกว้าง จึงไม่ซ้อนเป็นหลายบรรทัดบนจอเล็ก */
 .toolbar {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2) var(--space-4);
+  gap: 0 var(--space-4);
   margin-block: var(--space-3) var(--space-5);
 }
 
 .count {
   min-width: 0;
-}
-
-.count p {
   margin: 0;
 }
 
 .active {
+  grid-row: 2;
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0 var(--space-3);
-  color: var(--color-muted);
+  gap: 0 var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
   font-size: var(--text-label);
 }
 
-.filterBox {
+.remove {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--tap);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.remove svg {
   flex: none;
+  color: var(--color-muted);
+}
+
+@media (hover: hover) {
+  .remove:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+.filterBox {
+  grid-row: 1;
+  grid-column: 2;
 }
 
 .filterToggle {

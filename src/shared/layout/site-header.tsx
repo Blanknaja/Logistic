@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { SearchBar } from "@/features/browse/components/search-bar";
 import { cartCount, cartLabel } from "@/features/cart/nav";
+import { listCategories } from "@/features/product-listing/server/categories";
+import { getDb } from "@/shared/db";
 import { HeaderMenu } from "@/shared/layout/header-menu";
 import { headerLinks } from "@/shared/nav/registry";
 import { getCurrentAccount } from "@/shared/session";
@@ -18,7 +20,7 @@ export async function SiteHeader() {
         <Link href="/" className="brand">
           Blanksong
         </Link>
-        <SearchBar />
+        <SearchBar categories={listCategories(getDb())} />
         <Link href="/cart" className="header-icon-button" aria-label={cartLabel(count)}>
           <CartIcon />
           {count > 0 && count}

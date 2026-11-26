@@ -131,9 +131,34 @@ describe("BRW-004 กรองตามช่วงราคา", () => {
     expect(html).toMatch(/<details[^>]*><summary[^>]*>.*ตัวกรอง<\/summary>/);
     expect(html).not.toMatch(/<details[^>]*open=""/);
     expect(text).toContain("พบ 3 รายการ สำหรับ &quot;กระเป๋า&quot;");
-    expect(text).toContain("กระเป๋าและรองเท้า · ราคา ฿100 ถึง ฿500 ล้างตัวกรอง");
+    expect(text).toContain("กระเป๋าและรองเท้า ราคา ฿100 ถึง ฿500 ล้างตัวกรอง");
     expect(render({ max: "500" }, { items: [card(1)], total: 1, totalPages: 1 })).toContain("ราคาไม่เกิน ฿500");
     expect(render({ min: "250" }, { items: [card(1)], total: 1, totalPages: 1 })).toContain("ราคาตั้งแต่ ฿250");
+  });
+});
+
+describe("SNT-008 ตัวกรองที่ใช้อยู่เอาออกได้ทีละอัน", () => {
+  const some = { items: [card(1)], total: 3, totalPages: 1, category: categories[1] };
+  const q = encodeURIComponent("กระเป๋า");
+
+  test("แต่ละอันเป็นลิงก์ที่เอาเฉพาะตัวเองออก คงอย่างอื่นไว้ และกลับไปหน้า 1", () => {
+    const html = render({ q: "กระเป๋า", category: "2", min: "100", max: "500", sort: "price-asc", page: "2" }, some);
+
+    expect(html).toContain(`aria-label="เอา กระเป๋าและรองเท้า ออก" href="/?q=${q}&amp;min=100&amp;max=500&amp;sort=price-asc"`);
+    expect(html).toContain(`aria-label="เอา ราคา ฿100 ถึง ฿500 ออก" href="/?q=${q}&amp;category=2&amp;sort=price-asc"`);
+    expect(html).toContain(`aria-label="เอา เรียงราคาต่ำไปสูง ออก" href="/?q=${q}&amp;category=2&amp;min=100&amp;max=500"`);
+  });
+
+  test("การเรียงแบบใหม่ล่าสุดเป็นค่าเริ่มต้น จึงไม่ขึ้นเป็นตัวกรอง และมีแค่การเรียงก็ไม่มีล้างตัวกรอง", () => {
+    expect(render({ q: "กระเป๋า" }, { ...some, category: null })).not.toContain("ตัวกรองที่ใช้อยู่");
+    const sorted = render({ sort: "price-desc" }, { ...some, category: null });
+    expect(sorted).toContain('aria-label="เอา เรียงราคาสูงไปต่ำ ออก"');
+    expect(sorted).not.toContain("ล้างตัวกรอง");
+  });
+
+  test("ช่วงราคาที่ผิดไม่ได้ถูกใช้กรอง จึงไม่ขึ้นเป็นตัวกรอง", () => {
+    const html = render({ min: "500", max: "100" }, { ...some, category: null, priceError: "ราคาต่ำสุดต้องไม่มากกว่าราคาสูงสุด" });
+    expect(html).not.toContain("เอา ราคา");
   });
 });
 

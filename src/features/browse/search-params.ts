@@ -1,4 +1,4 @@
-import { formatNumber } from "@/shared/format";
+import { formatBaht, formatNumber } from "@/shared/format";
 
 // ค่าค้นหาทั้งหมดอยู่ในที่อยู่หน้าเว็บ (BRW-006) ไฟล์นี้ใช้ทั้งฝั่งเซิร์ฟเวอร์และในเบราว์เซอร์
 
@@ -55,6 +55,17 @@ export function priceError(min: number | null, max: number | null): string | nul
   if (min !== null && max !== null && min > max) return "ราคาต่ำสุดต้องไม่มากกว่าราคาสูงสุด";
   return null;
 }
+
+/** ช่วงราคาเป็นคำสั้นๆ หรือ null ถ้าไม่ได้กรองราคา */
+export function priceLabel(min: number | null, max: number | null): string | null {
+  if (min !== null && max !== null) return `ราคา ${formatBaht(min)} ถึง ${formatBaht(max)}`;
+  if (min !== null) return `ราคาตั้งแต่ ${formatBaht(min)}`;
+  if (max !== null) return `ราคาไม่เกิน ${formatBaht(max)}`;
+  return null;
+}
+
+/** การเรียงเป็นคำสั้นๆ ที่อ่านรู้เรื่องเมื่ออยู่นอกช่องเลือกการเรียง */
+export const sortLabel = (sort: Sort) => `เรียง${SORT_LABELS[sort]}`;
 
 /** ที่อยู่ของหน้ารายการสินค้า ค่าที่เป็นค่าเริ่มต้นไม่ถูกใส่ */
 export function browseHref(params: Partial<BrowseParams>): string {

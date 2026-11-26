@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { browseHref, hasCriteria, type BrowseParams } from "@/features/browse/search-params";
+import { browseHref, hasCriteria, priceLabel, sortLabel, type BrowseParams } from "@/features/browse/search-params";
 import type { SearchResult } from "@/features/browse/server/search";
 import type { Category } from "@/features/product-listing/server/categories";
-import { formatBaht, formatNumber } from "@/shared/format";
+import { formatNumber } from "@/shared/format";
 import { EmptyState } from "@/shared/ui/states";
 import { FilterForm } from "./filter-form";
 import { ProductCard } from "./product-card";
@@ -43,13 +43,16 @@ export function BrowseResults({ params, result, categories }: Props) {
   );
 }
 
-/** ตัวกรองที่ใช้อยู่ เป็นคำสั้นๆ ช่วงราคาที่ผิดไม่ได้ถูกใช้กรอง จึงไม่บอก */
-function activeFilters(params: BrowseParams, result: SearchResult): string[] {
-  const active = result.category ? [result.category.name] : [];
-  const { min, max } = result.priceError ? { min: null, max: null } : params;
-  if (min !== null && max !== null) active.push(`ราคา ${formatBaht(min)} ถึง ${formatBaht(max)}`);
-  else if (min !== null) active.push(`ราคาตั้งแต่ ${formatBaht(min)}`);
-  else if (max !== null) active.push(`ราคาไม่เกิน ${formatBaht(max)}`);
+type ActiveFilter = { label: string; removeHref: string };
+
+/** ตัวกรองและการเรียงที่ใช้อยู่ แต่ละอันเอาออกได้ทีละอัน (SNT-008) ช่วงราคาที่ผิดไม่ได้ถูกใช้กรอง จึงไม่บอก */
+function activeFilters(params: BrowseParams, result: SearchResult): ActiveFilter[] {
+  const active: ActiveFilter[] = [];
+  const without = (changes: Partial<BrowseParams>) => browseHref({ ...params, ...changes, page: 1 });
+  if (result.category) active.push({ label: result.category.name, removeHref: without({ category: null }) });
+  const price = result.priceError ? null : priceLabel(params.min, params.max);
+  if (price) active.push({ label: price, removeHref: without({ min: null, max: null }) });
+  if (params.sort !== "newest") active.push({ label: sortLabel(params.sort), removeHref: without({ sort: "newest" }) });
   return active;
 }
 
@@ -64,22 +67,31 @@ function Results({ params, result }: Omit<Props, "categories">) {
   return (
     <section aria-label="รายการสินค้า">
       <div className={styles.toolbar}>
-        <div className={styles.count}>
-          <p>
-            พบ {formatNumber(result.total)} รายการ{params.q && ` สำหรับ "${params.q}"`}
-          </p>
-          {filtered && (active.length > 0 || result.total > 0) && (
-            <p className={styles.active}>
-              {active.length > 0 && <span>{active.join(" · ")}</span>}
+        <p className={styles.count}>
+          พบ {formatNumber(result.total)} รายการ{params.q && ` สำหรับ "${params.q}"`}
+        </p>
+          {(active.length > 0 || (filtered && result.total > 0)) && (
+            <ul className={styles.active} aria-label="ตัวกรองที่ใช้อยู่">
+              {active.map((filter) => (
+                <li key={filter.label}>
+                  <Link href={filter.removeHref} className={styles.remove} aria-label={`เอา ${filter.label} ออก`}>
+                    {filter.label}
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+                      <path fill="currentColor" d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4 6.4 5Z" />
+                    </svg>
+                  </Link>
+                </li>
+              ))}
               {/* ไม่พบสินค้า ปุ่มล้างตัวกรองอยู่ในหน้าว่างแล้ว */}
-              {result.total > 0 && (
-                <Link href={clearHref} className="link-action">
-                  ล้างตัวกรอง
-                </Link>
+              {filtered && result.total > 0 && (
+                <li>
+                  <Link href={clearHref} className="link-action">
+                    ล้างตัวกรอง
+                  </Link>
+                </li>
               )}
-            </p>
+            </ul>
           )}
-        </div>
         <FilterForm key={browseHref(params)} params={params} initialError={result.priceError} />
       </div>
 

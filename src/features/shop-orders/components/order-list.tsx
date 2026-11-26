@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { orderHref, ordersHref, type ListParams, type StatusKey } from "@/features/shop-orders/paths";
-import type { OrderList, OrderRow, StatusCounts } from "@/features/shop-orders/server/orders";
+import type { OrderList, StatusCounts } from "@/features/shop-orders/server/orders";
 import { formatBaht, formatThaiDateTime, formatNumber } from "@/shared/format";
 import { ORDER_STATUS } from "@/shared/statuses";
 import { EmptyState } from "@/shared/ui/states";
@@ -13,8 +13,6 @@ type Props = {
   params: ListParams & { queryError: string | null };
   counts: StatusCounts;
   list: OrderList;
-  /** คำสั่งซื้อที่จ่ายแล้ว ใช้เมื่อเปิดตัวกรองทั้งหมดโดยไม่ค้น null ในกรณีอื่น */
-  awaitingPacking?: OrderList | null;
   version: string;
 };
 
@@ -22,13 +20,12 @@ const FILTERS: [StatusKey | null, string][] = [[null, "ทั้งหมด"], 
 
 /**
  * หน้ารายการคำสั่งซื้อของร้าน (ORD-001 ถึง ORD-003 ORD-009 ORD-010)
- * ตัวกรองทั้งหมดแสดงคำสั่งซื้อที่รอจัดของเป็นกลุ่มแรกที่หน้า 1 แล้วตามด้วยคำสั่งซื้ออื่น คำสั่งซื้อจึงไม่ซ้ำสองที่
+ * ตัวกรองทั้งหมดมีบรรทัด "รอจัดของ N รายการ" เหนือรายการ กดแล้วไปตัวกรองจ่ายแล้ว
  */
-export function OrderListView({ params, counts, list, awaitingPacking = null, version }: Props) {
+export function OrderListView({ params, counts, list, version }: Props) {
   const { status, q } = params;
   const current = { status, q, page: list.page, asOf: list.asOf };
-  const work = awaitingPacking && list.page === 1 && awaitingPacking.total > 0 ? awaitingPacking : null;
-  const rest = awaitingPacking ? list.items.filter((row) => row.status !== ORDER_STATUS.paid) : list.items;
+  const awaitingPacking = !status && !q ? counts[ORDER_STATUS.paid] : 0;
   return (
     <>
       <h1>คำสั่งซื้อ</h1>
@@ -65,30 +62,20 @@ export function OrderListView({ params, counts, list, awaitingPacking = null, ve
         </p>
       )}
 
-      {work && (
-        <section aria-labelledby="awaiting-packing" className={styles.group}>
-          <h2 id="awaiting-packing">รอจัดของ {formatNumber(work.total)} รายการ</h2>
-          <OrderTable rows={work.items} current={current} />
-          {work.total > work.items.length && (
-            <Link href={ordersHref({ status: "paid" })} className="link-action">
-              ดูที่รอจัดของทั้งหมด {formatNumber(work.total)} รายการ
-            </Link>
-          )}
-        </section>
+      {awaitingPacking > 0 && (
+        <p className={styles.searchResult}>
+          <Link href={ordersHref({ status: "paid" })} className="link-action">
+            รอจัดของ {formatNumber(awaitingPacking)} รายการ
+          </Link>
+        </p>
       )}
 
-      <Results params={params} list={list} rows={rest} current={current} grouped={work !== null} />
+      <Results params={params} list={list} current={current} />
     </>
   );
 }
 
-function Results({
-  params,
-  list,
-  rows,
-  current,
-  grouped,
-}: Pick<Props, "params" | "list"> & { rows: OrderRow[]; current: ListParams; grouped: boolean }) {
+function Results({ params, list, current }: Pick<Props, "params" | "list"> & { current: ListParams }) {
   if (list.total === 0) {
     if (params.q) return <EmptyState title={`ไม่พบคำสั่งซื้อเลข ${params.q} ในร้านของคุณ`} />;
     if (params.status) return <EmptyState title={`ไม่มีคำสั่งซื้อในสถานะ ${ORDER_STATUS[params.status]}`} />;
@@ -96,9 +83,8 @@ function Results({
   }
 
   return (
-    <section aria-label="รายการคำสั่งซื้อ" className={styles.group}>
-      {grouped && rows.length > 0 && <h2>คำสั่งซื้ออื่น</h2>}
-      {rows.length > 0 && <OrderTable rows={rows} current={current} />}
+    <section aria-label="รายการคำสั่งซื้อ">
+      <OrderTable rows={list.items} current={current} />
       {list.totalPages > 1 && (
         <nav aria-label="เปลี่ยนหน้า" className={styles.pagination}>
           <PageLink current={current} page={list.page - 1} totalPages={list.totalPages} label="หน้าก่อนหน้า" />
@@ -113,7 +99,7 @@ function Results({
 }
 
 /** ทั้งแถวกดไปหน้ารายละเอียด ปุ่มจัดส่งและลิงก์ดูการจัดส่งอยู่เหนือลิงก์ของแถว */
-function OrderTable({ rows, current }: { rows: OrderRow[]; current: ListParams }) {
+function OrderTable({ rows, current }: { rows: OrderList["items"]; current: ListParams }) {
   return (
     <div className={styles.table}>
       <div className={styles.head} aria-hidden="true">

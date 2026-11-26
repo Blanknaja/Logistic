@@ -201,37 +201,56 @@ describe("ORD-001 หน้ารายการคำสั่งซื้อ",
   });
 });
 
-describe("ORD-001 ORD-009 กลุ่มรอจัดของ", () => {
-  test("ORD-001 ORD-009 ตัวกรองทั้งหมดแสดงคำสั่งซื้อที่รอจัดของเป็นกลุ่มแรกพร้อมปุ่มจัดส่ง และไม่ซ้ำในกลุ่มอื่น", async () => {
+describe("ORD-001 ORD-009 คำสั่งซื้อที่รอจัดของในตัวกรองทั้งหมด", () => {
+  test("ORD-001 ORD-009 ตัวกรองทั้งหมดเรียงจากใหม่ไปเก่ารายการเดียว มีบรรทัดรอจัดของที่กดไปตัวกรองจ่ายแล้ว และแถวจ่ายแล้วมีปุ่มจัดส่ง", async () => {
     const somchai = newShop("สมชายเสื้อผ้า");
     const waiting = order(somchai, ORDER_STATUS.paid);
-    for (let i = 0; i < 3; i++) order(somchai);
+    const others = Array.from({ length: 3 }, () => order(somchai).orderNo);
     const shipping = order(somchai, ORDER_STATUS.shipping);
     addParcel(db, { orderId: shipping.id, trackingNo: "BS0000001240", status: PARCEL_STATUS.handedOver });
     signInAs(somchai.ownerId);
 
     const html = (await list()).html ?? "";
-    const [work, rest] = html.split("คำสั่งซื้ออื่น");
 
-    expect(plain(work)).toContain("รอจัดของ 1 รายการ");
-    expect(rowsIn(work)).toEqual([waiting.orderNo]);
-    expect(work).toContain("จัดส่ง</button>");
-    expect(rowsIn(rest)).toHaveLength(4);
-    expect(rowsIn(rest)).not.toContain(waiting.orderNo);
-    expect(rest).not.toContain("จัดส่ง</button>");
-    expect(rest).toMatch(/class="link-action" href="\/track\/BS0000001240">ดูการจัดส่ง</);
+    expect(text(html)).toMatch(/<a class="link-action" href="\/seller\/orders\?status=paid">รอจัดของ 1 รายการ<\/a>/);
+    expect(rowsIn(html)).toEqual([shipping.orderNo, ...others.reverse(), waiting.orderNo]);
+    expect(html.match(/จัดส่ง<\/button>/g)).toHaveLength(1);
+    expect(html).toMatch(/class="link-action" href="\/track\/BS0000001240">ดูการจัดส่ง</);
+    expect(html).not.toContain("คำสั่งซื้ออื่น");
   });
 
-  test("ORD-002 ORD-003 ตัวกรองสถานะอื่นและการค้นหาไม่มีกลุ่มรอจัดของ", async () => {
+  test("ORD-001 คำสั่งซื้อจ่ายแล้ว 25 รายการกับสถานะอื่น 5 รายการ ทุกหน้ามี 20 รายการยกเว้นหน้าสุดท้าย และทุกคำสั่งซื้ออยู่หน้าเดียว", async () => {
+    const somchai = newShop("สมชายเสื้อผ้า");
+    const created = Array.from({ length: 30 }, (_, i) => order(somchai, i % 6 === 0 ? ORDER_STATUS.awaitingPayment : ORDER_STATUS.paid).orderNo);
+    signInAs(somchai.ownerId);
+
+    const page1 = (await list()).html ?? "";
+    const asOf = page1.match(/page=2&amp;asOf=(\d+)/)?.[1] ?? "";
+    const page2 = (await list({ page: "2", asOf })).html ?? "";
+
+    expect(text(page1)).toContain("รอจัดของ 25 รายการ");
+    expect(text(page1)).toContain("หน้า 1 จาก 2");
+    expect(rowsIn(page1)).toHaveLength(20);
+    expect(rowsIn(page2)).toHaveLength(10);
+    expect([...rowsIn(page1), ...rowsIn(page2)]).toEqual(created.reverse());
+  });
+
+  test("ORD-001 ไม่มีคำสั่งซื้อที่รอจัดของ ไม่มีบรรทัดรอจัดของ", async () => {
+    const somchai = newShop("สมชายเสื้อผ้า");
+    order(somchai);
+    signInAs(somchai.ownerId);
+
+    expect((await list()).html).not.toContain("รอจัดของ");
+  });
+
+  test("ORD-002 ORD-003 ตัวกรองสถานะอื่นและการค้นหาไม่มีบรรทัดรอจัดของ", async () => {
     const somchai = newShop("สมชายเสื้อผ้า");
     const waiting = order(somchai, ORDER_STATUS.paid);
     order(somchai);
     signInAs(somchai.ownerId);
 
     for (const query of [{ status: "paid" }, { status: "awaitingPayment" }, { q: waiting.orderNo }] as Record<string, string>[]) {
-      const html = (await list(query)).html ?? "";
-      expect(html).not.toContain("รอจัดของ");
-      expect(html).not.toContain("คำสั่งซื้ออื่น");
+      expect((await list(query)).html).not.toContain("รอจัดของ");
     }
     expect(rowsIn((await list({ status: "paid" })).html)).toEqual([waiting.orderNo]);
   });

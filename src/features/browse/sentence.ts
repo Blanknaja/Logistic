@@ -42,7 +42,8 @@ const ABOVE = new Set(["มากกว่า", "แพงกว่า", "เก
 
 // คะแนนขั้นต่ำ (REV-012) อ่านก่อนราคา เพราะ "คะแนน 4 ขึ้นไป" กับ "ตั้งแต่ 4 ดาว" ตรงกับรูปแบบราคาต่ำสุดด้วย
 const STARS = String.raw`(?<![\d.,])(\d+(?:\.\d+)?)(?![\d.,])`;
-const STAR_WORD = "ดาว(?!น์)";
+// "ดาว" เป็นหน่วยของคะแนนเมื่อจบคำตรงนั้นหรือตามด้วย "ขึ้นไป" คำอื่นที่ขึ้นต้นด้วยดาว เช่น ดาวเทียม ดาวน์ ไม่ใช่
+const STAR_WORD = String.raw`ดาว(?=\s*ขึ้นไป|[^ก-๛]|$)`;
 const RATINGS = [
   new RegExp(String.raw`คะแนน\s*(?:ตั้งแต่\s*)?${STARS}\s*(?:${STAR_WORD}\s*)?ขึ้นไป`),
   new RegExp(String.raw`(?:คะแนน\s*)?ตั้งแต่\s*${STARS}\s*${STAR_WORD}(?:\s*ขึ้นไป)?`),
@@ -135,11 +136,11 @@ export function readSentence(input: string, categories: Category[]): Sentence | 
     }
   }
 
-  for (const [sort, pattern] of SORTS) {
-    if (take(pattern)) {
-      found.sort = sort;
-      break;
-    }
+  // คำเรียงที่มาก่อนในประโยคถูกใช้ คำเรียงที่เหลือถูกตัดทิ้ง ไม่ไปอยู่ในคำค้น
+  const first = SORTS.map(([sort, pattern]) => ({ sort, index: pattern.exec(plain)?.index ?? Infinity })).sort((a, b) => a.index - b.index)[0];
+  if (first.index !== Infinity) {
+    found.sort = first.sort;
+    for (const [, pattern] of SORTS) while (take(pattern));
   }
 
   const category = readCategory(text, categories);

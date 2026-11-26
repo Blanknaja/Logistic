@@ -3,6 +3,7 @@
 import Form from "next/form";
 import { useState, type FormEvent } from "react";
 import { parsePrice, priceError, SORT_LABELS, type BrowseParams } from "@/features/browse/search-params";
+import { minRatingLabel } from "@/features/review/rules";
 import styles from "./browse.module.css";
 
 const digitsOnly = (value: string) => value.replace(/\D/g, "");
@@ -66,6 +67,22 @@ export function FilterForm({ params, initialError }: { params: BrowseParams; ini
             </p>
           )}
         </fieldset>
+        <label className={styles.sort}>
+          คะแนน
+          <select
+            name="rating"
+            defaultValue={params.rating ?? ""}
+            className="input"
+            onChange={(event) => event.currentTarget.form?.requestSubmit()}
+          >
+            <option value="">ทั้งหมด</option>
+            {[5, 4, 3, 2, 1].map((stars) => (
+              <option key={stars} value={stars}>
+                {minRatingLabel(stars)}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className={styles.sort}>
           เรียงตาม
           <select

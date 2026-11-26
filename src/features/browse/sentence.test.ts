@@ -32,6 +32,13 @@ describe("readSentence", () => {
     expect(read("หูฟังตั้งแต่ 2 ล้าน")).toEqual({ q: "หูฟัง", min: 2000000 });
   });
 
+  test("SNT-002 REV-012 ตัวเลขที่มีคำว่าคะแนนนำหน้าหรือดาวตามหลัง ไม่ใช่ราคาต่ำสุด", () => {
+    expect(read("หูฟัง คะแนน 4 ขึ้นไป")).toEqual({ q: "หูฟัง", rating: 4 });
+    expect(read("หูฟังตั้งแต่ 4 ดาว")).toEqual({ q: "หูฟัง", rating: 4 });
+    expect(read("500 ขึ้นไป")).toEqual({ q: "", min: 500 });
+    expect(read("ตั้งแต่ 4")).toEqual({ q: "", min: 4 });
+  });
+
   test("SNT-003 ช่วงราคา", () => {
     expect(read("เสื้อ 100 ถึง 300 บาท")).toEqual({ q: "เสื้อ", min: 100, max: 300 });
     expect(read("เสื้อ ราคา 100-300")).toEqual({ q: "เสื้อ", min: 100, max: 300 });

@@ -13,9 +13,9 @@ export const PRODUCT_RATINGS_SQL = `(
   FROM reviews WHERE status = '${REVIEW_STATUS.visible}' GROUP BY product_id
 )`;
 
-/** แถวที่ JOIN กับ PRODUCT_RATINGS_SQL เป็นคะแนนบนการ์ด null ถ้าไม่มีรีวิวที่ `แสดงอยู่` (REV-009) */
-export const cardRating = (row: { review_count: number | null; rating_tenths: number | null }): Rating | null =>
-  row.review_count && row.rating_tenths !== null ? { average: row.rating_tenths / 10, count: row.review_count } : null;
+/** แถวที่ JOIN กับ PRODUCT_RATINGS_SQL เป็นช่อง rating ของการ์ดสินค้า ไม่มีรีวิวที่ `แสดงอยู่` ไม่มีช่องนี้ (REV-009) */
+export const ratingField = (row: { review_count: number | null; rating_tenths: number | null }): { rating?: Rating } =>
+  row.review_count && row.rating_tenths !== null ? { rating: { average: row.rating_tenths / 10, count: row.review_count } } : {};
 
 export type Stars = 1 | 2 | 3 | 4 | 5;
 

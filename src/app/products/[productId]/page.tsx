@@ -6,12 +6,13 @@ import { browseHref } from "@/features/browse/search-params";
 import { getProductDetail } from "@/features/browse/server/product-detail";
 import { addToCartAction } from "@/features/cart/actions";
 import { SHIPPING_FEE } from "@/features/checkout/server/checkout";
+import { ProductRating, ProductReviews } from "@/features/review/components/product-reviews";
 import { getDb } from "@/shared/db";
 import { getCurrentAccount } from "@/shared/session";
 import styles from "@/features/browse/components/browse.module.css";
 
 /** จอ 900 ขึ้นไป รูปอยู่ซ้าย ชื่อ ราคา ตัวเลือก และปุ่มอยู่ขวาในจอแรก ร้านกับรายละเอียดอยู่ข้างล่าง */
-export default async function ProductPage({ params }: PageProps<"/products/[productId]">) {
+export default async function ProductPage({ params, searchParams }: PageProps<"/products/[productId]">) {
   const { productId } = await params;
   const product = getProductDetail(getDb(), Number(productId));
   if (!product) notFound();
@@ -20,7 +21,10 @@ export default async function ProductPage({ params }: PageProps<"/products/[prod
   return (
     <article className={styles.detail}>
       <div className={styles.buyArea}>
-        <h1 className={styles.name}>{product.name}</h1>
+        <h1 className={styles.name}>
+          {product.name}
+          <ProductRating productId={product.id} />
+        </h1>
         <ProductGallery images={product.images} name={product.name} model={product.model} />
         <AddToCartForm
           product={product}
@@ -51,6 +55,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[prod
         <h2 id="product-description">รายละเอียด</h2>
         <p className={styles.description}>{product.description}</p>
       </section>
+      <ProductReviews productId={product.id} query={await searchParams} />
     </article>
   );
 }

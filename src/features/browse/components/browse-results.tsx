@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { browseHref, hasCriteria, priceLabel, sortLabel, type BrowseParams } from "@/features/browse/search-params";
+import { browseHref, hasCriteria, priceLabel, ratingLabel, sortLabel, type BrowseParams } from "@/features/browse/search-params";
 import type { SearchResult } from "@/features/browse/server/search";
 import type { Category } from "@/features/product-listing/server/categories";
 import { formatNumber } from "@/shared/format";
@@ -52,6 +52,8 @@ function activeFilters(params: BrowseParams, result: SearchResult): ActiveFilter
   if (result.category) active.push({ label: result.category.name, removeHref: without({ category: null }) });
   const price = result.priceError ? null : priceLabel(params.min, params.max);
   if (price) active.push({ label: price, removeHref: without({ min: null, max: null }) });
+  const rating = ratingLabel(params.rating);
+  if (rating) active.push({ label: rating, removeHref: without({ rating: null }) });
   if (params.sort !== "newest") active.push({ label: sortLabel(params.sort), removeHref: without({ sort: "newest" }) });
   return active;
 }
@@ -61,7 +63,7 @@ function Results({ params, result }: Omit<Props, "categories">) {
 
   // ล้างตัวกรองคงคำค้นและการเรียงไว้
   const clearHref = browseHref({ q: params.q, sort: params.sort });
-  const filtered = params.category !== null || params.min !== null || params.max !== null;
+  const filtered = params.category !== null || params.min !== null || params.max !== null || params.rating !== null;
   const active = activeFilters(params, result);
 
   return (

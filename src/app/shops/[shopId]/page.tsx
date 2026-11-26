@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ShopRatingLine } from "@/features/review/components/rating";
+import { shopRating } from "@/features/review/server/ratings";
 import { loadMoreShopProductsAction } from "@/features/shop/actions";
 import { ShopLogo } from "@/features/shop/components/shop-logo";
 import styles from "@/features/shop/components/shop.module.css";
@@ -44,6 +46,7 @@ export default async function StorefrontPage({ params }: PageProps<"/shops/[shop
         <ShopLogo name={shop.name} logoUrl={shop.logoUrl} />
         <div>
           <h1>{shop.name}</h1>
+          <ShopRatingLine rating={shopRating(db, shop.id)} />
           <p className={styles.meta}>
             <span>{shop.province}</span>
             <span>

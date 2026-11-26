@@ -5,6 +5,7 @@ import { nav as checkout } from "@/features/checkout/nav";
 import { nav as delivery } from "@/features/delivery/nav";
 import { nav as payment } from "@/features/payment/nav";
 import { nav as productListing } from "@/features/product-listing/nav";
+import { nav as review } from "@/features/review/nav";
 import { nav as shop } from "@/features/shop/nav";
 import { nav as shopOrders } from "@/features/shop-orders/nav";
 import { nav as stock } from "@/features/stock/nav";
@@ -21,6 +22,7 @@ export const featureNavs: Record<string, FeatureNav> = {
   delivery,
   payment,
   "product-listing": productListing,
+  review,
   shop,
   "shop-orders": shopOrders,
   stock,

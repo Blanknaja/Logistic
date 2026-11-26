@@ -1,3 +1,4 @@
+import { minRatingLabel, parseStars } from "@/features/review/rules";
 import { formatBaht, formatNumber } from "@/shared/format";
 
 // ค่าค้นหาทั้งหมดอยู่ในที่อยู่หน้าเว็บ (BRW-006) ไฟล์นี้ใช้ทั้งฝั่งเซิร์ฟเวอร์และในเบราว์เซอร์
@@ -9,6 +10,7 @@ export const SORT_LABELS = {
   newest: "ใหม่ล่าสุด",
   "price-asc": "ราคาต่ำไปสูง",
   "price-desc": "ราคาสูงไปต่ำ",
+  rating: "คะแนนสูงสุด",
 } as const;
 
 export type Sort = keyof typeof SORT_LABELS;
@@ -19,6 +21,8 @@ export type BrowseParams = {
   category: string | null;
   min: number | null;
   max: number | null;
+  /** คะแนนเฉลี่ยขั้นต่ำ 1 ถึง 5 ดาว (REV-011) */
+  rating: number | null;
   sort: Sort;
   page: number;
 };
@@ -45,6 +49,7 @@ export function parseBrowseParams(raw: RawSearchParams): BrowseParams {
     category: first(raw.category).trim() || null,
     min: parsePrice(first(raw.min)),
     max: parsePrice(first(raw.max)),
+    rating: parseStars(first(raw.rating)),
     sort: Object.hasOwn(SORT_LABELS, sort) ? (sort as Sort) : "newest",
     page: Number.isSafeInteger(page) && page >= 1 ? page : 1,
   };
@@ -64,6 +69,9 @@ export function priceLabel(min: number | null, max: number | null): string | nul
   return null;
 }
 
+/** คะแนนขั้นต่ำเป็นคำสั้นๆ หรือ null ถ้าไม่ได้กรองคะแนน (REV-011) */
+export const ratingLabel = (rating: number | null) => (rating === null ? null : `คะแนน ${minRatingLabel(rating)}`);
+
 /** การเรียงเป็นคำสั้นๆ ที่อ่านรู้เรื่องเมื่ออยู่นอกช่องเลือกการเรียง */
 export const sortLabel = (sort: Sort) => `เรียง${SORT_LABELS[sort]}`;
 
@@ -74,6 +82,7 @@ export function browseHref(params: Partial<BrowseParams>): string {
   if (params.category) query.set("category", params.category);
   if (params.min != null) query.set("min", String(params.min));
   if (params.max != null) query.set("max", String(params.max));
+  if (params.rating != null) query.set("rating", String(params.rating));
   if (params.sort && params.sort !== "newest") query.set("sort", params.sort);
   if (params.page && params.page > 1) query.set("page", String(params.page));
   const text = query.toString();
@@ -82,5 +91,5 @@ export function browseHref(params: Partial<BrowseParams>): string {
 
 /** มีคำค้นหรือตัวกรองอยู่ไหม การเรียงไม่นับ */
 export function hasCriteria(params: BrowseParams): boolean {
-  return params.q !== "" || params.category !== null || params.min !== null || params.max !== null;
+  return params.q !== "" || params.category !== null || params.min !== null || params.max !== null || params.rating !== null;
 }

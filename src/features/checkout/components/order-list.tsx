@@ -4,9 +4,10 @@ import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
 import { useState, useTransition } from "react";
 import { loadMoreOrdersAction } from "@/features/checkout/buyer-order-actions";
-import type { BuyerOrderPage, BuyerOrderSummary, OrderCursor } from "@/features/checkout/server/buyer-orders";
+import type { BuyerOrderPage, BuyerOrderSummary, OrderCursor, OrderFilter } from "@/features/checkout/server/buyer-orders";
+import { AwaitingReviewBadge } from "@/features/review/components/rating";
 import { formatBaht, formatThaiDateTime, formatNumber } from "@/shared/format";
-import { ORDER_STATUS, type OrderStatus } from "@/shared/statuses";
+import { ORDER_STATUS } from "@/shared/statuses";
 import styles from "./buyer-orders.module.css";
 import { PayButton } from "./pay-button";
 
@@ -28,7 +29,7 @@ export async function loadMore(
   }
 }
 
-export function OrderList({ initial, status }: { initial: OrderListState; status: OrderStatus | null }) {
+export function OrderList({ initial, status }: { initial: OrderListState; status: OrderFilter | null }) {
   const [state, setState] = useState(initial);
   const [pending, startTransition] = useTransition();
   const more = () =>
@@ -74,6 +75,7 @@ function OrderCard({ order }: { order: BuyerOrderSummary }) {
         )}
         <span className={styles.cardText}>
           <span className={styles.status}>{order.status}</span>
+          <AwaitingReviewBadge count={order.awaitingReview} />
           <span className={styles.muted}>
             {order.shopName} · {order.firstItemName} · รวม {formatNumber(order.itemCount)} ชิ้น
           </span>

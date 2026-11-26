@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CANCEL_REFUSED, type BuyerOrderDetail, type CancelRefusal } from "@/features/checkout/server/buyer-orders";
+import { OrderItemReview } from "@/features/review/components/rating";
 import { formatBaht, formatThaiDateTime, formatNumber } from "@/shared/format";
 import { ORDER_STATUS } from "@/shared/statuses";
 import { CancelOrderForm } from "./cancel-order-form";
@@ -99,6 +100,7 @@ export function OrderDetail({
                   <p className={styles.muted}>
                     {item.quantity === 1 ? "1 ชิ้น" : `${formatBaht(item.unitPrice)} × ${formatNumber(item.quantity)}`}
                   </p>
+                  {order.status === ORDER_STATUS.completed && <OrderItemReview orderNo={order.orderNo} itemId={item.id} rating={item.reviewRating} />}
                 </div>
                 <span>{formatBaht(item.unitPrice * item.quantity)}</span>
               </li>

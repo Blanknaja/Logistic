@@ -1178,20 +1178,6 @@ label.field {
   }
 }
 
-/* แถบที่ติดขอบล่างจอบนจอเล็ก: ยอดกับปุ่มหลักของหน้า */
-@media (max-width: 899px) {
-  .bottom-bar {
-    position: sticky;
-    bottom: 0;
-    z-index: 5;
-    margin-inline: calc(-1 * var(--gutter));
-    padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
-    border-radius: var(--radius-l) var(--radius-l) 0 0;
-    background: var(--color-surface);
-    box-shadow: var(--shadow-2);
-  }
-}
-
 /* ภาษาของการขยับ: class ที่ใช้ซ้ำได้ทุกหน้า ขยับแค่ transform กับ opacity (และเงาตอนชี้) */
 
 /* ของที่กดได้: ย่อตอนกด แล้วเด้งกลับตอนปล่อย */

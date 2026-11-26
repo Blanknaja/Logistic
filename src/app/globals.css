@@ -46,7 +46,7 @@
   --section-gap: var(--space-7);
 
   /* ขนาดตัวอักษรตามบทบาท ไม่มีขนาดที่เล็กกว่า --text-label */
-  --text-display: clamp(34px, 8vw, 72px);
+  --text-display: clamp(34px, 4.6vw, 64px);
   --text-title: 30px;
   --text-heading: 22px;
   --text-price: 24px;
@@ -75,6 +75,7 @@
   --dur-base: 240ms;
   --dur-move: 400ms;
   --dur-scene: 700ms;
+  --dur-travel: 2400ms;
   --dur-exit: 150ms;
   --stagger: 80ms;
   --ease-out: cubic-bezier(0.33, 1, 0.68, 1);

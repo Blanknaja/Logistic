@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
 import { BrowseResults } from "@/features/browse/components/browse-results";
-import { parseBrowseParams } from "@/features/browse/search-params";
+import { hasCriteria, parseBrowseParams } from "@/features/browse/search-params";
 import { readSentence } from "@/features/browse/sentence";
+import { getHomeSections } from "@/features/browse/server/home";
 import { searchProducts } from "@/features/browse/server/search";
 import { parseTrackingNo } from "@/features/delivery/tracking-no";
 import { listCategories } from "@/features/product-listing/server/categories";
 import { getDb } from "@/shared/db";
+import { PageReveal } from "@/shared/ui/transitions";
 
 export default async function HomePage({ searchParams }: PageProps<"/">) {
   const params = parseBrowseParams(await searchParams);
@@ -20,5 +22,13 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const sentence = readSentence(params.q, categories);
   const understood = sentence ? { ...params, ...sentence } : params;
 
-  return <BrowseResults params={understood} result={searchProducts(db, understood)} categories={categories} />;
+  const result = searchProducts(db, understood);
+  // ส่วนต้อนรับและชั้นวางมีเฉพาะหน้าแรกจริงๆ คนที่ค้นหา กรอง หรือเปลี่ยนหน้ามาหาของ ผลลัพธ์จึงขึ้นก่อน
+  const home = !hasCriteria(understood) && understood.sort === "newest" && result.page === 1 && result.total > 0;
+
+  return (
+    <PageReveal>
+      <BrowseResults params={understood} result={result} categories={categories} home={home ? getHomeSections(db) : undefined} />
+    </PageReveal>
+  );
 }

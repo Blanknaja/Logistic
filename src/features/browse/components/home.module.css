@@ -1,0 +1,552 @@
+/* ส่วนต้อนรับ การ์ดหมวด ชั้นวาง และแถบพื้นเข้มของหน้าแรก (docs/research/lively-design.md ข้อ f) */
+
+/* ส่วนต้อนรับ: จอเล็กสูงไม่เกิน 45% ของจอ สินค้าแถวแรกจึงโผล่ในจอแรก */
+.hero {
+  display: grid;
+  gap: var(--space-3);
+  margin: calc(-1 * var(--space-5)) calc(-1 * var(--gutter)) 0;
+  padding: var(--space-4) var(--gutter) 0;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--color-bg) 30%, var(--tint-2));
+}
+
+.heroText {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.heroTitle > span {
+  display: block;
+}
+
+.heroAccent {
+  color: var(--color-primary);
+}
+
+.heroLead {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.heroSearch {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-1);
+  border-radius: var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
+}
+
+.heroSearch:focus-within {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.heroInput {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--tap);
+  border-color: transparent;
+  background: none;
+}
+
+.heroInput:focus-visible {
+  border-color: transparent;
+  outline: 0;
+}
+
+.heroButton {
+  border-radius: var(--radius-m);
+}
+
+.examples {
+  display: none;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.example {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+  color: var(--color-primary-press);
+  font-size: var(--text-label);
+  text-decoration: none;
+  transition:
+    box-shadow var(--dur-fast) var(--ease-out),
+    transform var(--dur-base) var(--ease-spring);
+}
+
+.example:active {
+  transform: scale(0.97);
+  transition-duration: var(--dur-press);
+}
+
+@media (hover: hover) {
+  .example:hover {
+    box-shadow: var(--shadow-2);
+  }
+}
+
+.stage {
+  position: relative;
+  min-width: 0;
+}
+
+.stageArt {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 100%;
+}
+
+.canvas,
+.canvasLive {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.canvas,
+.artHidden {
+  visibility: hidden;
+}
+
+.canvasLive {
+  animation: appear var(--dur-move) var(--ease-out) both;
+  cursor: grab;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}
+
+.pause {
+  position: absolute;
+  right: 0;
+  bottom: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+/* ภาพพัสดุเดินทาง (route-art.tsx) */
+
+.art {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: 132px;
+  overflow: visible;
+}
+
+.artLine {
+  fill: none;
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.artGround {
+  fill: var(--tint-1);
+}
+
+.artRoute {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 0.03 0.035;
+}
+
+.artWall {
+  fill: var(--color-surface);
+}
+
+.artAwning,
+.artBoxTop {
+  fill: var(--color-accent);
+}
+
+.artDoor {
+  fill: var(--color-primary);
+}
+
+.artGlass {
+  fill: var(--tint-4);
+}
+
+.artRoof {
+  fill: var(--tint-3);
+}
+
+.artBoxSide {
+  fill: var(--color-accent-soft);
+}
+
+.artBoxFront {
+  fill: var(--color-surface);
+}
+
+/* กล่องเดินตามเส้นเดียวกับเส้นประ (ROUTE ใน route-art.tsx) เบราว์เซอร์ที่ไม่รู้จัก offset-path เห็นกล่องนิ่งกลางทาง */
+.artParcel {
+  transform: translate(262px, 62px);
+}
+
+@supports (offset-path: path("M0 0")) {
+  .artParcel {
+    transform: none;
+    offset-path: path("M128 150 C 190 20, 290 20, 352 150");
+    offset-rotate: 0deg;
+    offset-distance: 58%;
+  }
+
+  .travelOnce {
+    animation: travel var(--dur-travel) var(--ease-in-out) both;
+  }
+
+  @supports (animation-timeline: view()) {
+    .travelScroll {
+      animation: travel-through linear both;
+      animation-timeline: view();
+      animation-range: entry 20% exit 60%;
+    }
+  }
+}
+
+@keyframes travel {
+  from {
+    offset-distance: 0%;
+  }
+}
+
+@keyframes travel-through {
+  from {
+    offset-distance: 0%;
+  }
+
+  to {
+    offset-distance: 100%;
+  }
+}
+
+/* แถวที่เลื่อนซ้ายขวาแบบดูดเข้าที่ ชนขอบจอทั้งสองข้าง ขอบขวาจางเพื่อบอกว่ายังมีต่อ */
+
+.scroller {
+  position: relative;
+  margin-inline: calc(-1 * var(--gutter));
+}
+
+.scroller::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: var(--gutter);
+  background: linear-gradient(to right, transparent, var(--color-bg));
+  pointer-events: none;
+}
+
+.categoryRow,
+.productRow,
+.shopRow {
+  display: flex;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-2) var(--gutter) var(--space-5);
+  overflow-x: auto;
+  list-style: none;
+  scroll-padding-inline: var(--gutter);
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.categoryRow > li,
+.productRow > li,
+.shopRow > li {
+  display: grid;
+  flex: none;
+  scroll-snap-align: start;
+}
+
+.categoryRow {
+  margin-top: var(--space-4);
+  padding-bottom: var(--space-4);
+}
+
+.categoryRow > li {
+  width: 104px;
+}
+
+.categoryCard {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2) var(--space-3);
+  border-radius: var(--radius-l);
+  color: var(--color-text);
+  text-align: center;
+  text-decoration: none;
+}
+
+.categoryCard > img,
+.categoryCard > div {
+  border-radius: var(--radius-m);
+  background: var(--color-surface);
+}
+
+.categoryCard > div > span {
+  display: none;
+}
+
+.categoryName {
+  font-size: var(--text-label);
+  line-height: 1.3;
+}
+
+.tint1 {
+  background: var(--tint-1);
+}
+
+.tint2 {
+  background: var(--tint-2);
+}
+
+.tint3 {
+  background: var(--tint-3);
+}
+
+.tint4 {
+  background: var(--tint-4);
+}
+
+.shelf {
+  margin-top: var(--space-5);
+}
+
+.shelfHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 var(--space-4);
+}
+
+.shelfHeader h2 {
+  margin: 0;
+}
+
+.arrow {
+  flex: none;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .more:hover .arrow,
+  .bandButton:hover .arrow {
+    transform: translateX(4px);
+  }
+}
+
+.productRow > li {
+  width: 156px;
+}
+
+.shopRow > li {
+  width: 264px;
+}
+
+.shopCard {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.shopHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.shopText {
+  display: grid;
+  min-width: 0;
+}
+
+.shopName {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shopCount {
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.shopCovers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.shopCovers > * {
+  border-radius: var(--radius-s);
+}
+
+.shopCovers > div > span {
+  display: none;
+}
+
+/* แถบพื้นเข้มหนึ่งแถบของหน้า */
+.band {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  padding: var(--space-6) var(--space-5) var(--space-4);
+  overflow: hidden;
+  border-radius: var(--radius-l);
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+}
+
+.bandText {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+}
+
+.bandText h2,
+.bandText p {
+  margin: 0;
+}
+
+.bandText p {
+  max-width: 36em;
+}
+
+.bandArt {
+  justify-self: center;
+}
+
+.bandArt .artLine {
+  stroke: var(--color-on-ink);
+}
+
+.bandArt .artGround {
+  fill: var(--color-primary-press);
+}
+
+.bandArt .artRoute {
+  stroke: var(--color-accent);
+}
+
+.bandArt .artWall,
+.bandArt .artBoxFront {
+  fill: var(--color-ink);
+}
+
+.bandArt .artDoor {
+  fill: var(--color-accent);
+}
+
+@media (min-width: 600px) {
+  .examples {
+    display: flex;
+  }
+
+  .heroLead {
+    font-size: var(--text-body);
+  }
+
+  .categoryRow > li {
+    width: 132px;
+  }
+
+  .productRow > li {
+    width: 200px;
+  }
+}
+
+@media (min-width: 900px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr) clamp(240px, 32vw, 380px);
+    align-items: center;
+    gap: var(--space-5);
+    min-height: 376px;
+    margin-inline: 0;
+    margin-top: 0;
+    padding: var(--space-6) var(--space-7);
+    border-radius: var(--radius-l);
+  }
+
+  .heroText {
+    gap: var(--space-4);
+  }
+
+  .heroSearch {
+    max-width: 520px;
+    padding: var(--space-2);
+  }
+
+  .heroButton {
+    min-width: 112px;
+  }
+
+  .stage {
+    align-self: stretch;
+    margin-block: calc(-1 * var(--space-5));
+  }
+
+  .art {
+    width: 100%;
+    height: auto;
+  }
+
+  .productRow > li {
+    width: 216px;
+  }
+
+  .shelf,
+  .band {
+    margin-top: var(--space-7);
+  }
+
+  .band {
+    grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+    align-items: center;
+    padding: var(--space-7);
+  }
+
+  .bandArt {
+    width: 100%;
+    height: auto;
+  }
+}

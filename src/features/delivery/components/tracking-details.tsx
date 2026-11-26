@@ -50,14 +50,16 @@ export function TrackingDetails({
         {view.canChangeStatus && <section data-seam="parcel-status-controls">{statusControls}</section>}
       </div>
 
-      <section className={styles.mapBlock} aria-labelledby="tracking-map">
-        <h2 id="tracking-map" className="visually-hidden">
-          แผนที่การจัดส่ง
-        </h2>
-        <DeliveryMap route={view.route} />
-        <p>{routeText(view.route)}</p>
-        <p className={styles.note}>แผนที่แสดงจังหวัดที่พัสดุผ่านมาแล้ว ไม่ใช่ตำแหน่งปัจจุบัน</p>
-      </section>
+      {view.route && (
+        <section className={styles.mapBlock} aria-labelledby="tracking-map">
+          <h2 id="tracking-map" className="visually-hidden">
+            แผนที่การจัดส่ง
+          </h2>
+          <DeliveryMap route={view.route} />
+          <p>{routeText(view.route)}</p>
+          <p className={styles.note}>แผนที่แสดงจังหวัดที่พัสดุผ่านมาแล้ว ไม่ใช่ตำแหน่งปัจจุบัน</p>
+        </section>
+      )}
 
       <section className={styles.history} aria-labelledby="tracking-history">
         <h2 id="tracking-history">ประวัติการจัดส่ง</h2>

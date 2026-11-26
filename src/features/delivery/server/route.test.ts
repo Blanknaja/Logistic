@@ -6,6 +6,11 @@ import { PROVINCE_POINTS } from "./province-points/points";
 import { deliveryRoute, routeText, type DeliveryRoute } from "./route";
 
 const S = PARCEL_STATUS;
+function routeOf(input: Parameters<typeof deliveryRoute>[0]): DeliveryRoute {
+  const route = deliveryRoute(input);
+  if (!route) throw new Error("ไม่มีเส้นทาง");
+  return route;
+}
 const names = (points: { province: string }[]) => points.map((point) => point.province);
 /** ส่วนที่แผนที่ใช้วาด: หมุด จังหวัดล่าสุดที่ถูกเน้น เส้นทึบ และเส้นประ */
 const drawn = (route: DeliveryRoute) => ({
@@ -17,7 +22,7 @@ const drawn = (route: DeliveryRoute) => ({
 
 describe("MAP-004 MAP-006 เส้นทางของพัสดุที่ยังไม่จบการจัดส่ง", () => {
   test("MAP-004 MAP-006 หมุด 3 จังหวัด เส้นทึบเชียงใหม่ถึงลำปาง เส้นประลำปางถึงกรุงเทพมหานคร เน้นลำปาง และข้อความเส้นทาง", () => {
-    const route = deliveryRoute({
+    const route = routeOf({
       origin: "เชียงใหม่",
       history: ["เชียงใหม่", "เชียงใหม่", "ลำปาง"],
       destination: "กรุงเทพมหานคร",
@@ -38,7 +43,7 @@ describe("MAP-004 MAP-006 เส้นทางของพัสดุที่
 
 describe("MAP-007 ประวัติการจัดส่งที่ไม่มีจังหวัด", () => {
   test("MAP-007 ข้ามรายการที่ไม่มีจังหวัด และเริ่มจากจังหวัดของที่อยู่ต้นทาง", () => {
-    const route = deliveryRoute({
+    const route = routeOf({
       origin: "เชียงใหม่",
       history: [null, null, "ลำปาง"],
       destination: "กรุงเทพมหานคร",
@@ -50,7 +55,7 @@ describe("MAP-007 ประวัติการจัดส่งที่ไ�
   });
 
   test("MAP-007 ไม่มีรายการไหนมีจังหวัด หมุดต้นทางถูกเน้นเป็นจังหวัดล่าสุด", () => {
-    const route = deliveryRoute({ origin: "เชียงใหม่", history: [null, null], destination: "กรุงเทพมหานคร", status: S.handedOver });
+    const route = routeOf({ origin: "เชียงใหม่", history: [null, null], destination: "กรุงเทพมหานคร", status: S.handedOver });
 
     expect(drawn(route)).toEqual({
       pins: ["เชียงใหม่", "กรุงเทพมหานคร"],
@@ -62,9 +67,41 @@ describe("MAP-007 ประวัติการจัดส่งที่ไ�
   });
 });
 
+describe("MAP-007 จังหวัดที่ไม่อยู่ในรายชื่อจังหวัด", () => {
+  const unknown = '<img src=x onerror="alert(1)">';
+
+  test("MAP-007 ข้ามรายการที่จังหวัดไม่อยู่ในรายชื่อ เหมือนรายการที่ไม่มีจังหวัด", () => {
+    const route = deliveryRoute({
+      origin: "เชียงใหม่",
+      history: [unknown, "กรุงเทพฯ", "ลำปาง", unknown],
+      destination: "กรุงเทพมหานคร",
+      status: S.inTransit,
+    });
+
+    expect(route && drawn(route)).toEqual({
+      pins: ["เชียงใหม่", "ลำปาง", "กรุงเทพมหานคร"],
+      latest: "ลำปาง",
+      solid: ["เชียงใหม่", "ลำปาง"],
+      dashed: true,
+    });
+  });
+
+  test("MAP-007 จังหวัดของที่อยู่ต้นทางไม่อยู่ในรายชื่อ เส้นทางเริ่มจากจังหวัดแรกที่รู้จัก", () => {
+    const route = deliveryRoute({ origin: unknown, history: [null, "ลำปาง"], destination: "กรุงเทพมหานคร", status: S.inTransit });
+
+    expect(route && routeText(route)).toBe("ลำปาง (ล่าสุด) → กรุงเทพมหานคร (ปลายทาง)");
+  });
+
+  test("MAP-007 ไม่มีจังหวัดที่ผ่านมาแล้วที่รู้จัก หรือจังหวัดปลายทางไม่อยู่ในรายชื่อ ไม่มีเส้นทางให้วาด", () => {
+    expect(deliveryRoute({ origin: unknown, history: [null], destination: "กรุงเทพมหานคร", status: S.handedOver })).toBeNull();
+    expect(deliveryRoute({ origin: "เชียงใหม่", history: ["ลำปาง"], destination: unknown, status: S.inTransit })).toBeNull();
+    expect(deliveryRoute({ origin: "toString", history: [], destination: "constructor", status: S.inTransit })).toBeNull();
+  });
+});
+
 describe("MAP-008 ต้นทางและปลายทางอยู่จังหวัดเดียวกัน", () => {
   test("MAP-008 ทุกจุดอยู่กรุงเทพมหานคร หมุดเดียว ไม่มีเส้น และบอกว่าจัดส่งภายในจังหวัด", () => {
-    const route = deliveryRoute({
+    const route = routeOf({
       origin: "กรุงเทพมหานคร",
       history: ["กรุงเทพมหานคร", "กรุงเทพมหานคร", "กรุงเทพมหานคร"],
       destination: "กรุงเทพมหานคร",
@@ -76,7 +113,7 @@ describe("MAP-008 ต้นทางและปลายทางอยู่�
   });
 
   test("MAP-008 ออกไปนนทบุรีแล้วกลับมากรุงเทพมหานคร หมุด 2 จังหวัด เส้นทึบไปและกลับ", () => {
-    const route = deliveryRoute({
+    const route = routeOf({
       origin: "กรุงเทพมหานคร",
       history: ["กรุงเทพมหานคร", "นนทบุรี", "กรุงเทพมหานคร"],
       destination: "กรุงเทพมหานคร",
@@ -95,7 +132,7 @@ describe("MAP-008 ต้นทางและปลายทางอยู่�
 
 describe("MAP-009 แผนที่เมื่อการจัดส่งจบแล้ว", () => {
   test("MAP-009 ส่งสำเร็จ เส้นทึบจากเชียงใหม่ผ่านลำปางถึงกรุงเทพมหานคร ไม่มีเส้นประ", () => {
-    const route = deliveryRoute({
+    const route = routeOf({
       origin: "เชียงใหม่",
       history: ["เชียงใหม่", "เชียงใหม่", "ลำปาง", "กรุงเทพมหานคร", "กรุงเทพมหานคร"],
       destination: "กรุงเทพมหานคร",
@@ -112,7 +149,7 @@ describe("MAP-009 แผนที่เมื่อการจัดส่ง�
   });
 
   test("MAP-009 ส่งไม่สำเร็จที่ลำปาง มีหมุดปลายทางแต่ไม่มีเส้นประ", () => {
-    const route = deliveryRoute({
+    const route = routeOf({
       origin: "เชียงใหม่",
       history: ["เชียงใหม่", "เชียงใหม่", "ลำปาง", "ลำปาง", "ลำปาง"],
       destination: "กรุงเทพมหานคร",
@@ -138,7 +175,7 @@ describe("MAP-Q04 อ่านได้โดยไม่ต้องเห็�
       for (const origin of provinces) {
         for (const destination of provinces) {
           for (const history of histories) {
-            const route = deliveryRoute({ origin, history, destination, status });
+            const route = routeOf({ origin, history, destination, status });
             const text = routeText(route);
             for (const pin of route.pins) expect(text, `${origin} ${history} ${destination} ${status}`).toContain(pin.province);
             checked++;

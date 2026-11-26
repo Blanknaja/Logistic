@@ -51,7 +51,8 @@ export type TrackingView = {
   autoConfirmAt: string | null;
   history: TrackingHistoryEntry[];
   /** เส้นทางระดับจังหวัดของแผนที่การจัดส่งและข้อความเส้นทาง */
-  route: DeliveryRoute;
+  /** null เมื่อจังหวัดที่เก็บไว้ไม่อยู่ในรายชื่อจังหวัดจนวาดเส้นทางไม่ได้ */
+  route: DeliveryRoute | null;
 };
 
 /** " bs0000000123 " → "BS0000000123" หรือ null ถ้ารูปแบบผิด */

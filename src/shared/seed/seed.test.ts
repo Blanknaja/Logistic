@@ -117,6 +117,7 @@ describe("ข้อมูลตัวอย่าง", () => {
     expect(parcels.length).toBeGreaterThan(0);
     for (const { tracking_no } of parcels) {
       const route = getTrackingView(db, tracking_no, { id: admin.id, isAdmin: true, shopId: null })!.route;
+      if (!route) throw new Error(`${tracking_no} ไม่มีเส้นทาง`);
       for (const pin of route.pins) expect(routeText(route), tracking_no).toContain(pin.province);
     }
   });

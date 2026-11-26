@@ -1,4 +1,3 @@
-import type { PROVINCES } from "@/shared/provinces";
 import { PARCEL_STATUS, type ParcelStatus } from "@/shared/statuses";
 import { PROVINCE_POINTS } from "./province-points/points";
 
@@ -17,22 +16,27 @@ export type DeliveryRoute = {
   dashed: boolean;
 };
 
-const point = (province: string): RoutePoint => {
-  const [lat, lng] = PROVINCE_POINTS[province as (typeof PROVINCES)[number]];
+const known = (province: string | null): province is keyof typeof PROVINCE_POINTS =>
+  province !== null && Object.hasOwn(PROVINCE_POINTS, province);
+
+const point = (province: keyof typeof PROVINCE_POINTS): RoutePoint => {
+  const [lat, lng] = PROVINCE_POINTS[province];
   return { province, lat, lng };
 };
 
 /**
  * origin คือจังหวัดของที่อยู่ต้นทางของพัสดุ history คือจังหวัดของประวัติการจัดส่งจากเก่าไปใหม่
- * รายการที่ไม่มีจังหวัด (null) ถูกข้าม (MAP-007)
+ * รายการที่ไม่มีจังหวัด (null) หรือจังหวัดไม่อยู่ในรายชื่อจังหวัดถูกข้าม (MAP-007)
+ * ได้ null เมื่อไม่มีจังหวัดที่ผ่านมาแล้วเหลือเลย หรือจังหวัดปลายทางไม่อยู่ในรายชื่อจังหวัด
  */
 export function deliveryRoute(input: {
   origin: string;
   history: (string | null)[];
   destination: string;
   status: ParcelStatus;
-}): DeliveryRoute {
-  const provinces = [input.origin, ...input.history].filter((province) => province !== null);
+}): DeliveryRoute | null {
+  const provinces = [input.origin, ...input.history].filter(known);
+  if (provinces.length === 0 || !known(input.destination)) return null;
   const passed = provinces.filter((province, i) => province !== provinces[i - 1]).map(point);
   const latest = passed[passed.length - 1];
   const destination = point(input.destination);

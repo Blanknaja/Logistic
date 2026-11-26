@@ -720,10 +720,35 @@ describe("MAP แผนที่การจัดส่งบนหน้าต
     const view = getTrackingView(db, "BS0000000777", people.somying);
 
     expect(view?.history).toHaveLength(3);
-    expect(view?.route.pins.map((pin) => pin.province)).toEqual(["เชียงใหม่", "ลำปาง", "กรุงเทพมหานคร"]);
+    expect(view?.route?.pins.map((pin) => pin.province)).toEqual(["เชียงใหม่", "ลำปาง", "กรุงเทพมหานคร"]);
     const text = textOf((await openTracking("BS0000000777")).html);
     expect(text).toContain(ROUTE_TEXT);
     expect(text).toContain("รอร้านจัดของ 25 พ.ย. 09:00 · สมชายการช่าง ");
+  });
+
+  test("MAP-007 จังหวัดในประวัติที่ไม่อยู่ในรายชื่อจังหวัดถูกข้ามบนแผนที่และข้อความเส้นทาง หน้ายังเปิดได้", async () => {
+    addTrackedParcel({ history: [...LAMPANG_HISTORY, { ...LAMPANG_HISTORY[2], at: thai("2026-11-25T15:00"), province: "<b>ลำปาง</b>" }] });
+    signInAs(people.somying.id);
+
+    const { html } = await openTracking();
+
+    expect(textOf(html)).toContain(ROUTE_TEXT);
+    expect(html).toContain("&lt;b&gt;ลำปาง&lt;/b&gt;");
+    expect(html).not.toContain("<b>ลำปาง</b>");
+  });
+
+  test("MAP-007 จังหวัดของที่อยู่จัดส่งไม่อยู่ในรายชื่อจังหวัด หน้าไม่มีแผนที่และข้อความเส้นทาง ส่วนสถานะกับประวัติยังอยู่", async () => {
+    const order = addTrackedParcel({ history: LAMPANG_HISTORY });
+    db.prepare("UPDATE orders SET ship_province = 'กรุงเทพฯ' WHERE id = ?").run(order.id);
+    signInAs(people.somying.id);
+
+    const { html } = await openTracking();
+
+    expect(getTrackingView(db, "BS0000000123", people.somying)?.route).toBeNull();
+    expect(headingOf(html)).toBe("ติดตามพัสดุ BS0000000123 อยู่ระหว่างขนส่ง");
+    expect(textOf(html)).toContain("ศูนย์คัดแยกลำปาง · ลำปาง");
+    expect(html).not.toContain("data-delivery-map");
+    expect(textOf(html)).not.toContain(NOTICE);
   });
 
   test("MAP-009 พัสดุ ส่งไม่สำเร็จ ข้อความเส้นทางบอกปลายทางแยกต่างหาก และแผนที่ไม่มีเส้นประ", async () => {
@@ -739,7 +764,7 @@ describe("MAP แผนที่การจัดส่งบนหน้าต
     });
     signInAs(people.somying.id);
 
-    expect(getTrackingView(db, "BS0000000999", people.somying)?.route.dashed).toBe(false);
+    expect(getTrackingView(db, "BS0000000999", people.somying)?.route?.dashed).toBe(false);
     expect(textOf((await openTracking("BS0000000999")).html)).toContain("เชียงใหม่ → ลำปาง (ล่าสุด) · ปลายทาง กรุงเทพมหานคร");
   });
 });

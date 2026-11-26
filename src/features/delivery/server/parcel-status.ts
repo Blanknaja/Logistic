@@ -1,5 +1,6 @@
 import { randomInt } from "node:crypto";
 import type { CurrentAccount } from "@/features/account/server/sessions";
+import { notifyParcelStatusChanged } from "@/features/notification/server/events";
 import { releaseCancelledOrderStock } from "@/features/stock/server/reservation";
 import { transaction, type Db } from "@/shared/db";
 import { PROVINCES } from "@/shared/provinces";
@@ -231,6 +232,7 @@ export function changeParcelStatus(db: Db, input: StatusChangeInput, now: Date =
       db.prepare("UPDATE orders SET status = ? WHERE id = ?").run(ORDER_STATUS.shipping, parcel.order_id);
     }
     if (to === S.failed) cancelOrderOfFailedParcel(db, parcel.order_id, now);
+    notifyParcelStatusChanged(db, parcel.tracking_no, to, now);
     return { ok: true };
   });
 }

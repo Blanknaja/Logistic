@@ -7,6 +7,7 @@ import { dynamic } from "@/app/layout";
 vi.mock("next/font/google", () => ({ Noto_Sans_Thai_Looped: () => ({ variable: "" }), Noto_Serif_Thai: () => ({ variable: "" }) }));
 import { getProductDetail } from "@/features/browse/server/product-detail";
 import { parseBrowseParams, type RawSearchParams } from "@/features/browse/search-params";
+import { readSentence } from "@/features/browse/sentence";
 import { searchProducts } from "@/features/browse/server/search";
 import type { Db } from "@/shared/db";
 import { addProduct, addShop, type ProductInput } from "@/shared/db/builders";
@@ -256,6 +257,42 @@ describe("BRW-012 คำขอซ้ำ", () => {
 });
 
 describe("BRW-Q02 ผลลัพธ์ตรงกับเงื่อนไขครบทุกรายการ", () => {
+  test("SNT-007 คำค้นหลายคำ ชื่อสินค้าต้องมีทุกคำ คำเรียงสลับกันได้", () => {
+    product({ name: "รองเท้าแตะ กันน้ำ" });
+    product({ name: "รองเท้าหนัง หนังแท้" });
+    product({ name: "กระเป๋าเป้ กันน้ำ" });
+
+    expect(search({ q: "รองเท้า กันน้ำ" }).items.map((item) => item.name)).toEqual(["รองเท้าแตะ กันน้ำ"]);
+    expect(search({ q: "กันน้ำ   รองเท้า" }).total).toBe(1);
+    expect(search({ q: "รองเท้า ผ้าใบ" }).total).toBe(0);
+  });
+
+  test("SNT-Q01 ประโยคได้ผลลัพธ์ชุดเดียวกับการเลือกตัวกรองเอง", () => {
+    const categories = [
+      { id: 1, name: "เสื้อผ้าและแฟชั่น" },
+      { id: 2, name: "กระเป๋าและรองเท้า" },
+    ];
+    const names = ["รองเท้าแตะ กันน้ำ", "รองเท้าหนัง", "เสื้อยืด", "กระเป๋าเป้ กันน้ำ"];
+    for (let i = 0; i < 40; i++) product({ name: `${names[i % 4]} ${i}`, categoryId: (i % 2) + 1, price: 50 + i * 30 });
+
+    const cases: [string, RawSearchParams][] = [
+      ["รองเท้าไม่เกิน 500", { q: "รองเท้า", max: "500" }],
+      ["รองเท้า กันน้ำ ต่ำกว่า 1 พัน ถูกสุด", { q: "รองเท้า กันน้ำ", max: "999", sort: "price-asc" }],
+      ["หมวดรองเท้า 200 ถึง 800 บาท แพงสุด", { category: "2", min: "200", max: "800", sort: "price-desc" }],
+      ["เสื้อผ้าและแฟชั่น ตั้งแต่ 5 ร้อย", { category: "1", min: "500" }],
+      ["กันน้ำ 1k ขึ้นไป", { q: "กันน้ำ", min: "1000" }],
+    ];
+    for (const [text, raw] of cases) {
+      const sentence = readSentence(text, categories);
+      expect(sentence, text).not.toBeNull();
+      const got = searchProducts(db, { ...parseBrowseParams({}), ...sentence });
+      const expected = search(raw);
+      expect(expected.total, text).toBeGreaterThan(0);
+      expect(got.items.map((item) => item.id), text).toEqual(expected.items.map((item) => item.id));
+      expect(got.total, text).toBe(expected.total);
+    }
+  });
+
   test("ทุกชุดคำค้นและตัวกรอง ได้รายการเดียวกับการนับเอง", () => {
     const suspended = addShop(db, { status: "ถูกระงับ" }).id;
     const names = ["เสื้อ Polo", "เสื้อยืด", "กางเกง", "หมวก POLO", "ถุงเท้า"];

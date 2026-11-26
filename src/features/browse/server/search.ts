@@ -48,10 +48,11 @@ export function searchProducts(db: Db, params: BrowseParams): SearchResult {
 
   const where = ["p.status = ?", "s.status = ?"];
   const whereArgs: (string | number)[] = [PRODUCT_STATUS.onSale, SHOP_STATUS.open];
-  if (params.q) {
+  // ชื่อสินค้าต้องมีทุกคำ คำเรียงสลับกันได้ (SNT-007)
+  for (const word of params.q.split(/\s+/).filter(Boolean)) {
     // instr ไม่มีอักษรพิเศษแบบ LIKE ส่วน lower แปลงเฉพาะอักษรอังกฤษ
     where.push("instr(lower(p.name), lower(?)) > 0");
-    whereArgs.push(params.q);
+    whereArgs.push(word);
   }
   if (category) {
     where.push("p.category_id = ?");

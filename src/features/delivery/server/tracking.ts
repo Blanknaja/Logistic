@@ -8,6 +8,7 @@ import {
   type ReceiptConfirmedBy,
 } from "@/shared/statuses";
 import { deliveryRoute, type DeliveryRoute } from "./route";
+import { parseTrackingNo } from "@/features/delivery/tracking-no";
 
 export const PARCEL_NOT_FOUND = "ไม่พบพัสดุนี้";
 export const TRACKING_NO_FORMAT_ERROR = "เลขติดตามพัสดุต้องเป็น BS ตามด้วยตัวเลข 10 หลัก";
@@ -55,11 +56,7 @@ export type TrackingView = {
   route: DeliveryRoute | null;
 };
 
-/** " bs0000000123 " → "BS0000000123" หรือ null ถ้ารูปแบบผิด */
-export function parseTrackingNo(input: string): string | null {
-  const value = input.trim().toUpperCase();
-  return /^BS[0-9]{10}$/.test(value) ? value : null;
-}
+export { parseTrackingNo };
 
 type ParcelRow = {
   id: number;

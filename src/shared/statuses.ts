@@ -59,7 +59,14 @@ export const RECEIPT_CONFIRMED_BY = {
   system: "ระบบ",
 } as const;
 
+export const REVIEW_STATUS = {
+  visible: "แสดงอยู่",
+  hidden: "ถูกซ่อน",
+} as const;
+
 type ValueOf<T> = T[keyof T];
+
+export type ReviewStatus = ValueOf<typeof REVIEW_STATUS>;
 
 export type AccountStatus = ValueOf<typeof ACCOUNT_STATUS>;
 export type ShopStatus = ValueOf<typeof SHOP_STATUS>;

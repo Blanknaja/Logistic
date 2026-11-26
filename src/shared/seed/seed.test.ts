@@ -160,6 +160,10 @@ describe("ข้อมูลตัวอย่าง", () => {
       expect(entry, file).toMatch(/^ {2}ที่มา: https:\/\/\S+/m);
       expect(entry, file).toMatch(/^ {2}ผู้สร้าง: \S/m);
       expect(entry, file).toMatch(/^ {2}สัญญาอนุญาต: (CC0 1\.0|สาธารณสมบัติ)/m);
+      // ป้ายที่เป็นสาธารณสมบัติเฉพาะในสหรัฐอเมริกา หรือครอบคลุมแค่ภาพของงานสองมิติ ใช้ไม่ได้
+      expect(entry, file).not.toMatch(/\{\{PD-(US-|Art)/);
+      // ป้าย Pixabay ต้องมีชื่อผู้ตรวจและวันที่ตรวจสัญญาอนุญาตของ Wikimedia Commons
+      if (entry?.includes("{{Pixabay")) expect(entry, file).toMatch(/\{\{Pixabay\|[^}]*status=confirmed\|reviewer=[^|}]+\|date=\d{4}-\d{2}-\d{2}\}\}/);
     }
     for (const [name, files] of Object.entries(SAMPLE_PHOTOS)) {
       for (const file of files!) expect(entries.get(file), file).toContain(`\n  สินค้า: ${name}\n`);

@@ -2,12 +2,6 @@
 สัญญาอนุญาตอ่านจากหน้าของไฟล์นั้นเอง ทั้งป้ายสัญญาอนุญาตในเนื้อหน้าและข้อมูลสัญญาอนุญาตของหน้า เมื่อ 2026-11-25
 ย่อให้ด้านยาวไม่เกิน 1000 จุด บีบอัดเป็น JPEG ใหม่ และลบข้อมูล EXIF ไฟล์ที่เขียนว่า "ตัดขอบ" ตัดเฉพาะขอบรูป
 
-baby-blanket.jpg
-  สินค้า: ผ้าห่มเด็ก
-  ที่มา: https://commons.wikimedia.org/wiki/File:The_Loomette_Handbook;_New_weaves,_vogues,_and_suggestions;_1938_(page_14_crop_to_%22Little_Princess_Baby_Set%22_baby_blanket).jpg
-  ผู้สร้าง: Loomette Studios
-  สัญญาอนุญาต: สาธารณสมบัติ (ป้าย {{PD-US-not}})
-
 baby-clothes.jpg
   สินค้า: ชุดเด็กอ่อน
   ที่มา: https://commons.wikimedia.org/wiki/File:Lace_bodysuits_among_other_items_for_newborn_photography_-_20241116.jpg
@@ -54,19 +48,13 @@ coffee.jpg
   สินค้า: กาแฟคั่วบด
   ที่มา: https://commons.wikimedia.org/wiki/File:Coffee-206142.jpg
   ผู้สร้าง: Elias Shariff Falla Mardini ( eliasfalla )
-  สัญญาอนุญาต: CC0 1.0 (ป้าย {{Pixabay|1=206142|status=confirmed}})
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{Pixabay|1=206142|status=confirmed|reviewer=INeverCry|date=2016-01-10}}) ผู้ตรวจสัญญาอนุญาตของ Wikimedia Commons ยืนยันว่าไฟล์นี้เป็น CC0 ที่ Pixabay ตรวจหน้าของไฟล์เมื่อ 2026-11-26
 
 colored-pencils.jpg
   สินค้า: ดินสอสี
   ที่มา: https://commons.wikimedia.org/wiki/File:Colored_pencils_lined_up_on_pink_surface.jpg
   ผู้สร้าง: Artsy Crafty
   สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
-
-cookbook.jpg
-  สินค้า: หนังสือสอนทำอาหาร
-  ที่มา: https://commons.wikimedia.org/wiki/File:Suffrage_Cookbook_cover,_edited_by_Mrs._L._O._Kleber_1915.jpg
-  ผู้สร้าง: Unknown author
-  สัญญาอนุญาต: สาธารณสมบัติ (ป้าย {{PD-US-expired}})
 
 desk-fan.jpg
   สินค้า: พัดลมตั้งโต๊ะ
@@ -186,7 +174,7 @@ keyboard.jpg
   สินค้า: คีย์บอร์ด
   ที่มา: https://commons.wikimedia.org/wiki/File:Keyboard_Close_Up.jpg
   ผู้สร้าง: Alexander-design
-  สัญญาอนุญาต: CC0 1.0 (ป้าย {{Pixabay|1983410|status=confirmed}})
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{Pixabay|1983410|status=confirmed|reviewer=Mdaniels5757|date=2020-05-12}}) ผู้ตรวจสัญญาอนุญาตของ Wikimedia Commons ยืนยันว่าไฟล์นี้เป็น CC0 ที่ Pixabay ตรวจหน้าของไฟล์เมื่อ 2026-11-26
 
 keychain-2.jpg
   สินค้า: พวงกุญแจ
@@ -374,12 +362,6 @@ umbrella.jpg
   ผู้สร้าง: Swethasakthivel
   สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
 
-wallet.jpg
-  สินค้า: กระเป๋าสตางค์
-  ที่มา: https://commons.wikimedia.org/wiki/File:Wallet_Made_by_Laura_A._Phelps_for_her_Father.jpg
-  ผู้สร้าง: Phelps, Laura A., 1803-
-  สัญญาอนุญาต: สาธารณสมบัติ (ป้าย {{PD-Art}}) ตัดขอบ
-
 water-bottle.jpg
   สินค้า: ขวดน้ำกีฬา
   ที่มา: https://commons.wikimedia.org/wiki/File:A_bottle_of_cold_water_with_droplets.jpg
@@ -394,3 +376,4 @@ wooden-toy.jpg
 
 CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/legalcode ใช้ได้โดยไม่ต้องให้เครดิต
 สาธารณสมบัติ: ไม่มีลิขสิทธิ์ตามป้ายในหน้าของไฟล์ ใช้ได้โดยไม่ต้องขออนุญาต
+ใช้เฉพาะ CC0 หรือสาธารณสมบัติที่ไม่จำกัดประเทศ ไม่ใช้ป้ายที่เป็นสาธารณสมบัติเฉพาะในสหรัฐอเมริกา ({{PD-US-not}} {{PD-US-expired}}) และไม่ใช้ {{PD-Art}} กับรูปถ่ายของวัตถุสามมิติ

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { searchPreview, SENTENCE_HINT } from "@/features/browse/components/search-bar";
 import { readSentence, understoodLabels } from "@/features/browse/sentence";
 
 const categories = [
@@ -87,6 +88,35 @@ describe("readSentence", () => {
     expect(read("หมวดสัตว์เลี้ยง 100 ถึง 500 แพงสุด")).toEqual({ q: "", category: "11", min: 100, max: 500, sort: "price-desc" });
   });
 
+  test("SNT-003 ตัวเลขที่เป็นขนาด น้ำหนัก หรือเบอร์ ไม่ใช่ราคา", () => {
+    for (const text of [
+      "ดัมเบล น้ำหนักไม่เกิน 5 kg",
+      "สายชาร์จ ยาวเกิน 2 เมตร",
+      "รองเท้าเบอร์ 42 ถึง 44",
+      "ทีวี 50 นิ้วขึ้นไป",
+      "ไม่เกิน 99999999999999999999999",
+    ]) {
+      expect(read(text), text).toBeNull();
+    }
+    expect(read("แบตสำรอง 10000 ถึง 20000 mAh ไม่เกิน 900")).toEqual({ q: "แบตสำรอง 10000 ถึง 20000 mAh", max: 900 });
+  });
+
+  test("คำที่ซ้อนกันไม่ถูกอ่านสองความหมาย", () => {
+    expect(read("เสื้อ ไม่เกิน 500 ไม่เกิน 300")).toEqual({ q: "เสื้อ ไม่เกิน 300", max: 500 });
+    expect(read("ตั้งแต่ 100 ถึง 500")).toEqual({ q: "", min: 100, max: 500 });
+    expect(read("เสื้อถูกสุดๆ")).toEqual({ q: "เสื้อ", sort: "price-asc" });
+    expect(read("เสื้อตั้งแต่ 100 ถึง 300")).toEqual({ q: "เสื้อ", min: 100, max: 300 });
+    expect(read("เสื้อ ราคา 100 กับ 300")).toEqual({ q: "เสื้อ", min: 100, max: 300 });
+    expect(read("รองเท้า เรียงตามราคา ถูกสุด")).toEqual({ q: "รองเท้า", sort: "price-asc" });
+    expect(read("รองเท้า เรียง ถูกสุด ก่อน")).toEqual({ q: "รองเท้า", sort: "price-asc" });
+    expect(read("เสื้อ ๕ ตัว ไม่เกิน ๕๐๐")).toEqual({ q: "เสื้อ ๕ ตัว", max: 500 });
+    expect(read("ไซส์ 38 ถึง 42")).toBeNull();
+    expect(read("ไม่เกิน 500พันธุ์ไม้")).toEqual({ q: "พันธุ์ไม้", max: 500 });
+    expect(read("ต่ำกว่า 99.50")).toEqual({ q: "", max: 99 });
+    expect(read("มากกว่า 99.50")).toEqual({ q: "", min: 100 });
+    expect(readSentence("หมวดอะไรก็ได้ ถูกสุด", [{ id: 9, name: "และของแถม" }])).toEqual({ q: "หมวดอะไรก็ได้", sort: "price-asc" });
+  });
+
   test("SNT-009 ไม่เข้าใจอะไรเลย ได้ null และคำค้นใช้ตามที่พิมพ์", () => {
     for (const text of ["", "เสื้อยืด", "สาย USB 2 เมตร", "iPhone 12-13", "เบอร์ 42", "ราคา", "ไม่เกิน", "เกินคุ้ม", "ถูก", "ไม่เกิน ห้าร้อย", "ขอของดีๆ หน่อย"]) {
       expect(read(text), text).toBeNull();
@@ -112,5 +142,14 @@ describe("understoodLabels", () => {
     ]);
     expect(understoodLabels(read("100 ถึง 300")!, categories)).toEqual(["ราคา ฿100 ถึง ฿300"]);
     expect(understoodLabels(read("ตั้งแต่ 100")!, categories)).toEqual(["ราคาตั้งแต่ ฿100"]);
+  });
+});
+
+describe("searchPreview", () => {
+  test("SNT-011 ประโยคบอกว่าจะค้นอะไร เลขพัสดุบอกว่าจะเปิดหน้าติดตามพัสดุ คำค้นธรรมดาไม่บอกอะไร", () => {
+    expect(searchPreview(" รองเท้าไม่เกิน 500 ", categories)).toEqual({ lead: "จะค้นหา", detail: "“รองเท้า” · ราคาไม่เกิน ฿500" });
+    expect(searchPreview("bs0000000123", categories)).toEqual({ lead: "จะเปิดหน้าติดตามพัสดุ", detail: "BS0000000123" });
+    expect(searchPreview("รองเท้า", categories)).toBeNull();
+    expect(SENTENCE_HINT).toContain("รองเท้าไม่เกิน 500 ถูกสุด");
   });
 });

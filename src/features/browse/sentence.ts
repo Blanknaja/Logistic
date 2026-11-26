@@ -1,8 +1,12 @@
 import { priceLabel, sortLabel, type Sort } from "@/features/browse/search-params";
+import type { Category } from "@/features/product-listing/server/categories";
 
 // อ่านประโยคในช่องค้นหาเป็นคำค้นกับตัวกรอง (SNT) ไฟล์นี้ใช้ทั้งฝั่งเซิร์ฟเวอร์และในเบราว์เซอร์
 
-type Category = { id: number; name: string };
+
+// ตัวเลขที่ตามด้วยหน่วยวัดหรือนำด้วยคำบอกขนาด เป็นขนาดของสินค้า ไม่ใช่ราคา (SNT-003)
+const MEASURE = String.raw`(?!\s*(?:kg|g\b|กก|ก\.ก|กิโล|กรัม|เมตร|ม\.|ซม|cm|mm|นิ้ว|ลิตร|ml|มล|mah|gb|tb|วัตต์|ชิ้น|คู่|เบอร์))`;
+const NOT_SIZE = String.raw`(?<!(?:เบอร์|ไซส์|ขนาด|รุ่น|size)\s*)`;
 
 /** สิ่งที่อ่านได้จากประโยค ช่องที่ไม่มีคือประโยคไม่ได้พูดถึง */
 export type Sentence = {
@@ -16,27 +20,28 @@ export type Sentence = {
 
 const UNITS: Record<string, number> = { ร้อย: 100, พัน: 1_000, หมื่น: 10_000, แสน: 100_000, ล้าน: 1_000_000, k: 1_000 };
 
-const AMOUNT = String.raw`฿?\s*(\d[\d,]*(?:\.\d+)?)\s*(ร้อย|พัน|หมื่น|แสน|ล้าน|k)?`;
+const AMOUNT = String.raw`฿?\s*(?<![\d.,])(\d[\d,]{0,9}(?:\.\d+)?)(?![\d.,])\s*(ร้อย|พัน(?!ธุ์)|หมื่น|แสน|ล้าน|k(?![a-z]))?${MEASURE}`;
 const BAHT = String.raw`\s*(?:บาท|฿|บ\.)`;
-const SORT_LEAD = String.raw`(?:เรียง(?:จาก|ตาม)?\s*)?(?:ราคา)?`;
+const SORT_LEAD = String.raw`(?:เรียง(?:จาก|ตาม)?\s*)?(?:ราคา\s*)?`;
+const SORT_TAIL = String.raw`ๆ?(?:\s*ก่อน)?`;
 
 const RANGES = [
-  new RegExp(String.raw`(?:ราคา\s*)?ระหว่าง\s*${AMOUNT}(?:${BAHT})?\s*(?:ถึง|กับ|และ|[-–])\s*${AMOUNT}(?:${BAHT})?`, "i"),
-  new RegExp(String.raw`ราคา\s*${AMOUNT}(?:${BAHT})?\s*(?:ถึง|[-–])\s*${AMOUNT}(?:${BAHT})?`, "i"),
-  new RegExp(String.raw`${AMOUNT}(?:${BAHT})?\s*ถึง\s*${AMOUNT}(?:${BAHT})?`, "i"),
+  new RegExp(String.raw`(?:ราคา\s*)?(?:ระหว่าง|ตั้งแต่)\s*${AMOUNT}(?:${BAHT})?\s*(?:ถึง|กับ|และ|[-–])\s*${AMOUNT}(?:${BAHT})?`, "i"),
+  new RegExp(String.raw`ราคา\s*${AMOUNT}(?:${BAHT})?\s*(?:ถึง|กับ|และ|[-–])\s*${AMOUNT}(?:${BAHT})?`, "i"),
+  new RegExp(String.raw`${NOT_SIZE}${AMOUNT}(?:${BAHT})?\s*ถึง\s*${AMOUNT}(?:${BAHT})?`, "i"),
   // ขีดอย่างเดียวอาจเป็นรุ่นหรือขนาดของสินค้า จึงต้องมีคำว่าบาทตามหลัง
   new RegExp(String.raw`${AMOUNT}\s*[-–]\s*${AMOUNT}${BAHT}`, "i"),
 ];
 const MAX = new RegExp(String.raw`(?:ราคา\s*)?(ไม่เกิน|งบไม่เกิน|งบ|ไม่ถึง|ต่ำกว่า|ถูกกว่า|น้อยกว่า)\s*${AMOUNT}(?:${BAHT})?`, "i");
-const MIN = new RegExp(String.raw`(?:ราคา\s*)?(ตั้งแต่|อย่างน้อย|มากกว่า|แพงกว่า|เกิน)\s*${AMOUNT}(?:${BAHT})?`, "i");
-const MIN_AFTER = new RegExp(String.raw`${AMOUNT}(?:${BAHT})?\s*ขึ้นไป`, "i");
+const MIN = new RegExp(String.raw`(?:ราคา\s*)?(ตั้งแต่|อย่างน้อย|มากกว่า|แพงกว่า|(?<!ไม่)เกิน)\s*${AMOUNT}(?:${BAHT})?`, "i");
+const MIN_AFTER = new RegExp(String.raw`${NOT_SIZE}${AMOUNT}(?:${BAHT})?\s*ขึ้นไป`, "i");
 const BELOW = new Set(["ไม่ถึง", "ต่ำกว่า", "ถูกกว่า", "น้อยกว่า"]);
 const ABOVE = new Set(["มากกว่า", "แพงกว่า", "เกิน"]);
 
 const SORTS: [Sort, RegExp][] = [
-  ["price-asc", new RegExp(String.raw`${SORT_LEAD}ถูก(?:ที่)?สุด(?:ก่อน)?`)],
-  ["price-desc", new RegExp(String.raw`${SORT_LEAD}แพง(?:ที่)?สุด(?:ก่อน)?`)],
-  ["newest", /(?:เรียง(?:จาก|ตาม)?\s*)?(?:ใหม่ล่าสุด|ใหม่(?:ที่)?สุด|มาใหม่)(?:ก่อน)?/],
+  ["price-asc", new RegExp(String.raw`${SORT_LEAD}ถูก(?:ที่)?สุด${SORT_TAIL}`)],
+  ["price-desc", new RegExp(String.raw`${SORT_LEAD}แพง(?:ที่)?สุด${SORT_TAIL}`)],
+  ["newest", new RegExp(String.raw`${SORT_LEAD}(?:ใหม่ล่าสุด|ใหม่(?:ที่)?สุด|มาใหม่)${SORT_TAIL}`)],
 ];
 
 const amount = (digits: string, unit: string | undefined) =>
@@ -53,7 +58,7 @@ function readCategory(text: string, categories: Category[]): { id: number; found
   if (categories.length === 0) return null;
   const byName = new Map<string, number>();
   for (const category of categories) {
-    for (const part of category.name.split("และ")) byName.set(part, category.id);
+    for (const part of category.name.split("และ").filter(Boolean)) byName.set(part, category.id);
   }
   for (const category of categories) byName.set(category.name, category.id);
 
@@ -72,11 +77,17 @@ function readCategory(text: string, categories: Category[]): { id: number; found
  * ซึ่งหมายถึงใช้ทั้งประโยคเป็นคำค้นตามเดิม (SNT-009)
  */
 export function readSentence(input: string, categories: Category[]): Sentence | null {
-  let text = input.replace(/[๐-๙]/g, (digit) => String(digit.charCodeAt(0) - "๐".charCodeAt(0)));
+  // จับรูปแบบบนข้อความที่แปลงเลขไทยแล้ว แต่ตัดจากข้อความเดิม คำค้นที่เหลือจึงเป็นตามที่ผู้ซื้อพิมพ์ สองข้อความยาวเท่ากันเสมอ
+  let text = input;
+  let plain = input.replace(/[๐-๙]/g, (digit) => String(digit.charCodeAt(0) - "๐".charCodeAt(0)));
   const found: Omit<Sentence, "q"> = {};
+  const cut = (from: string, start: number, length: number) => `${from.slice(0, start)} ${from.slice(start + length)}`;
   const take = (pattern: RegExp) => {
-    const match = pattern.exec(text);
-    if (match) text = `${text.slice(0, match.index)} ${text.slice(match.index + match[0].length)}`;
+    const match = pattern.exec(plain);
+    if (match) {
+      text = cut(text, match.index, match[0].length);
+      plain = cut(plain, match.index, match[0].length);
+    }
     return match;
   };
 
@@ -110,7 +121,7 @@ export function readSentence(input: string, categories: Category[]): Sentence | 
   const category = readCategory(text, categories);
   if (category) {
     found.category = String(category.id);
-    text = text.replace(category.found, " ");
+    text = cut(text, text.indexOf(category.found), category.found.length);
   }
 
   if (Object.keys(found).length === 0) return null;

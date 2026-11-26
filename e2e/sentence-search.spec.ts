@@ -72,12 +72,28 @@ test("SNT-006 หมวดหมู่ในประโยค เลือก�
   await expect(page.getByRole("navigation", { name: "หมวดหมู่" }).getByRole("link", { name: "สัตว์เลี้ยง" })).toHaveAttribute("aria-current", "page");
 });
 
-test("SNT-009 ช่วงราคาในประโยคกลับด้าน บอกข้อผิดพลาดใต้ช่องราคาเหมือนกรอกเอง", async ({ page }) => {
+test("SNT-008 ช่วงราคาในประโยคกลับด้าน บอกข้อผิดพลาดใต้ช่องราคาเหมือนกรอกเอง", async ({ page }) => {
   await page.goto("/");
   await searchBox(page).fill("เสื้อ 500 ถึง 100");
   await searchBox(page).press("Enter");
 
   await expect(page.getByText("ราคาต่ำสุดต้องไม่มากกว่าราคาสูงสุด")).toBeVisible();
+  await expect(page.getByRole("link", { name: /^เอา ราคา/ })).toHaveCount(0);
+});
+
+test("SNT-002 ราคาในประโยคเกิน 1,000,000 บาท บอกข้อผิดพลาดใต้ช่องราคา", async ({ page }) => {
+  await page.goto("/");
+  await searchBox(page).fill("หูฟังตั้งแต่ 2000000");
+  await searchBox(page).press("Enter");
+
+  await expect(page.getByText("ราคาต้องไม่เกิน 1,000,000 บาท")).toBeVisible();
+});
+
+test("SNT-005 ประโยคที่บอกการเรียง ช่องเลือกการเรียงแสดงแบบนั้น และค่าจากประโยคชนะตัวกรองในที่อยู่ของหน้า", async ({ page }) => {
+  await page.goto(`/?q=${encodeURIComponent(SENTENCE)}&max=9000&sort=price-desc`);
+
+  await expect(page.getByLabel("เรียงตาม")).toHaveValue("price-asc");
+  await expect(page.getByLabel("ราคาสูงสุด")).toHaveValue("500");
 });
 
 test("SNT-010 เลขติดตามพัสดุในช่องค้นหาสินค้า พาไปหน้าติดตามพัสดุ", async ({ page }) => {
@@ -91,7 +107,8 @@ test("SNT-010 เลขติดตามพัสดุในช่องค้
   await expect(preview(page)).toHaveText("จะเปิดหน้าติดตามพัสดุ BS0000000001");
   await searchBox(page).press("Enter");
 
-  await expect(page).toHaveURL(/\/track(\?no=|\/)BS0000000001$/);
+  await expect(page).toHaveURL(/\/track\?no=BS0000000001$/);
+  await expect(page.getByRole("main")).toContainText("ไม่พบ");
 });
 
 test("ประโยคทำงานแม้ JavaScript ของแอปโหลดไม่ได้", async ({ page }) => {
@@ -99,6 +116,8 @@ test("ประโยคทำงานแม้ JavaScript ของแอป�
   await page.goto(`/?q=${encodeURIComponent(SENTENCE)}`);
 
   await expect(page.getByRole("link", { name: "เอา ราคาไม่เกิน ฿500 ออก" })).toBeVisible();
+  await searchBox(page).focus();
+  await expect(preview(page)).toBeHidden();
 });
 
 test("SNT-Q02 หน้าผลลัพธ์ของประโยคแสดงภายใน 2 วินาที ใน 95 จาก 100 ครั้ง", async ({ request }) => {

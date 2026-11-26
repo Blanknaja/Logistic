@@ -3,7 +3,7 @@ import { BrowseResults } from "@/features/browse/components/browse-results";
 import { parseBrowseParams } from "@/features/browse/search-params";
 import { readSentence } from "@/features/browse/sentence";
 import { searchProducts } from "@/features/browse/server/search";
-import { parseTrackingNo } from "@/features/delivery/server/tracking";
+import { parseTrackingNo } from "@/features/delivery/tracking-no";
 import { listCategories } from "@/features/product-listing/server/categories";
 import { getDb } from "@/shared/db";
 

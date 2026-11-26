@@ -2,7 +2,7 @@
 
 import Form from "next/form";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { MAX_QUERY_LENGTH, normalizeQuery } from "@/features/browse/search-params";
 import { readSentence, understoodLabels } from "@/features/browse/sentence";
 import { parseTrackingNo } from "@/features/delivery/tracking-no";
@@ -28,13 +28,17 @@ export function SearchBar({ categories }: { categories: Category[] }) {
   const pathname = usePathname();
   // หน้าอื่นใช้ q เป็นคำค้นของตัวเอง เช่นสินค้าของร้าน จึงเติมคำค้นเฉพาะหน้าผลการค้นหา
   const q = pathname === "/" ? normalizeQuery(params?.get("q") ?? "") : "";
-  // เปลี่ยนหน้าแล้วเริ่มใหม่ ข้อความที่พิมพ์ค้างไว้จึงไม่ตามไปหน้าถัดไป
+  // หน้าหรือคำค้นในที่อยู่เปลี่ยนแล้วเริ่มใหม่ แถบบอกก่อนกดค้นหาจึงไม่ค้างข้อความของการค้นหาครั้งก่อน
   return <SearchForm key={`${pathname}?${q}`} q={q} categories={categories} />;
 }
 
+const noSubscribe = () => () => {};
+
 function SearchForm({ q, categories }: { q: string; categories: Category[] }) {
   const [text, setText] = useState(q);
-  const preview = searchPreview(text, categories);
+  // แถบนี้ตามข้อความที่พิมพ์ จึงมีเฉพาะเมื่อสคริปต์ของหน้าทำงานแล้ว ไม่อย่างนั้นจะค้างข้อความเดิม (SNT-011)
+  const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const preview = hydrated ? searchPreview(text, categories) : null;
   return (
     <>
       <Form action="/" role="search" className="header-search">
@@ -43,6 +47,9 @@ function SearchForm({ q, categories }: { q: string; categories: Category[] }) {
           name="q"
           defaultValue={q}
           onChange={(event) => setText(event.target.value)}
+          // เบราว์เซอร์เติมข้อความเดิมให้เองตอนย้อนกลับ โดยไม่แจ้ง onChange
+          onFocus={(event) => setText(event.target.value)}
+          aria-describedby="search-preview"
           maxLength={MAX_QUERY_LENGTH}
           enterKeyHint="search"
           className="input"
@@ -60,12 +67,13 @@ function SearchForm({ q, categories }: { q: string; categories: Category[] }) {
         </button>
       </Form>
       {/* CSS แสดงแถบนี้เฉพาะตอนที่ช่องค้นหาถูกเลือกอยู่ และมีข้อความข้างใน */}
-      <div className="search-preview" role="status">
+      <div id="search-preview" className="search-preview" role="status">
         {preview ? (
           <p className="container">
             <span>{preview.lead}</span> {preview.detail}
           </p>
         ) : (
+          hydrated &&
           text.trim() === "" && (
             <p className="container">
               <span>{SENTENCE_HINT}</span>

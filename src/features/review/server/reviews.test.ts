@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { MESSAGES } from "@/features/review/rules";
 import type { Db } from "@/shared/db";
 import { addAccount, addOrder, addProduct, addShop } from "@/shared/db/builders";
@@ -569,5 +569,45 @@ describe("REV-Q02 ความถูกต้องของคะแนนเ�
     check();
     unhideReview(db, { adminAccountId: wichai, reviewId: sent.reviewId });
     check();
+  });
+});
+
+describe("รายการรีวิวอ่านฐานข้อมูลจำนวนครั้งคงที่", () => {
+  test("REV-007 REV-014 REV-016 รายการ 12 รีวิวที่มีรูปใช้คำสั่งอ่านไม่เกิน 3 ครั้ง ไม่เพิ่มตามจำนวนรีวิว และได้รูปกับตัวเลขถูกต้อง", () => {
+    const urls = [1, 2].map(() => {
+      const saved = saveReviewImage(db, somying, PNG);
+      if (!saved.ok) throw new Error(saved.error);
+      return saved.url;
+    });
+    for (let i = 0; i < 12; i++) reviewed(screwdriver.variantIds[0], 5, { images: i === 0 ? urls : [`/review-images/x${i}`], reply: i < 4 ? { body: "ขอบคุณครับ" } : undefined });
+    const hiddenOne = reviewed(screwdriver.variantIds[0], 1);
+    hideReview(db, { adminAccountId: wichai, reviewId: hiddenOne.id, reason: "ใช้คำหยาบ" });
+
+    const queries = vi.spyOn(db, "prepare");
+    const counted = <T>(read: () => T) => {
+      queries.mockClear();
+      const result = read();
+      return { result, queries: queries.mock.calls.length };
+    };
+
+    const product = counted(() => listProductReviews(db, screwdriver.id));
+    expect(product.queries).toBeLessThanOrEqual(3);
+    expect(product.result.total).toBe(12);
+    expect(product.result.reviews).toHaveLength(10);
+    expect(product.result.reviews.every((review) => review.images.length === 1)).toBe(true);
+
+    const shop = counted(() => listShopReviews(db, somchaiShop));
+    expect(shop.queries).toBeLessThanOrEqual(3);
+    expect(shop.result).toMatchObject({ total: 13, counts: { all: 13, unanswered: 8 } });
+    expect(shop.result.reviews.at(-1)?.images).toEqual(urls);
+
+    const unanswered = counted(() => listShopReviews(db, somchaiShop, { unanswered: true }));
+    expect(unanswered.queries).toBeLessThanOrEqual(3);
+    expect(unanswered.result).toMatchObject({ total: 8, counts: { all: 13, unanswered: 8 } });
+
+    const all = counted(() => listAllReviews(db, { status: REVIEW_STATUS.hidden }));
+    expect(all.queries).toBeLessThanOrEqual(3);
+    expect(all.result).toMatchObject({ total: 1, counts: { all: 13, visible: 12, hidden: 1 } });
+    expect(counted(() => listAllReviews(db)).result.total).toBe(13);
   });
 });

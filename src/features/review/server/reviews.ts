@@ -282,9 +282,22 @@ type ListedRow = ReviewRow & { display_name: string; product_name: string; varia
 
 type Audience = "public" | "shop" | "admin";
 
-/** หน้าที่ขอเกินหน้าสุดท้าย ได้หน้าสุดท้ายที่มีอยู่จริง (REV-007) */
-function listReviews(db: Db, audience: Audience, where: string, args: (string | number)[], page: number, pageSize: number) {
-  const total = Number(db.prepare(`SELECT count(*) AS n FROM reviews r WHERE ${where}`).get(...args)?.n);
+/** รูปของหลายรีวิวในคำสั่งอ่านเดียว */
+function imagesByReview(db: Db, reviewIds: number[]): Map<number, string[]> {
+  const images = new Map<number, string[]>();
+  if (reviewIds.length === 0) return images;
+  const rows = db
+    .prepare(`SELECT review_id, url FROM review_images WHERE review_id IN (${reviewIds.map(() => "?").join(", ")}) ORDER BY review_id, position`)
+    .all(...reviewIds) as { review_id: number; url: string }[];
+  for (const row of rows) images.set(row.review_id, [...(images.get(row.review_id) ?? []), row.url]);
+  return images;
+}
+
+const countWhere = (db: Db, where: string, ...args: (string | number)[]) =>
+  Number(db.prepare(`SELECT count(*) AS n FROM reviews r WHERE ${where}`).get(...args)?.n);
+
+/** total คือจำนวนรีวิวที่ตรงกับ where หน้าที่ขอเกินหน้าสุดท้าย ได้หน้าสุดท้ายที่มีอยู่จริง (REV-007) */
+function listReviews(db: Db, audience: Audience, where: string, args: (string | number)[], total: number, page: number, pageSize: number) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const shown = Math.min(Number.isSafeInteger(page) && page >= 1 ? page : 1, totalPages);
   const rows = db
@@ -300,6 +313,7 @@ function listReviews(db: Db, audience: Audience, where: string, args: (string | 
        LIMIT ? OFFSET ?`,
     )
     .all(...args, pageSize, (shown - 1) * pageSize) as ListedRow[];
+  const images = imagesByReview(db, rows.map((row) => row.id));
   const reviews: ListedReview[] = rows.map((row) => ({
     id: row.id,
     productId: row.product_id,
@@ -310,7 +324,7 @@ function listReviews(db: Db, audience: Audience, where: string, args: (string | 
     author: audience === "admin" ? row.display_name : maskName(row.display_name),
     rating: row.rating,
     body: row.body,
-    images: imagesOf(db, row.id),
+    images: images.get(row.id) ?? [],
     createdAt: row.created_at,
     edited: row.edited_at !== null,
     status: row.status,
@@ -321,9 +335,6 @@ function listReviews(db: Db, audience: Audience, where: string, args: (string | 
   return { reviews, total, page: shown, totalPages };
 }
 
-const countWhere = (db: Db, where: string, ...args: (string | number)[]) =>
-  Number(db.prepare(`SELECT count(*) AS n FROM reviews r WHERE ${where}`).get(...args)?.n);
-
 /** รีวิวที่ `แสดงอยู่` ของสินค้า ล่าสุดก่อน หน้าละ 10 รีวิว กรองตามจำนวนดาวได้ (REV-007 REV-008) */
 export function listProductReviews(db: Db, productId: number, options: { stars?: number | null; page?: number } = {}) {
   const where = ["r.product_id = ?", "r.status = ?"];
@@ -332,7 +343,8 @@ export function listProductReviews(db: Db, productId: number, options: { stars?:
     where.push("r.rating = ?");
     args.push(options.stars);
   }
-  return listReviews(db, "public", where.join(" AND "), args, options.page ?? 1, PRODUCT_REVIEWS_PAGE_SIZE);
+  const filter = where.join(" AND ");
+  return listReviews(db, "public", filter, args, countWhere(db, filter, ...args), options.page ?? 1, PRODUCT_REVIEWS_PAGE_SIZE);
 }
 
 const UNANSWERED = "r.shop_id = ? AND r.status = ? AND r.reply_body IS NULL";
@@ -342,23 +354,24 @@ export const countUnansweredReviews = (db: Db, shopId: number) => countWhere(db,
 
 /** รีวิวของสินค้าในร้านนี้ทุกสถานะ ล่าสุดก่อน หน้าละ 20 รีวิว (REV-014) */
 export function listShopReviews(db: Db, shopId: number, options: { unanswered?: boolean; page?: number } = {}) {
+  const row = db
+    .prepare("SELECT count(*) AS total, coalesce(sum(status = ? AND reply_body IS NULL), 0) AS unanswered FROM reviews WHERE shop_id = ?")
+    .get(REVIEW_STATUS.visible, shopId);
+  const counts = { all: Number(row?.total), unanswered: Number(row?.unanswered) };
   const list = options.unanswered
-    ? listReviews(db, "shop", UNANSWERED, [shopId, REVIEW_STATUS.visible], options.page ?? 1, PAGE_SIZE)
-    : listReviews(db, "shop", "r.shop_id = ?", [shopId], options.page ?? 1, PAGE_SIZE);
-  return { ...list, counts: { all: countWhere(db, "r.shop_id = ?", shopId), unanswered: countUnansweredReviews(db, shopId) } };
+    ? listReviews(db, "shop", UNANSWERED, [shopId, REVIEW_STATUS.visible], counts.unanswered, options.page ?? 1, PAGE_SIZE)
+    : listReviews(db, "shop", "r.shop_id = ?", [shopId], counts.all, options.page ?? 1, PAGE_SIZE);
+  return { ...list, counts };
 }
 
 /** รีวิวของทุกร้านสำหรับหน้าจัดการรีวิว ล่าสุดก่อน หน้าละ 20 รีวิว ชื่อผู้ซื้อเป็นชื่อเต็ม (REV-016) */
 export function listAllReviews(db: Db, options: { status?: ReviewStatus | null; page?: number } = {}) {
+  const row = db.prepare("SELECT count(*) AS total, coalesce(sum(status = ?), 0) AS visible FROM reviews").get(REVIEW_STATUS.visible);
+  const all = Number(row?.total);
+  const visible = Number(row?.visible);
+  const counts = { all, visible, hidden: all - visible };
   const list = options.status
-    ? listReviews(db, "admin", "r.status = ?", [options.status], options.page ?? 1, PAGE_SIZE)
-    : listReviews(db, "admin", "1", [], options.page ?? 1, PAGE_SIZE);
-  return {
-    ...list,
-    counts: {
-      all: countWhere(db, "1"),
-      visible: countWhere(db, "r.status = ?", REVIEW_STATUS.visible),
-      hidden: countWhere(db, "r.status = ?", REVIEW_STATUS.hidden),
-    },
-  };
+    ? listReviews(db, "admin", "r.status = ?", [options.status], options.status === REVIEW_STATUS.visible ? visible : counts.hidden, options.page ?? 1, PAGE_SIZE)
+    : listReviews(db, "admin", "1", [], all, options.page ?? 1, PAGE_SIZE);
+  return { ...list, counts };
 }

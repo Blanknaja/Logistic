@@ -12,7 +12,7 @@ test("ผู้ใช้ขอลดการขยับ: หน้าแรก
     if (/three/i.test(request.url())) sceneScripts.push(request.url());
   });
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1, name: "ซื้อของจากหลายร้านในที่เดียว" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /ซื้อของจากหลายร้าน\s*ในที่เดียว/ })).toBeVisible();
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(600);
 

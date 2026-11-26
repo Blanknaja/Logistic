@@ -59,3 +59,19 @@ test("จอ 1440: ฉาก 3 มิติของส่วนต้อนร�
   await expect(page.getByText(/^พบ [\d,]+ รายการ/)).toBeVisible();
   await expect(page.getByRole("searchbox", { name: "พิมพ์สิ่งที่อยากได้" })).toHaveCount(0);
 });
+
+test("จอ 1440: เปลี่ยนการตั้งค่าลดการขยับระหว่างเปิดหน้า ฉาก 3 มิติหยุดและกลับมาตามการตั้งค่า", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  const pause = page.getByRole("button", { name: "หยุดภาพเคลื่อนไหว" });
+  await expect(pause).toBeVisible();
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(pause).toHaveCount(0);
+  await expect(page.locator("canvas")).toBeHidden();
+  await expect(page.getByRole("img", { name: "พัสดุเดินทางจากร้านถึงบ้าน" })).toBeVisible();
+
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await expect(pause).toBeVisible();
+  await expect(page.locator("canvas")).toBeVisible();
+});

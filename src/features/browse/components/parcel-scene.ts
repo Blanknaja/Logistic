@@ -13,6 +13,24 @@ const TO_X = 1.7;
 /** ครึ่งความกว้างของฉากที่กล้องต้องเห็นครบ */
 const HALF_WIDTH = 4.1;
 
+/** คืนฟังก์ชันที่ตั้งขนาดของตัววาดและกล้องเฉพาะเมื่อขนาดเปลี่ยน ได้ false เมื่อ canvas ยังไม่มีขนาด */
+export function createSizer(
+  renderer: { setSize(width: number, height: number, updateStyle: boolean): void },
+  camera: { aspect: number; updateProjectionMatrix(): void },
+) {
+  let fitted = "";
+  return (width: number, height: number): boolean => {
+    if (width === 0 || height === 0) return false;
+    if (fitted !== `${width}x${height}`) {
+      fitted = `${width}x${height}`;
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    }
+    return true;
+  };
+}
+
 export function startParcelScene(canvas: HTMLCanvasElement, colors: SceneColors): ParcelScene {
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -92,18 +110,14 @@ export function startParcelScene(canvas: HTMLCanvasElement, colors: SceneColors)
   };
   canvas.addEventListener("pointermove", onPointer);
 
+  const fit = createSizer(renderer, camera);
   let sway = { x: 0, y: 0 };
   let elapsed = 0;
   let last = 0;
   let frame = 0;
 
   function draw() {
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
-    if (width === 0 || height === 0) return;
-    renderer.setSize(width, height, false);
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
+    if (!fit(canvas.clientWidth, canvas.clientHeight)) return;
 
     const phase = elapsed % (TRIP_MS + REST_MS);
     const t = Math.min(phase / TRIP_MS, 1);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { ParcelScene, SceneColors } from "./parcel-scene";
 import { RouteArt } from "./route-art";
 import styles from "./home.module.css";
@@ -20,9 +20,18 @@ function sceneColors(element: Element): SceneColors {
   };
 }
 
+const SCENE_QUERY = "(min-width: 900px) and (prefers-reduced-motion: no-preference)";
+
+function watchSceneQuery(onChange: () => void) {
+  const query = matchMedia(SCENE_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
 /**
  * ภาพของส่วนต้อนรับ เริ่มจากภาพ SVG ที่เห็นได้ทันที จอกว้าง 900 ขึ้นไปที่ไม่ได้ขอลดการขยับหรือประหยัดข้อมูล
  * โหลดฉาก 3 มิติมาแทนหลังหน้าแสดงแล้ว ฉากหยุดเมื่อเลื่อนพ้นจอ และมีปุ่มหยุดเพราะขยับเองไม่มีจบ
+ * ผู้ใช้ขอลดการขยับหรือย่อจอระหว่างเปิดหน้า ฉากถูกเก็บและภาพ SVG กลับมา เลิกขอแล้วฉากกลับมา
  */
 export function ParcelStage() {
   const stage = useRef<HTMLDivElement>(null);
@@ -32,9 +41,11 @@ export function ParcelStage() {
   const [inView, setInView] = useState(false);
   const [paused, setPaused] = useState(false);
 
+  const allowed = useSyncExternalStore(watchSceneQuery, () => matchMedia(SCENE_QUERY).matches, () => false);
+
   useEffect(() => {
     const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
-    if (saveData || !matchMedia("(min-width: 900px) and (prefers-reduced-motion: no-preference)").matches) return;
+    if (saveData || !allowed) return;
     let cancelled = false;
     const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting));
     const timer = setTimeout(async () => {
@@ -54,8 +65,9 @@ export function ParcelStage() {
       observer.disconnect();
       scene.current?.dispose();
       scene.current = null;
+      setLive(false);
     };
-  }, []);
+  }, [allowed]);
 
   useEffect(() => {
     scene.current?.setRunning(live && inView && !paused);

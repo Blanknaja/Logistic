@@ -222,7 +222,7 @@
   gap: var(--space-3);
   color: inherit;
   text-decoration: none;
-  transition: transform var(--duration) var(--ease);
+  transition: transform var(--dur-fast) var(--ease-out);
 }
 
 .card:active {
@@ -243,7 +243,7 @@
   text-decoration-color: transparent;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
-  transition: text-decoration-color var(--duration) var(--ease);
+  transition: text-decoration-color var(--dur-fast) var(--ease-out);
 }
 
 @media (hover: hover) {
@@ -267,7 +267,7 @@
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  background: var(--color-surface);
+  background: var(--color-surface-sunken);
 }
 
 .noImage {
@@ -336,7 +336,7 @@
   aspect-ratio: 1;
   margin-inline: calc(-1 * var(--gutter));
   overflow: hidden;
-  background: var(--color-surface);
+  background: var(--color-surface-sunken);
 }
 
 .plate > .image {
@@ -367,7 +367,7 @@
 .thumb > * {
   outline: 1px solid var(--color-border);
   outline-offset: -1px;
-  transition: outline-color var(--duration) var(--ease);
+  transition: outline-color var(--dur-fast) var(--ease-out);
 }
 
 /* วงของรูปย่อที่เลือกอยู่วาดบนชั้นเหนือรูป เพราะ box-shadow แบบ inset ของ img ถูกรูปบัง */
@@ -385,7 +385,7 @@
   height: 56px;
   padding: 0 var(--space-4);
   border: 0;
-  border-radius: var(--radius);
+  border-radius: var(--radius-s);
   background: transparent;
   box-shadow: inset 0 0 0 1px var(--color-border-strong);
   color: var(--color-text);
@@ -393,8 +393,8 @@
   font-size: var(--text-label);
   cursor: pointer;
   transition:
-    box-shadow var(--duration) var(--ease),
-    transform var(--duration) var(--ease);
+    box-shadow var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
 }
 
 .view3d svg {
@@ -682,7 +682,7 @@
 /* โครงสีเทาระหว่างรอข้อมูล (BRW-012) */
 
 .skeleton {
-  background: var(--color-surface);
+  background: var(--color-surface-sunken);
   animation: pulse 1.2s ease-in-out infinite;
 }
 

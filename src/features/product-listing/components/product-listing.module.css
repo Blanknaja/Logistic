@@ -116,7 +116,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-surface);
+  background: var(--color-surface-sunken);
   color: var(--color-muted);
   line-height: 1.2;
   text-align: center;
@@ -130,7 +130,7 @@
   line-height: 1.4;
   text-decoration: underline;
   text-decoration-color: transparent;
-  transition: text-decoration-color var(--duration) var(--ease);
+  transition: text-decoration-color var(--dur-fast) var(--ease-out);
 }
 
 .rowName::after {
@@ -334,7 +334,7 @@
   top: var(--space-2);
   left: var(--space-2);
   padding: 0 var(--space-2);
-  border-radius: var(--radius);
+  border-radius: var(--radius-s);
   background: var(--color-text);
   color: var(--color-bg);
   font-size: var(--text-label);
@@ -555,7 +555,7 @@
   width: min(calc(100vw - 2 * var(--gutter)), 28rem);
   padding: var(--space-6);
   border: 0;
-  border-radius: var(--radius);
+  border-radius: var(--radius-s);
   background: var(--color-bg);
   color: var(--color-text);
 }

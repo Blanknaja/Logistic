@@ -130,7 +130,7 @@ export async function seed(db: Db): Promise<{ created: boolean }> {
           })),
           images: photos
             ? photos.slice(0, imageCount).map((file) => photoUrl(file, new Date(createdAt)))
-            : Array.from({ length: imageCount }, (_, i) => `/sample-images/s${index + 1}-${i + 1}.svg`),
+            : Array.from({ length: imageCount }, (_, i) => `/sample-images/s${index + 1}-${i + 1}-c${category.categoryId}.svg`),
           recordStockHistory: true,
           createdAt,
           publishedAt: createdAt,

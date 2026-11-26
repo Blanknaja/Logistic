@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { browseHref, parseBrowseParams, priceError } from "@/features/browse/search-params";
+import { browseHref, hasCriteria, parseBrowseParams, priceError, ratingLabel, SORT_LABELS } from "@/features/browse/search-params";
 
 describe("parseBrowseParams", () => {
   test("BRW-002 ตัดช่องว่างหน้าหลังคำค้น", () => {
@@ -23,6 +23,17 @@ describe("parseBrowseParams", () => {
     expect(parseBrowseParams({ sort: "cheapest" }).sort).toBe("newest");
     expect(parseBrowseParams({ sort: "toString" }).sort).toBe("newest");
     expect(parseBrowseParams({}).sort).toBe("newest");
+  });
+
+  test("REV-010 การเรียงมีแบบที่สี่คือคะแนนสูงสุด", () => {
+    expect(parseBrowseParams({ sort: "rating" }).sort).toBe("rating");
+    expect(Object.values(SORT_LABELS)).toEqual(["ใหม่ล่าสุด", "ราคาต่ำไปสูง", "ราคาสูงไปต่ำ", "คะแนนสูงสุด"]);
+  });
+
+  test("REV-011 คะแนนขั้นต่ำรับเฉพาะ 1 ถึง 5 ค่าอื่นเช่น 9 หรือตัวอักษรถือว่าไม่ได้กรอง", () => {
+    for (const rating of ["1", "4", "5"]) expect(parseBrowseParams({ rating }).rating).toBe(Number(rating));
+    for (const rating of ["9", "0", "abc", "4.5", "", "-1", "44"]) expect(parseBrowseParams({ rating }).rating).toBeNull();
+    expect(parseBrowseParams({}).rating).toBeNull();
   });
 
   test("BRW-006 เลขหน้าที่ใช้ไม่ได้ กลับไปหน้า 1", () => {
@@ -49,16 +60,27 @@ describe("priceError", () => {
   });
 });
 
+describe("ratingLabel", () => {
+  test("REV-011 คะแนนขั้นต่ำเป็นคำ และนับเป็นตัวกรองที่ใช้อยู่", () => {
+    expect(ratingLabel(4)).toBe("คะแนน 4 ดาวขึ้นไป");
+    expect(ratingLabel(5)).toBe("คะแนน 5 ดาว");
+    expect(ratingLabel(null)).toBeNull();
+    expect(hasCriteria(parseBrowseParams({ rating: "3" }))).toBe(true);
+    expect(hasCriteria(parseBrowseParams({ sort: "rating" }))).toBe(false);
+  });
+});
+
 describe("browseHref", () => {
   test("BRW-006 ที่อยู่หน้าเว็บเก็บคำค้น ตัวกรอง การเรียง และเลขหน้าไว้ครบ", () => {
-    const href = browseHref({ q: "ร่ม", category: "6", min: 100, max: 300, sort: "price-desc", page: 3 });
-    expect(href).toBe("/?q=%E0%B8%A3%E0%B9%88%E0%B8%A1&category=6&min=100&max=300&sort=price-desc&page=3");
+    const href = browseHref({ q: "ร่ม", category: "6", min: 100, max: 300, rating: 4, sort: "price-desc", page: 3 });
+    expect(href).toBe("/?q=%E0%B8%A3%E0%B9%88%E0%B8%A1&category=6&min=100&max=300&rating=4&sort=price-desc&page=3");
     const [, query] = href.split("?");
     expect(parseBrowseParams(Object.fromEntries(new URLSearchParams(query)))).toEqual({
       q: "ร่ม",
       category: "6",
       min: 100,
       max: 300,
+      rating: 4,
       sort: "price-desc",
       page: 3,
     });
@@ -66,6 +88,6 @@ describe("browseHref", () => {
 
   test("ค่าเริ่มต้นไม่ถูกใส่ในที่อยู่ หน้าแรกจึงเป็น /", () => {
     expect(browseHref({})).toBe("/");
-    expect(browseHref({ q: "", category: null, min: null, max: null, sort: "newest", page: 1 })).toBe("/");
+    expect(browseHref({ q: "", category: null, min: null, max: null, rating: null, sort: "newest", page: 1 })).toBe("/");
   });
 });

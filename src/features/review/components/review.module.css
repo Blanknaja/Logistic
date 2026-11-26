@@ -1,0 +1,378 @@
+/* รีวิวและคะแนน (REV) ใช้เฉพาะค่าจาก token ใน globals.css */
+
+.cardRating {
+  color: var(--color-muted);
+  font-size: var(--text-label);
+  white-space: nowrap;
+}
+
+.ratingLink {
+  display: flex;
+  flex-wrap: wrap;
+  width: fit-content;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+  color: inherit;
+  font-size: var(--text-body);
+  font-weight: 400;
+}
+
+.shopRating {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-1) 0 0;
+}
+
+.muted {
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.section {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  scroll-margin-top: var(--header-height);
+}
+
+.section > h2 {
+  margin: 0;
+}
+
+.summary {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.average {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.averageNumber {
+  font-size: var(--text-title);
+  line-height: 1.2;
+}
+
+.breakdown {
+  display: grid;
+  gap: var(--space-1);
+  max-width: var(--measure);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.breakdown > li {
+  display: grid;
+  grid-template-columns: 4em minmax(0, 1fr) 3em;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-label);
+}
+
+.breakdown progress {
+  width: 100%;
+  accent-color: var(--color-text);
+}
+
+.breakdown > li > :last-child {
+  text-align: end;
+}
+
+.filters {
+  margin: 0;
+}
+
+.chipLink {
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--color-border);
+  scroll-margin-top: var(--header-height);
+}
+
+.review > p {
+  margin: 0;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+
+.stars {
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.body {
+  max-width: var(--measure);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.images img {
+  display: block;
+  width: calc(var(--tap) * 1.5);
+  height: calc(var(--tap) * 1.5);
+  border-radius: var(--radius-s);
+  object-fit: cover;
+}
+
+.reply {
+  display: grid;
+  gap: var(--space-1);
+  max-width: var(--measure);
+  padding-left: var(--space-4);
+  border-left: 1px solid var(--color-border);
+  overflow-wrap: anywhere;
+}
+
+.reply > p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.badge {
+  color: var(--color-danger);
+  font-size: var(--text-label);
+}
+
+.notice {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-s);
+  background: var(--color-surface-sunken);
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.actions > form {
+  display: contents;
+}
+
+.disclosure > summary {
+  display: inline-flex;
+  width: fit-content;
+  cursor: pointer;
+  list-style: none;
+}
+
+.disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure[open] > summary {
+  margin-bottom: var(--space-3);
+}
+
+/* ฟอร์ม */
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+  max-width: var(--measure);
+}
+
+.form textarea {
+  width: 100%;
+  min-height: calc(var(--tap) * 3);
+  padding: var(--space-3);
+  resize: vertical;
+}
+
+.counter {
+  color: var(--color-muted);
+  font-size: var(--text-label);
+  text-align: end;
+}
+
+.failed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-danger);
+}
+
+.failed > p {
+  margin: 0;
+}
+
+.starPicker {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.starPicker > legend {
+  padding: 0;
+  margin-bottom: var(--space-1);
+}
+
+.starOption {
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: var(--radius-s);
+  color: var(--color-border-strong);
+  font-size: var(--text-title);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.starOption[data-filled="true"] {
+  color: var(--color-text);
+}
+
+.starOption:has(input:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: calc(-1 * var(--focus-offset));
+}
+
+.imagesField {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.imagesField > legend {
+  padding: 0;
+}
+
+.imagesField p {
+  margin: 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.item img,
+.item > span:first-child {
+  flex: none;
+  width: calc(var(--tap) * 1.5);
+  height: calc(var(--tap) * 1.5);
+  border-radius: var(--radius-s);
+  background: var(--color-surface-sunken);
+  object-fit: cover;
+}
+
+.item p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.pickedImages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pickedImages > li {
+  display: grid;
+  gap: var(--space-1);
+  width: calc(var(--tap) * 2);
+}
+
+.pickedImages img {
+  width: calc(var(--tap) * 2);
+  height: calc(var(--tap) * 2);
+  border-radius: var(--radius-s);
+  object-fit: cover;
+}
+
+.pickedImages progress {
+  width: 100%;
+}
+
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.fileInput:focus-visible + span {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.fileInput:disabled + span {
+  background: var(--color-disabled);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.orderItemReview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.orderBadge {
+  width: fit-content;
+}

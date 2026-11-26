@@ -5,7 +5,9 @@ import { saveModelFile } from "@/features/product-listing/server/model-files";
 import { transaction, type Db } from "@/shared/db";
 import { addAccount, addProduct, addShop } from "@/shared/db/builders";
 import { CATEGORIES, LOCATIONS, PERSON_FIRST, PERSON_LAST, SAMPLE_PHOTOS, SHOP_NAME_FIRST, SHOP_NAME_LAST } from "./catalog";
+import { addSampleNotifications } from "./notifications";
 import { addSampleOrders } from "./orders";
+import { addSampleReviews } from "./reviews";
 
 /** รหัสผ่านสาธิตของบัญชีตัวอย่าง ห้ามใช้กับระบบจริง (เขียนไว้ใน README) */
 export const ADMIN_PASSWORD = "admin1234";
@@ -146,5 +148,7 @@ export async function seed(db: Db): Promise<{ created: boolean }> {
   });
 
   await addSampleOrders(db, now);
+  await addSampleReviews(db, now, DEMO_PASSWORD);
+  await addSampleNotifications(db, now);
   return { created: true };
 }

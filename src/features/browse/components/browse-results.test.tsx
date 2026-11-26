@@ -79,6 +79,33 @@ describe("BRW-001 หน้าแรก", () => {
     expect(texts).toEqual(["แก้วน้ำ", "฿59", "บ้านสวนผ้าไทย"]);
     expect(cardHtml).toContain('src="/sample-images/p7-1.svg"');
   });
+
+  test("REV-009 การ์ดของสินค้าที่มีรีวิวแสดงดาว คะแนนเฉลี่ย และจำนวนรีวิว ต่อจากราคา ส่วนสินค้าที่ไม่มีรีวิวไม่แสดงอะไรเรื่องคะแนน", () => {
+    const html = render(
+      {},
+      {
+        items: [card(7, { name: "ลูกฟุตบอล", price: 350, rating: { average: 4.3, count: 128 } }), card(8, { name: "ไม้แบดมินตัน", price: 590 })],
+        total: 2,
+        totalPages: 1,
+      },
+    );
+    const texts = (id: number) =>
+      (html.match(new RegExp(`<a[^>]*href="/products/${id}"[^>]*>(.*?)</a>`))?.[1] ?? "")
+        .replace(/<[^>]+>/g, "|")
+        .split("|")
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+    expect(texts(7)).toEqual(["ลูกฟุตบอล", "฿350", "★ 4.3 (128)", "บ้านสวนผ้าไทย"]);
+    expect(html).toContain('role="img" aria-label="คะแนน 4.3 จาก 5 จาก 128 รีวิว"');
+    expect(texts(8)).toEqual(["ไม้แบดมินตัน", "฿590", "บ้านสวนผ้าไทย"]);
+    expect(html).not.toContain("ยังไม่มีรีวิว");
+  });
+
+  test("REV-009 จำนวนรีวิวตั้งแต่ 1,000 มีจุลภาค และคะแนนเต็มแสดงทศนิยม 1 ตำแหน่ง", () => {
+    const html = render({}, { items: [card(7, { rating: { average: 5, count: 1280 } })], total: 1, totalPages: 1 });
+    expect(html).toContain("★ 5.0 (1,280)");
+  });
 });
 
 describe("BRW-003 กรองตามหมวดหมู่", () => {
@@ -167,6 +194,57 @@ describe("BRW-005 เรียงลำดับ", () => {
     const some = { items: [card(1)], total: 1, totalPages: 1 };
     expect(render({ sort: "price-asc" }, some)).toMatch(/<option value="price-asc" selected="">ราคาต่ำไปสูง/);
     expect(render({ sort: "oops" }, some)).toMatch(/<option value="newest" selected="">ใหม่ล่าสุด/);
+  });
+
+  test("REV-010 ช่องเลือกการเรียงมีคะแนนสูงสุดต่อจากสามแบบเดิม และแสดงเมื่อเลือกอยู่", () => {
+    const html = render({ q: "รองเท้า", sort: "rating" }, { items: [card(1)], total: 1, totalPages: 1 });
+    const sort = html.match(/<select name="sort".*?<\/select>/)?.[0] ?? "";
+    expect([...sort.matchAll(/<option[^>]*>([^<]+)/g)].map((match) => match[1])).toEqual(["ใหม่ล่าสุด", "ราคาต่ำไปสูง", "ราคาสูงไปต่ำ", "คะแนนสูงสุด"]);
+    expect(sort).toMatch(/<option value="rating" selected="">คะแนนสูงสุด/);
+    expect(html).toContain('name="q" value="รองเท้า"');
+  });
+
+  test("REV-010 ค้นหาไม่เจอแล้วเรียงตามคะแนน ได้หน้าว่างเหมือนการเรียงแบบอื่น", () => {
+    const html = render({ q: "ยานอวกาศ", sort: "rating" }, {});
+    expect(html).toContain("ไม่พบสินค้าที่ตรงกับที่ค้นหา");
+    expect(html).not.toContain('role="alert"');
+  });
+});
+
+describe("REV-011 กรองตามคะแนนขั้นต่ำ", () => {
+  const some = { items: [card(1)], total: 2, totalPages: 1 };
+  const q = encodeURIComponent("หูฟัง");
+
+  test("REV-011 ตัวกรองคะแนนอยู่กับช่วงราคา มีทั้งหมดกับ 5 ระดับ และแสดงค่าที่เลือกอยู่", () => {
+    const html = render({ q: "หูฟัง", rating: "4" }, some);
+    const select = html.match(/<select name="rating".*?<\/select>/)?.[0] ?? "";
+    expect([...select.matchAll(/<option[^>]*>([^<]+)/g)].map((match) => match[1])).toEqual([
+      "ทั้งหมด",
+      "5 ดาว",
+      "4 ดาวขึ้นไป",
+      "3 ดาวขึ้นไป",
+      "2 ดาวขึ้นไป",
+      "1 ดาวขึ้นไป",
+    ]);
+    expect(select).toMatch(/<option value="4" selected="">4 ดาวขึ้นไป/);
+    expect(html).toContain("พบ 2 รายการ สำหรับ &quot;หูฟัง&quot;");
+  });
+
+  test("REV-011 คะแนนขั้นต่ำขึ้นในตัวกรองที่ใช้อยู่ กดแล้วเอาออก และล้างตัวกรองล้างคะแนนด้วย", () => {
+    const html = render({ q: "หูฟัง", rating: "4", max: "1000", sort: "rating" }, some);
+    expect(html).toContain(`aria-label="เอา คะแนน 4 ดาวขึ้นไป ออก" href="/?q=${q}&amp;max=1000&amp;sort=rating"`);
+    expect(html).toContain(`aria-label="เอา ราคาไม่เกิน ฿1,000 ออก" href="/?q=${q}&amp;rating=4&amp;sort=rating"`);
+    expect(html.indexOf("ราคาไม่เกิน ฿1,000")).toBeLessThan(html.indexOf("คะแนน 4 ดาวขึ้นไป"));
+    expect(html).toContain(`<a class="link-action" href="/?q=${q}&amp;sort=rating">ล้างตัวกรอง</a>`);
+  });
+
+  test("REV-011 ลิงก์ที่คะแนนขั้นต่ำเป็น 9 หรือตัวอักษร ตัวกรองคะแนนแสดงทั้งหมดและไม่มีข้อความผิดพลาด", () => {
+    for (const rating of ["9", "abc"]) {
+      const html = render({ rating }, some);
+      expect(html).toMatch(/<option value="" selected="">ทั้งหมด/);
+      expect(html).not.toContain("เอา คะแนน");
+      expect(html).not.toContain('role="alert"');
+    }
   });
 });
 

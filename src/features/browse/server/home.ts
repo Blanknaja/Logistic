@@ -38,7 +38,7 @@ export function getHomeSections(db: Db): HomeSections {
     ({ id, name }) => ({ id, name, coverUrl: (cover.get(id, ...visible)?.url as string | undefined) ?? null }),
   );
 
-  const budget = searchProducts(db, { q: "", category: null, min: null, max: BUDGET_MAX, sort: "newest", page: 1 }).items;
+  const budget = searchProducts(db, { q: "", category: null, min: null, max: BUDGET_MAX, rating: null, sort: "newest", page: 1 }).items;
 
   const covers = db.prepare(
     `SELECT i.url FROM products p

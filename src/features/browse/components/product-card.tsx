@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CardRating } from "@/features/review/components/rating";
+import type { Rating } from "@/features/review/rules";
 import { formatBaht } from "@/shared/format";
 import { Morph, productImageName } from "@/shared/ui/transitions";
 import { ProductImage } from "./product-image";
@@ -15,6 +17,7 @@ type Card = {
   soldOut: boolean;
   shopName?: string;
   categoryId?: number | null;
+  rating?: Rating;
 };
 
 /**
@@ -43,6 +46,7 @@ export function ProductCard({ item, morph = true }: { item: Card; morph?: boolea
           {formatBaht(item.price)}
           {item.soldOut && <span className="badge badge-alert">สินค้าหมด</span>}
         </span>
+        <CardRating rating={item.rating} />
         {item.shopName && <span className={styles.muted}>{item.shopName}</span>}
       </span>
     </Link>

@@ -234,6 +234,21 @@ describe("CHK-009 หน้ารายการคำสั่งซื้อ�
     expect(html).toMatch(/class="chip _chipLink_\w+" aria-current="page"[^>]*>รอจ่ายเงิน</);
   });
 
+  test("CHK-009 REV-005 ตัวกรองมี 7 ตัว คือทั้งหมด สถานะทั้ง 5 และรอรีวิวพร้อมจำนวน", async () => {
+    somchaiOrdersTwoShops();
+    const { html = "" } = await ordersPage();
+    const filters = html.match(/aria-label="กรองตามสถานะ".*?<\/nav>/)?.[0] ?? "";
+    expect([...filters.matchAll(/<a[^>]*>([^<]+)<\/a>/g)].map((match) => match[1])).toEqual([
+      "ทั้งหมด",
+      "รอจ่ายเงิน",
+      "จ่ายแล้ว",
+      "กำลังจัดส่ง",
+      "สำเร็จ",
+      "ยกเลิก",
+      "รอรีวิว 0",
+    ]);
+  });
+
   test("CHK-009 ยังไม่เข้าสู่ระบบ ถูกพาไปหน้าเข้าสู่ระบบ", async () => {
     expect((await ordersPage()).redirect).toBe("/login?next=%2Forders");
   });

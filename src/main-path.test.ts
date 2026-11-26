@@ -244,12 +244,13 @@ describe("ตัวนับรอจัดของตัวเดียว (SH
 });
 
 describe("เมนูหลังบ้านครบ (SHP-006)", () => {
-  test("SHP-006 เมนูจากทุก feature มีทางเข้า 5 ทาง และตัวเลขรอจัดของ", () => {
+  test("SHP-006 REV-014 เมนูจากทุก feature มีทางเข้า 5 ทางกับหน้ารีวิวของร้าน และตัวเลขรอจัดของ", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     const hrefs = sellerMenuLinks(7).map((link) => link.href);
     expect(hrefs).toEqual(
-      expect.arrayContaining(["/seller/products", "/seller/stock", "/seller/orders", "/seller/settings", "/shops/7"]),
+      expect.arrayContaining(["/seller/products", "/seller/stock", "/seller/orders", "/seller/reviews", "/seller/settings", "/shops/7"]),
     );
     expect(sellerMenuLinks(7).map((link) => link.label)).toContain("รอจัดของ –");
+    expect(sellerMenuLinks(7).map((link) => link.label)).toContain("รีวิว");
   });
 });

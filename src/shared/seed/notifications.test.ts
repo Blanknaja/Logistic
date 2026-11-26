@@ -108,6 +108,17 @@ describe("NTF-018 ข้อมูลตัวอย่าง", () => {
     }
   });
 
+  test("NTF-018 บัญชีตัวอย่างอื่นที่มีคำสั่งซื้อหรือรีวิวตัวอย่างมีแจ้งเตือนของเหตุการณ์จริงของตัวเอง ยังไม่อ่านไม่เกิน 3 รายการ", () => {
+    for (const name of ["buyer4", "buyer24", "seller03", "seller50"]) {
+      const viewer = account(name);
+      const notes = notesOf(name);
+      expect(notes.length).toBeGreaterThan(0);
+      expect(unread(notes).length).toBeLessThanOrEqual(3);
+      expect(notes.filter((note) => !opens(viewer, note)).map((note) => `${name}: ${note.message} → ${note.href}`)).toEqual([]);
+    }
+    expect(notesOf("admin")).toEqual([]);
+  });
+
   test("NTF-018 แจ้งเตือนเรื่องสถานะการจัดส่งรายการบนสุดของ buyer1 พาไปหน้าติดตามพัสดุที่สถานะตรงกับข้อความ", () => {
     const viewer = account("buyer1");
     const top = notesOf("buyer1").find((note) => note.type === T.parcelStatus)!;

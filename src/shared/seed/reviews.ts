@@ -234,8 +234,9 @@ export async function addSampleReviews(db: Db, now: number, demoPassword: string
       const sent = submitReview(db, { buyerAccountId: item.buyerId, orderItemId: item.orderItemId, rating, body, images }, new Date(at));
       if (!sent.ok) throw new Error(`ส่งรีวิวตัวอย่างไม่ได้ ${JSON.stringify(sent.errors)}`);
 
+      let replyAt = at;
       if (random.next() < 0.4) {
-        const replyAt = Math.min(at + Math.floor(random.next() * 2 * DAY) + HOUR, now);
+        replyAt = Math.min(at + Math.floor(random.next() * 2 * DAY) + HOUR, now);
         const replied = replyToReview(
           db,
           { shopId: item.shopId, reviewId: sent.reviewId, body: random.pick(rating >= 4 ? THANKS : SORRY), editing: false },
@@ -245,7 +246,7 @@ export async function addSampleReviews(db: Db, now: number, demoPassword: string
       }
       if (rating === 1 && body && hidden < 6 && !recent) {
         hidden += 1;
-        const hid = hideReview(db, { adminAccountId: admin.id, reviewId: sent.reviewId, reason: "ใช้คำไม่สุภาพ" }, new Date(Math.min(at + DAY, now)));
+        const hid = hideReview(db, { adminAccountId: admin.id, reviewId: sent.reviewId, reason: "ใช้คำไม่สุภาพ" }, new Date(Math.min(Math.max(at + DAY, replyAt + HOUR), now)));
         if (!hid.ok) throw new Error(`ซ่อนรีวิวตัวอย่างไม่ได้ ${JSON.stringify(hid)}`);
       }
     }

@@ -86,7 +86,7 @@ describe("ข้อมูลตัวอย่าง", () => {
       )
       .all()
       .map((row) => [row.status, row.n]);
-    expect(Object.fromEntries(statuses)).toEqual({ จ่ายแล้ว: 2, กำลังจัดส่ง: 2, สำเร็จ: 2, ยกเลิก: 2 });
+    expect(Object.fromEntries(statuses)).toEqual({ จ่ายแล้ว: 3, กำลังจัดส่ง: 2, สำเร็จ: 2, ยกเลิก: 2 });
     expect(count("SELECT count(*) AS n FROM orders o WHERE o.status <> 'ยกเลิก' AND NOT EXISTS (SELECT 1 FROM parcels p WHERE p.order_id = o.id)")).toBe(0);
     expect(count("SELECT count(*) AS n FROM parcels WHERE status = 'ส่งสำเร็จ' AND receipt_confirmed_at IS NULL")).toBe(1);
   });

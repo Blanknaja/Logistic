@@ -23,6 +23,7 @@ export const MESSAGES = {
   tooManyImages: "ใส่รูปได้ไม่เกิน 3 รูป",
   imageWrongType: "ใช้ได้เฉพาะรูป JPG หรือ PNG",
   uploadFailed: "ส่งรูปไม่สำเร็จ",
+  tooManyUnusedUploads: "ส่งรูปที่ยังไม่ได้ใช้ในรีวิวมากเกินไป กรุณาลองใหม่ในวันถัดไป",
   sent: "ส่งรีวิวแล้ว",
   saved: "บันทึกรีวิวแล้ว",
   alreadyReviewed: "รายการนี้รีวิวไปแล้ว",

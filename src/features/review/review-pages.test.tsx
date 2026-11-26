@@ -248,12 +248,41 @@ describe("REV-002 รูปในรีวิว", () => {
     });
     expect(shown.status).toBe(200);
     expect(shown.headers.get("Content-Type")).toBe("image/png");
+    // รูปที่ถูกซ่อนทีหลังต้องไม่ค้างในเบราว์เซอร์ของคนอื่น
+    expect(shown.headers.get("Cache-Control")).toBe("private, no-cache");
+    const again = await getReviewImageRoute(new Request(`http://localhost${first.url}`, { headers: { "If-None-Match": shown.headers.get("ETag") ?? "" } }), {
+      params: Promise.resolve({ key: first.url.split("/").pop() ?? "" }),
+    });
+    expect(again.status).toBe(304);
 
     const sent = await save({ orderNo: mine.orderNo, itemId: String(mine.itemIds[0]), mode: "new", rating: "4", image: [first.url, second.url] });
     expect(sent.redirect).toContain("notice=sent");
     const product = productReviews(screwdriver.id);
     expect(product).toContain(`<a href="${first.url}" target="_blank"`);
     expect(product.match(/<img src="\/review-images\//g)).toHaveLength(2);
+  });
+
+  test("REV-017 รูปของรีวิวที่ถูกซ่อน คนทั่วไปและบัญชีอื่นได้ไม่พบ ผู้ซื้อเจ้าของรีวิว ร้าน และผู้ดูแลแพลตฟอร์มยังเปิดได้", async () => {
+    const mine = order(manee, [football.variantIds[0]]);
+    signInAs(manee);
+    const { url } = (await (await postReviewImage(new Request("http://localhost/review-images", { method: "POST", body: PNG }))).json()) as { url: string };
+    await save({ orderNo: mine.orderNo, itemId: String(mine.itemIds[0]), mode: "new", rating: "1", image: [url] });
+    const reviewId = Number(db.prepare("SELECT id FROM reviews").get()?.id);
+    const status = async (accountId: number | null) => {
+      request.cookies.clear();
+      if (accountId !== null) signInAs(accountId);
+      return (await getReviewImageRoute(new Request(`http://localhost${url}`), { params: Promise.resolve({ key: url.split("/").pop() ?? "" }) })).status;
+    };
+
+    expect(await status(null)).toBe(200);
+    signInAs(wichai);
+    await submit(hideReviewAction(form({ reviewId: String(reviewId), reason: "ใช้คำหยาบ" })));
+    expect(await status(null)).toBe(404);
+    expect(await status(somying)).toBe(404);
+    expect(await status(somchai.accountId)).toBe(404);
+    expect(await status(manee)).toBe(200);
+    expect(await status(mana.accountId)).toBe(200);
+    expect(await status(wichai)).toBe(200);
   });
 
   test("REV-002 ยังไม่เข้าสู่ระบบ ไฟล์ที่ไม่ใช่รูป หรือรูปเกิน 5 MB ส่งขึ้นไม่ได้", async () => {

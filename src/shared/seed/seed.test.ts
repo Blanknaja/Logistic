@@ -261,7 +261,7 @@ describe("ข้อมูลตัวอย่าง", () => {
     const images = db.prepare("SELECT url FROM review_images").all() as { url: string }[];
     for (const image of images) {
       expect(image.url.startsWith(REVIEW_IMAGE_URL_PREFIX)).toBe(true);
-      expect(getReviewImage(db, image.url.slice(REVIEW_IMAGE_URL_PREFIX.length))).not.toBeNull();
+      expect(getReviewImage(db, image.url.slice(REVIEW_IMAGE_URL_PREFIX.length), { id: 0, shopId: null, isAdmin: true })).not.toBeNull();
     }
     expect(
       count(
@@ -269,6 +269,17 @@ describe("ข้อมูลตัวอย่าง", () => {
          WHERE NOT EXISTS (SELECT 1 FROM review_image_files f WHERE '${REVIEW_IMAGE_URL_PREFIX}' || f.key = i.url AND f.account_id = r.buyer_account_id)`,
       ),
     ).toBe(0);
+  });
+
+  test("REV-019 ลำดับเวลาเป็นไปได้จริง: บัญชีก่อนร้านและคำสั่งซื้อของตัวเอง ร้านก่อนสินค้า สินค้าก่อนคำสั่งซื้อ และไม่มีคำตอบของร้านหลังรีวิวถูกซ่อน", () => {
+    expect(count("SELECT count(*) AS n FROM shops s JOIN accounts a ON a.id = s.owner_account_id WHERE a.created_at > s.opened_at")).toBe(0);
+    expect(count("SELECT count(*) AS n FROM products p JOIN shops s ON s.id = p.shop_id WHERE p.published_at < s.opened_at")).toBe(0);
+    expect(
+      count("SELECT count(*) AS n FROM order_items i JOIN orders o ON o.id = i.order_id JOIN products p ON p.id = i.product_id WHERE o.ordered_at < p.published_at"),
+    ).toBe(0);
+    expect(count("SELECT count(*) AS n FROM orders o JOIN accounts a ON a.id = o.buyer_account_id WHERE o.ordered_at < a.created_at")).toBe(0);
+    expect(count("SELECT count(*) AS n FROM reviews WHERE replied_at > hidden_at")).toBe(0);
+    expect(count("SELECT count(*) AS n FROM reviews WHERE status = 'ถูกซ่อน' AND reply_body IS NOT NULL")).toBeGreaterThanOrEqual(1);
   });
 
   test("REV-019 วันที่ส่งรีวิวกระจายใน 90 วันก่อนวันที่สร้างข้อมูลตัวอย่าง", () => {

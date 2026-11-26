@@ -5,7 +5,7 @@ import { addAccount, addOrder, addProduct, addShop } from "@/shared/db/builders"
 import { createTestDb } from "@/shared/db/testing";
 import { ORDER_STATUS, REVIEW_STATUS, SHOP_STATUS, type OrderStatus } from "@/shared/statuses";
 import { writeReview } from "./fixtures";
-import { saveReviewImage } from "./image-files";
+import { getReviewImage, saveReviewImage, UNUSED_UPLOAD_KEEP_MS, UNUSED_UPLOAD_LIMIT } from "./image-files";
 import { productRating, shopRating } from "./ratings";
 import {
   countUnansweredReviews,
@@ -127,6 +127,52 @@ describe("REV-002 รูปในรีวิว", () => {
     big.set(PNG);
     expect(saveReviewImage(db, somying, big)).toEqual({ ok: false, error: "รูปต้องมีขนาดไม่เกิน 5 MB" });
     expect(saveReviewImage(db, somying, PNG).ok).toBe(true);
+  });
+
+  test("REV-002 บัญชีหนึ่งมีรูปที่ยังไม่มีรีวิวใช้ได้จำกัด เกินแล้วไม่รับจนกว่ารูปจะถูกใช้หรือครบ 24 ชั่วโมง", () => {
+    const urls = Array.from({ length: UNUSED_UPLOAD_LIMIT }, () => {
+      const saved = saveReviewImage(db, somying, PNG, NOV26_1810);
+      if (!saved.ok) throw new Error(saved.error);
+      return saved.url;
+    });
+    expect(saveReviewImage(db, somying, PNG, NOV26_1810)).toEqual({ ok: false, error: MESSAGES.tooManyUnusedUploads });
+    expect(saveReviewImage(db, manee, PNG, NOV26_1810).ok).toBe(true);
+
+    const mine = order(somying, [screwdriver.variantIds[0]]);
+    expect(send(somying, mine.itemIds[0], 4, "", urls.slice(0, 1)).ok).toBe(true);
+    expect(saveReviewImage(db, somying, PNG, NOV26_1810).ok).toBe(true);
+    expect(saveReviewImage(db, somying, PNG, NOV26_1810).ok).toBe(false);
+
+    const nextDay = new Date(NOV26_1810.getTime() + UNUSED_UPLOAD_KEEP_MS + 1);
+    expect(saveReviewImage(db, somying, PNG, nextDay).ok).toBe(true);
+    expect(Number(db.prepare("SELECT count(*) AS n FROM review_image_files WHERE account_id = ?").get(somying)?.n)).toBe(2);
+  });
+
+  test("REV-017 รูปของรีวิวที่ถูกซ่อนเปิดได้เฉพาะผู้ซื้อเจ้าของรีวิว ร้านของรีวิวนั้น และผู้ดูแลแพลตฟอร์ม", () => {
+    const saved = saveReviewImage(db, manee, PNG);
+    if (!saved.ok) throw new Error(saved.error);
+    const key = saved.url.split("/").pop() ?? "";
+    const viewer = (id: number, shopId: number | null = null, isAdmin = false) => ({ id, shopId, isAdmin });
+
+    expect(getReviewImage(db, key, null)).toBeNull();
+    expect(getReviewImage(db, key, viewer(somying))).toBeNull();
+    expect(getReviewImage(db, key, viewer(manee))?.contentType).toBe("image/png");
+
+    const mine = order(manee, [football.variantIds[0]]);
+    const sent = send(manee, mine.itemIds[0], 1, "", [saved.url]);
+    if (!sent.ok) throw new Error("ส่งรีวิวไม่ผ่าน");
+    expect(getReviewImage(db, key, null)?.contentType).toBe("image/png");
+
+    hideReview(db, { adminAccountId: wichai, reviewId: sent.reviewId, reason: "ใช้คำหยาบ" });
+    expect(getReviewImage(db, key, null)).toBeNull();
+    expect(getReviewImage(db, key, viewer(somying))).toBeNull();
+    expect(getReviewImage(db, key, viewer(somying, somchaiShop))).toBeNull();
+    expect(getReviewImage(db, key, viewer(manee))).not.toBeNull();
+    expect(getReviewImage(db, key, viewer(somying, manaShop))).not.toBeNull();
+    expect(getReviewImage(db, key, viewer(wichai, null, true))).not.toBeNull();
+
+    unhideReview(db, { adminAccountId: wichai, reviewId: sent.reviewId });
+    expect(getReviewImage(db, key, null)).not.toBeNull();
   });
 });
 

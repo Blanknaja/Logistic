@@ -229,7 +229,7 @@ test("REV ผู้ซื้อเขียนรีวิวพร้อมร�
 
 test("REV-009 REV-010 REV-011 หน้าแรกมีการ์ดที่แสดงคะแนน เรียงคะแนนสูงสุดและกรอง 4 ดาวขึ้นไปได้ และพิมพ์คะแนนในประโยคได้ผลเดียวกัน", async ({ page }) => {
   await page.goto("/");
-  const cards = page.getByRole("main").locator('a[href^="/products/"]');
+  const cards = page.getByRole("region", { name: "รายการสินค้า" }).locator('a[href^="/products/"]');
   await expect(cards).toHaveCount(20);
   const rated = await cards.filter({ hasText: "★" }).count();
   expect(rated, "REV-019 การ์ดที่แสดงคะแนนในหน้าแรกหน้าที่ 1").toBeGreaterThanOrEqual(8);

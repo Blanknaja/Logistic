@@ -12,13 +12,8 @@ export function CardRating({ rating }: { rating?: Rating | null }) {
   const average = formatAverage(rating.average);
   const count = formatNumber(rating.count);
   return (
-    <span className={styles.cardRating}>
-      <span aria-hidden="true">
-        ★ {average} ({count})
-      </span>
-      <span className="visually-hidden">
-        คะแนน {average} จาก 5 จาก {count} รีวิว
-      </span>
+    <span className={styles.cardRating} role="img" aria-label={`คะแนน ${average} จาก 5 จาก ${count} รีวิว`}>
+      ★ {average} ({count})
     </span>
   );
 }

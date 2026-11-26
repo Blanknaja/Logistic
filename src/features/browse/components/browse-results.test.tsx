@@ -96,7 +96,8 @@ describe("BRW-001 หน้าแรก", () => {
         .map((t) => t.trim())
         .filter(Boolean);
 
-    expect(texts(7)).toEqual(["ลูกฟุตบอล", "฿350", "★ 4.3 (128)", "คะแนน 4.3 จาก 5 จาก 128 รีวิว", "บ้านสวนผ้าไทย"]);
+    expect(texts(7)).toEqual(["ลูกฟุตบอล", "฿350", "★ 4.3 (128)", "บ้านสวนผ้าไทย"]);
+    expect(html).toContain('role="img" aria-label="คะแนน 4.3 จาก 5 จาก 128 รีวิว"');
     expect(texts(8)).toEqual(["ไม้แบดมินตัน", "฿590", "บ้านสวนผ้าไทย"]);
     expect(html).not.toContain("ยังไม่มีรีวิว");
   });

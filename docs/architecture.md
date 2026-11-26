@@ -219,8 +219,9 @@ feature `notification` (requirement `notification.md` รหัส NTF) เก�
 
 - feature ต้นทางเรียกฟังก์ชัน `notify...` ใน `notification/server/events.ts` หนึ่งฟังก์ชันต่อหนึ่งเหตุการณ์ ใน transaction เดียวกับที่บันทึกเหตุการณ์ เหตุการณ์ที่ถูกปฏิเสธจึงไม่มีแจ้งเตือน ข้อความและหน้าที่เกี่ยวข้องถูกเก็บตอนเหตุการณ์เกิด จะเพิ่มชนิดใหม่ ให้เพิ่มฟังก์ชันในไฟล์นี้พร้อมชนิดใน `NOTIFICATION_TYPE`
 - เรียกซ้ำด้วยเหตุการณ์เดิมไม่ได้รายการเพิ่ม เพราะฐานข้อมูลมี `UNIQUE (account_id, event_key)` (NTF-016) ผู้เรียกจึงไม่ต้องตรวจเองว่าเคยแจ้งแล้ว
+- ข้อความและตัวช่วยที่ component ในเบราว์เซอร์ใช้ (`badgeText` `bellLabel` `notificationHref` และข้อความของหน้า) อยู่ใน `notification/rules.ts` component ใน `notification/components/` import จาก `notification/server/` ได้แค่ชนิดข้อมูล มี test ใน `notification-pages.test.tsx` ตรวจ
 - กระดิ่งอยู่ใน `SiteHeader` นอกเมนูแบบเดียวกับไอคอนตะกร้า (`NotificationBell` ใน `notification/components/`) ใช้ class `header-icon-button` ของแถบด้านบน สไตล์อื่นอยู่ใน `notification.module.css`
-- หน้าที่เปิดค้างถามเซิร์ฟเวอร์ทุก 5 วินาทีด้วย server action `notificationPulseAction` (`usePulse` ใน `notification/components/use-pulse.ts`) แบบเดียวกับ `LiveUpdates` ของ shop-orders ได้จำนวนที่ยังไม่อ่านที่นับใหม่ทั้งหมดทุกรอบ รอบที่ถามไม่ได้จึงไม่ทำให้นับซ้ำหรือนับขาด (NTF-014 NTF-015) แอปมีโปรเซสเดียวและฐานข้อมูลเดียว จึงไม่ใช้ SSE หรือ WebSocket
+- หน้าที่เปิดค้างถามเซิร์ฟเวอร์ทุก 5 วินาทีด้วย server action `notificationPulseAction` (`usePulse` ใน `notification/components/use-pulse.ts`) ทุก component ที่เรียก `usePulse` บนหน้าเดียวกันใช้รอบถามเดียวกัน (`createPulsePoller`) คำขอเดียวตอบทุกตัว แท็บที่ถูกซ่อนไม่ถามและถามทันทีเมื่อกลับมาแสดง การถามนี้อ่านบัญชีด้วย `peekCurrentAccount()` จึงไม่เขียนแถว `sessions` และไม่ต่ออายุ 30 วัน ได้จำนวนที่ยังไม่อ่านที่นับใหม่ทั้งหมดทุกรอบ รอบที่ถามไม่ได้จึงไม่ทำให้นับซ้ำหรือนับขาด (NTF-014 NTF-015) แอปมีโปรเซสเดียวและฐานข้อมูลเดียว จึงไม่ใช้ SSE หรือ WebSocket
 - ลิงก์ของแจ้งเตือนคือ `/notifications/[id]` ซึ่งเปลี่ยนเป็นอ่านแล้วตอนเปิด ลิงก์ไปที่อยู่นี้ต้องใส่ `prefetch={false}` ใช้ `NotificationItems` ที่ใส่ให้แล้ว
 - แจ้งเตือนตัวอย่างเกิดจากคำสั่งซื้อตัวอย่างของ `seed/orders.ts` เอง และ `seed/notifications.ts` เพิ่มคำสั่งซื้ออีก 5 รายการผ่านกฎจริงเพื่อให้มีเรื่องจ่ายไม่สำเร็จ หมดเวลาจ่ายเงิน และสต็อกเหลือ 0 (NTF-018) คำสั่งซื้อและรีวิวตัวอย่างของ `seed/reviews.ts` ผ่านกฎจริงเช่นกัน ผู้ซื้อและผู้ขายตัวอย่างทุกบัญชีจึงมีแจ้งเตือน ร้าน seller01 จึงมีคำสั่งซื้อตัวอย่างรวม 9 รายการ (`สำเร็จ` 3) และร้าน seller02 มี 4 รายการ
 
@@ -287,7 +288,7 @@ const buyer: CurrentAccount = await requireAccount(`/orders/${orderNo}`);
 ```
 
 - ใช้ได้ใน server component, server action และ route handler เรียกกี่ครั้งในคำขอเดียวก็อ่านฐานข้อมูลครั้งเดียว
-- อ่าน token จาก cookie `bs_session` แล้วหาในตาราง `sessions` คืน null ถ้าหมดอายุ (ไม่ได้ใช้เกิน 30 วัน) หรือบัญชีถูกระงับ ทุกครั้งที่ใช้จะต่ออายุอีก 30 วัน
+- อ่าน token จาก cookie `bs_session` แล้วหาในตาราง `sessions` คืน null ถ้าหมดอายุ (ไม่ได้ใช้เกิน 30 วัน) หรือบัญชีถูกระงับ ทุกครั้งที่ใช้จะต่ออายุอีก 30 วัน คำขอที่หน้าเว็บส่งเองเป็นระยะโดยผู้ใช้ไม่ได้ทำอะไร ให้ใช้ `peekCurrentAccount()` ซึ่งอ่านอย่างเดียว ไม่ต่ออายุ
 - `requireAccount(next)` ใส่ที่อยู่ของหน้านั้นเองเป็น `next` ใส่ query ได้ เช่น `"/checkout?step=2"` เขียน `redirect("/login?next=/cart")` เองก็ได้ผลเหมือนกัน
 - หน้าเข้าสู่ระบบดู cookie เองว่าเครื่องนี้หมดอายุหรือบัญชีถูกระงับ แล้วขึ้นข้อความให้ ไม่ต้องส่งเหตุมาด้วย
 - อยากให้หน้าเข้าสู่ระบบขึ้นข้อความเพิ่ม ใช้ `loginPath(next, notice)` จาก `@/features/account/server/login-path` notice มี `"relogin"` (กรุณาเข้าสู่ระบบอีกครั้ง) และ `"password-reset"` (ตั้งรหัสผ่านใหม่แล้ว กรุณาเข้าสู่ระบบ) เช่นตั้งรหัสผ่านใหม่สำเร็จให้ `redirect(loginPath("/", "password-reset"))`

@@ -1,7 +1,9 @@
 // test ระดับหน้า กระดิ่ง และ server action ของแจ้งเตือน ส่วน vi.mock ลอกจาก account-pages.test.tsx
 
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import NotificationNotFound from "@/app/notifications/[id]/not-found";
 import OpenNotificationPage from "@/app/notifications/[id]/page";
 import NotificationsError from "@/app/notifications/error";
@@ -10,7 +12,7 @@ import { createSession } from "@/features/account/server/sessions";
 import { latestNotificationsAction, markAllReadAction, notificationPulseAction } from "@/features/notification/actions";
 import { loadBellList } from "@/features/notification/components/bell";
 import { saveAllRead } from "@/features/notification/components/mark-all-read";
-import { askPulse, PULSE_INTERVAL_MS } from "@/features/notification/components/use-pulse";
+import { askPulse, createPulsePoller, PULSE_INTERVAL_MS } from "@/features/notification/components/use-pulse";
 import { addNotification, countUnread, NOTIFICATION_TYPE, type Pulse } from "@/features/notification/server/notifications";
 import type { Db } from "@/shared/db";
 import { addAccount } from "@/shared/db/builders";
@@ -102,6 +104,9 @@ function fill(accountId: number, count: number, unread: number): number[] {
   db.prepare("UPDATE notifications SET read_at = created_at WHERE account_id = ? AND id <= ?").run(accountId, ids[count - unread - 1] ?? 0);
   return ids;
 }
+
+/** ถามหนึ่งรอบด้วยรายการล่าสุดที่รู้ค่าเดียว */
+const pulse = async (sinceId: number): Promise<Pulse | null> => (await notificationPulseAction([sinceId]))?.[0] ?? null;
 
 const itemCount = (html: string) => html.match(/href="\/notifications\/\d+"/g)?.length ?? 0;
 
@@ -272,10 +277,10 @@ describe("NTF-014 NTF-015 แจ้งเตือนใหม่ขึ้นเ
     expect(PULSE_INTERVAL_MS).toBeLessThanOrEqual(5_000);
 
     fill(mana, 1, 1);
-    expect(await notificationPulseAction(known)).toEqual({ unread: 2, latestId: known, newCount: 0 });
+    expect(await pulse(known)).toEqual({ unread: 2, latestId: known, newCount: 0 });
 
     const [fresh] = fill(somying, 1, 1);
-    expect(await notificationPulseAction(known)).toEqual({ unread: 3, latestId: fresh, newCount: 1 });
+    expect(await pulse(known)).toEqual({ unread: 3, latestId: fresh, newCount: 1 });
   });
 
   test("NTF-014 อ่านแจ้งเตือนจากหน้าต่างหนึ่ง รอบถามถัดไปของอีกหน้าต่างได้จำนวนที่ลดลง", async () => {
@@ -284,25 +289,137 @@ describe("NTF-014 NTF-015 แจ้งเตือนใหม่ขึ้นเ
 
     await openPage(ids[0]);
 
-    expect((await notificationPulseAction(ids[2]))?.unread).toBe(2);
+    expect((await pulse(ids[2]))?.unread).toBe(2);
   });
 
   test("NTF-015 รอบที่ถามไม่ได้หรือออกจากระบบแล้วไม่ได้ค่าใหม่และไม่โยน error กระดิ่งจึงแสดงตัวเลขล่าสุดที่รู้ และรอบถัดไปได้จำนวนที่นับใหม่ทั้งหมด", async () => {
     fill(somchai, 1, 1);
     signInAs(somchai);
-    const offline = async (): Promise<Pulse | null> => {
+    const offline = async (): Promise<Pulse[] | null> => {
       throw new TypeError("Failed to fetch");
     };
 
-    expect(await askPulse(offline, 1)).toBeNull();
+    expect(await askPulse(offline, [1])).toBeNull();
     fill(somchai, 2, 2);
-    expect(await askPulse(offline, 1)).toBeNull();
-    expect((await askPulse(notificationPulseAction, 1))?.unread).toBe(3);
-    expect((await askPulse(notificationPulseAction, 1))?.unread).toBe(3);
+    expect(await askPulse(offline, [1])).toBeNull();
+    expect((await askPulse(notificationPulseAction, [1]))?.[0].unread).toBe(3);
+    expect((await askPulse(notificationPulseAction, [1]))?.[0].unread).toBe(3);
 
     signOut();
-    expect(await askPulse(notificationPulseAction, 1)).toBeNull();
+    expect(await askPulse(notificationPulseAction, [1])).toBeNull();
     expect(await latestNotificationsAction()).toBeNull();
+  });
+
+  test("NTF-014 กระดิ่งกับแถบแจ้งเตือนใหม่ถามในคำขอเดียว แต่ละตัวได้จำนวนรายการใหม่นับจากรายการที่ตัวเองรู้", async () => {
+    const ids = fill(somying, 3, 3);
+    signInAs(somying);
+
+    expect(await notificationPulseAction([ids[2], ids[0]])).toEqual([
+      { unread: 3, latestId: ids[2], newCount: 0 },
+      { unread: 3, latestId: ids[2], newCount: 2 },
+    ]);
+    expect(await notificationPulseAction("x" as never)).toEqual([]);
+    expect(await notificationPulseAction(Array.from({ length: 50 }, () => 0))).toHaveLength(4);
+  });
+
+  test("NTF-014 การถามเป็นระยะไม่เขียนแถวการเข้าสู่ระบบ จึงไม่ต่ออายุ 30 วัน และการเข้าสู่ระบบที่หมดอายุหรือบัญชีที่ถูกระงับไม่ได้ค่า", async () => {
+    fill(somying, 1, 1);
+    signInAs(somying);
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    db.prepare("UPDATE sessions SET last_used_at = ?, expires_at = ?").run("2026-01-01T00:00:00.000Z", tomorrow);
+
+    expect((await pulse(0))?.unread).toBe(1);
+    expect((await pulse(0))?.unread).toBe(1);
+    expect(db.prepare("SELECT last_used_at, expires_at FROM sessions").get()).toEqual({ last_used_at: "2026-01-01T00:00:00.000Z", expires_at: tomorrow });
+
+    db.prepare("UPDATE sessions SET expires_at = ?").run("2026-01-02T00:00:00.000Z");
+    expect(await pulse(0)).toBeNull();
+    db.prepare("UPDATE sessions SET expires_at = ?").run(tomorrow);
+    db.prepare("UPDATE accounts SET status = 'ถูกระงับ' WHERE id = ?").run(somying);
+    expect(await pulse(0)).toBeNull();
+  });
+
+  describe("รอบถามของหน้าที่เปิดค้าง", () => {
+    const answer = (sinceIds: number[]) => sinceIds.map((sinceId) => ({ unread: 1, latestId: 9, newCount: 9 - sinceId }));
+    /** หน้าเว็บจำลองที่ซ่อนและแสดงแท็บได้ */
+    function fakePage() {
+      const listeners = new Set<() => void>();
+      const page = {
+        hidden: false,
+        addEventListener: (_type: string, listener: () => void) => void listeners.add(listener),
+        removeEventListener: (_type: string, listener: () => void) => void listeners.delete(listener),
+        show(visible: boolean) {
+          page.hidden = !visible;
+          for (const listener of listeners) listener();
+        },
+        listeners,
+      };
+      return page;
+    }
+
+    beforeEach(() => void vi.useFakeTimers());
+    afterEach(() => void vi.useRealTimers());
+
+    test("NTF-014 component สองตัวบนหน้าเดียวใช้รอบถามเดียวกัน รอบละหนึ่งคำขอ ตอนเปิดหน้าและทุก 5 วินาที", async () => {
+      const ask = vi.fn(async (sinceIds: number[]) => answer(sinceIds));
+      const poller = createPulsePoller(ask, fakePage());
+      const bell = vi.fn();
+      const banner = vi.fn();
+      const stopBell = poller.subscribe({ sinceId: () => 7, onPulse: bell });
+      const stopBanner = poller.subscribe({ sinceId: () => 4, onPulse: banner });
+      poller.askSoon();
+
+      await vi.advanceTimersByTimeAsync(0);
+      expect(ask.mock.calls).toEqual([[[7, 4]]]);
+      expect(bell).toHaveBeenLastCalledWith({ unread: 1, latestId: 9, newCount: 2 });
+      expect(banner).toHaveBeenLastCalledWith({ unread: 1, latestId: 9, newCount: 5 });
+
+      await vi.advanceTimersByTimeAsync(PULSE_INTERVAL_MS * 2);
+      expect(ask).toHaveBeenCalledTimes(3);
+
+      stopBanner();
+      await vi.advanceTimersByTimeAsync(PULSE_INTERVAL_MS);
+      expect(ask.mock.lastCall).toEqual([[7]]);
+      expect(banner).toHaveBeenCalledTimes(3);
+
+      stopBell();
+      await vi.advanceTimersByTimeAsync(PULSE_INTERVAL_MS * 3);
+      expect(ask).toHaveBeenCalledTimes(4);
+    });
+
+    test("NTF-014 แท็บที่ถูกซ่อนไม่ถามเซิร์ฟเวอร์ กลับมาแสดงแล้วถามทันทีหนึ่งครั้งและถามต่อทุก 5 วินาที", async () => {
+      const ask = vi.fn(async (sinceIds: number[]) => answer(sinceIds));
+      const page = fakePage();
+      const poller = createPulsePoller(ask, page);
+      const stop = poller.subscribe({ sinceId: () => 0, onPulse: () => {} });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(ask).toHaveBeenCalledTimes(1);
+
+      page.show(false);
+      await vi.advanceTimersByTimeAsync(PULSE_INTERVAL_MS * 6);
+      expect(ask).toHaveBeenCalledTimes(1);
+
+      page.show(true);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(ask).toHaveBeenCalledTimes(2);
+      await vi.advanceTimersByTimeAsync(PULSE_INTERVAL_MS);
+      expect(ask).toHaveBeenCalledTimes(3);
+
+      stop();
+      expect(page.listeners.size).toBe(0);
+    });
+
+    test("NTF-015 รอบที่ถามไม่ได้ไม่เรียก component และรอบถัดไปยังถามต่อ", async () => {
+      const ask = vi.fn(async (sinceIds: number[]): Promise<Pulse[] | null> => answer(sinceIds));
+      ask.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+      const onPulse = vi.fn();
+      const stop = createPulsePoller(ask, fakePage()).subscribe({ sinceId: () => 0, onPulse });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(onPulse).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(PULSE_INTERVAL_MS);
+      expect(onPulse).toHaveBeenCalledTimes(1);
+      stop();
+    });
   });
 
   test("NTF-015 แจ้งเตือนที่เกิดระหว่างออกจากระบบแสดงครบตั้งแต่หน้าแรกที่โหลด โดยไม่ต้องมีสคริปต์", async () => {
@@ -329,7 +446,7 @@ describe("NTF-016 เฉพาะบัญชีที่เกี่ยวข�
     expect(html).toContain(`พัสดุของบัญชี ${mana} `);
     expect(html).not.toContain(`พัสดุของบัญชี ${somchai} `);
     expect((await latestNotificationsAction())?.items.every((item) => item.message.includes(`บัญชี ${mana} `))).toBe(true);
-    expect(await notificationPulseAction(0)).toMatchObject({ unread: 0, newCount: 2 });
+    expect(await pulse(0)).toMatchObject({ unread: 0, newCount: 2 });
   });
 });
 
@@ -352,5 +469,19 @@ describe("NTF-017 หน้าว่าง หน้ากำลังโหล�
 
     expect(html).toContain("โหลดแจ้งเตือนไม่สำเร็จ");
     expect(html).toContain("ลองใหม่");
+  });
+});
+
+describe("ไฟล์ที่ไปอยู่ในเบราว์เซอร์", () => {
+  test("component ของแจ้งเตือนและหน้าผิดพลาดไม่ import ค่าจากโมดูลใน server/ ใช้ได้แค่ชนิดข้อมูล", () => {
+    const dir = join(process.cwd(), "src/features/notification/components");
+    const files = [...readdirSync(dir).filter((name) => /\.tsx?$/.test(name)).map((name) => join(dir, name)), join(process.cwd(), "src/app/notifications/error.tsx")];
+    const values = files.flatMap((file) =>
+      [...readFileSync(file, "utf8").matchAll(/import\s+(type\s+)?\{([^}]*)\}\s+from\s+"[^"]*\/server\/[^"]*"/g)]
+        .filter((match) => !match[1])
+        .flatMap((match) => match[2].split(",").map((name) => name.trim()).filter((name) => name && !name.startsWith("type ")))
+        .map((name) => `${file.split("/").pop()}: ${name}`),
+    );
+    expect(values).toEqual([]);
   });
 });

@@ -309,3 +309,44 @@ test.describe("จอกว้าง 360 จุด", () => {
     expect(await overflow(page)).toBe(0);
   });
 });
+
+test("NTF-014 หน้าแจ้งเตือนถามเซิร์ฟเวอร์รอบละครั้งเดียว ไม่ถามตอนแท็บถูกซ่อน ถามทันทีเมื่อกลับมา และการถามไม่ต่ออายุการเข้าสู่ระบบ", async ({ browser }) => {
+  const page = await signedInPage(browser, "buyer3@example.com");
+  const asked: number[] = [];
+  page.on("request", (request) => {
+    if (request.method() === "POST" && request.headers()["next-action"]) asked.push(Date.now());
+  });
+  const session = () =>
+    query<{ last_used_at: string; expires_at: string }>(
+      `SELECT se.last_used_at, se.expires_at FROM sessions se JOIN accounts a ON a.id = se.account_id
+       WHERE a.email = ? ORDER BY se.id DESC LIMIT 1`,
+      "buyer3@example.com",
+    )[0];
+
+  await page.goto("/notifications");
+  await expect(page.getByRole("heading", { name: "แจ้งเตือน" })).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  const loaded = session();
+  asked.length = 0;
+
+  // 11 วินาทีมีรอบถาม 2 รอบ กระดิ่งกับแถบแจ้งเตือนใหม่ใช้รอบเดียวกัน
+  await page.waitForTimeout(11_000);
+  expect(asked.length).toBeGreaterThanOrEqual(2);
+  expect(asked.length).toBeLessThanOrEqual(3);
+  expect(session()).toEqual(loaded);
+
+  const setHidden = (hidden: boolean) =>
+    page.evaluate((value) => {
+      Object.defineProperty(document, "hidden", { configurable: true, get: () => value });
+      document.dispatchEvent(new Event("visibilitychange"));
+    }, hidden);
+  await setHidden(true);
+  await page.waitForTimeout(1_000);
+  asked.length = 0;
+  await page.waitForTimeout(6_000);
+  expect(asked).toEqual([]);
+
+  await setHidden(false);
+  await expect.poll(() => asked.length, { timeout: 2_000 }).toBe(1);
+  await page.context().close();
+});

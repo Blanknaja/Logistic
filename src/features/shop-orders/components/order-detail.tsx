@@ -2,7 +2,9 @@ import Link from "next/link";
 import type { OrderDetail, ParcelSummary } from "@/features/shop-orders/server/orders";
 import { formatBaht, formatThaiDateTime, formatNumber } from "@/shared/format";
 import { ORDER_STATUS } from "@/shared/statuses";
+import { Journey, PARCEL_JOURNEY } from "@/shared/ui/journey";
 import { ErrorState } from "@/shared/ui/states";
+import { StatusBadge } from "@/shared/ui/status-badge";
 import { CopyText } from "./copy-text";
 import { LiveUpdates } from "./live-updates";
 import { ShippingActions } from "./shipping-actions";
@@ -34,7 +36,7 @@ export function OrderDetailView({ order, parcel, backHref, version }: Props) {
         <p className={styles.muted}>
           คำสั่งซื้อ {order.orderNo} · สั่งซื้อเมื่อ <time dateTime={order.orderedAt}>{formatThaiDateTime(order.orderedAt)}</time>
         </p>
-        {cancelled && <p>คำสั่งซื้อนี้ถูกยกเลิกแล้ว</p>}
+        {cancelled && <p className="badge">คำสั่งซื้อนี้ถูกยกเลิกแล้ว</p>}
         <ShippingActions
           orderNo={order.orderNo}
           status={order.status}
@@ -43,7 +45,7 @@ export function OrderDetailView({ order, parcel, backHref, version }: Props) {
       </header>
 
       <div className={styles.detail}>
-        <section aria-labelledby="order-items">
+        <section className="card card-pad" aria-labelledby="order-items">
           <h2 id="order-items" className={styles.sectionHeading}>
             สินค้า
           </h2>
@@ -74,7 +76,7 @@ export function OrderDetailView({ order, parcel, backHref, version }: Props) {
         </section>
 
         <div className={styles.aside}>
-          <section aria-labelledby="order-recipient">
+          <section className="card card-pad" aria-labelledby="order-recipient">
             <h2 id="order-recipient" className={styles.sectionHeading}>
               ที่อยู่จัดส่ง
             </h2>
@@ -88,14 +90,14 @@ export function OrderDetailView({ order, parcel, backHref, version }: Props) {
             <CopyText text={`${name}\n${phone}\n${address}`} label="คัดลอกที่อยู่" />
           </section>
 
-          <section aria-labelledby="order-payment">
+          <section className="card card-pad" aria-labelledby="order-payment">
             <h2 id="order-payment" className={styles.sectionHeading}>
               การจ่ายเงิน
             </h2>
             <p>{order.payment ? `จ่ายแล้ว ${order.payment.method} ${formatThaiDateTime(order.payment.paidAt)}` : "ยังไม่จ่าย"}</p>
           </section>
 
-          <section aria-labelledby="order-parcel">
+          <section className="card card-pad" aria-labelledby="order-parcel">
             <h2 id="order-parcel" className={styles.sectionHeading}>
               การจัดส่ง
             </h2>
@@ -110,14 +112,24 @@ export function OrderDetailView({ order, parcel, backHref, version }: Props) {
 function ParcelInfo({ parcel, cancelled }: { parcel: Props["parcel"]; cancelled: boolean }) {
   if (parcel === "unavailable") return <ErrorState level={2} title="โหลดข้อมูลการจัดส่งไม่ได้" />;
   if (!parcel) return <p>{cancelled ? "ไม่มีพัสดุ" : "ยังไม่มีพัสดุ จะมีเมื่อผู้ซื้อจ่ายเงินแล้ว"}</p>;
+  const step = PARCEL_JOURNEY.indexOf(parcel.status);
   return (
-    <dl className={styles.facts}>
-      <dt>เลขติดตามพัสดุ</dt>
-      <dd>{parcel.trackingNo}</dd>
-      <dt>สถานะการจัดส่ง</dt>
-      <dd>{parcel.status}</dd>
-      <dt>เปลี่ยนเมื่อ</dt>
-      <dd>{formatThaiDateTime(parcel.changedAt)}</dd>
-    </dl>
+    <>
+      {step >= 0 && (
+        <div className={styles.journey}>
+          <Journey compact steps={PARCEL_JOURNEY} current={step} label={`ขั้นที่ ${step + 1} จาก ${PARCEL_JOURNEY.length}`} />
+        </div>
+      )}
+      <dl className={styles.facts}>
+        <dt>เลขติดตามพัสดุ</dt>
+        <dd>{parcel.trackingNo}</dd>
+        <dt>สถานะการจัดส่ง</dt>
+        <dd>
+          <StatusBadge status={parcel.status} />
+        </dd>
+        <dt>เปลี่ยนเมื่อ</dt>
+        <dd>{formatThaiDateTime(parcel.changedAt)}</dd>
+      </dl>
+    </>
   );
 }

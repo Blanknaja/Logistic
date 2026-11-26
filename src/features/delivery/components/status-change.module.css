@@ -2,8 +2,16 @@
 
 .page {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-4);
   max-width: var(--measure);
+}
+
+.page > :global(.notice) {
+  margin: 0;
+}
+
+.journey {
+  padding: var(--space-4) var(--space-2);
 }
 
 .page > p {
@@ -19,25 +27,30 @@
   display: block;
   margin-bottom: var(--space-1);
   color: var(--color-muted);
+  font-family: var(--font);
   font-size: var(--text-label);
   font-weight: 400;
   line-height: var(--line-height);
 }
 
 .cancelled {
-  color: var(--color-danger);
+  justify-self: start;
 }
 
 .facts {
   display: grid;
   margin: 0;
+  padding: var(--space-1) var(--space-4);
 }
 
 .facts > div {
   display: flex;
   gap: var(--space-3);
   padding-block: var(--space-3);
-  border-bottom: 1px solid var(--color-border);
+}
+
+.facts > div + div {
+  border-top: 1px solid var(--color-border);
 }
 
 .facts dt {
@@ -66,11 +79,6 @@
   min-height: var(--control-main);
   padding-inline: var(--space-7);
   font-size: var(--text-body);
-}
-
-.form {
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--color-text);
 }
 
 .formTitle {

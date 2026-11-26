@@ -48,7 +48,7 @@ export default async function AdminReviewsPage({ searchParams }: PageProps<"/adm
           <EmptyState title="ไม่มีรีวิวในสถานะนี้" />
         ) : (
           <>
-            <ul className={styles.list}>
+            <ul className={`card ${styles.list}`}>
               {list.reviews.map((review) => (
                 <ReviewItem key={review.id} review={review} meta={`${review.productName} · ${review.shopName} · ${review.status}`}>
                   {review.status === REVIEW_STATUS.visible ? (

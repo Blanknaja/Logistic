@@ -22,7 +22,10 @@ export function CardRating({ rating }: { rating?: Rating | null }) {
 export function Stars({ rating }: { rating: number }) {
   return (
     <span className={styles.stars}>
-      <span aria-hidden="true">{"★".repeat(rating) + "☆".repeat(5 - rating)}</span>
+      <span aria-hidden="true">
+        <span className={styles.starOn}>{"★".repeat(rating)}</span>
+        <span className={styles.starOff}>{"★".repeat(5 - rating)}</span>
+      </span>
       <span className="visually-hidden">{rating} ดาว</span>
     </span>
   );
@@ -33,8 +36,10 @@ export function ProductRatingLink({ rating }: { rating: Rating | null }) {
   if (!rating) return null;
   return (
     <a href="#reviews" className={styles.ratingLink}>
-      <span>
-        <span aria-hidden="true">★ </span>
+      <span className={styles.score}>
+        <span aria-hidden="true" className={styles.starOn}>
+          ★{" "}
+        </span>
         <span className="visually-hidden">คะแนน </span>
         {formatAverage(rating.average)}
       </span>
@@ -48,8 +53,10 @@ export function ShopRatingLine({ rating }: { rating: Rating | null }) {
   if (!rating) return <p className={`${styles.shopRating} ${styles.muted}`}>{MESSAGES.noReviews}</p>;
   return (
     <p className={styles.shopRating}>
-      <span>
-        <span aria-hidden="true">★ </span>
+      <span className={styles.score}>
+        <span aria-hidden="true" className={styles.starOn}>
+          ★{" "}
+        </span>
         <span className="visually-hidden">คะแนน </span>
         {formatAverage(rating.average)}
       </span>

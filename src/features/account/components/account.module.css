@@ -1,9 +1,14 @@
-/* หน้าบัญชีเป็นคอลัมน์แคบชิดขอบซ้ายของเนื้อหา ไม่ใช่กล่องลอยกลางจอ */
+/* หน้าบัญชีเป็นการ์ดแคบใบเดียวกลางหน้า */
 
 .page {
   display: grid;
   gap: var(--space-5);
-  max-width: 440px;
+  max-width: 480px;
+  margin-inline: auto;
+  padding: var(--space-5) clamp(var(--space-4), 5vw, var(--space-6));
+  border-radius: var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
 }
 
 .page > h1,
@@ -50,7 +55,11 @@
 }
 
 .notice {
-  margin: 0 0 var(--space-4);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-m);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-press);
 }
 
 /* ทางไปหน้าอื่นของบัญชี เบากว่าฟอร์ม: ตัวเล็ก สีรอง ลิงก์ยังกดได้สูง 44 จุด */
@@ -67,12 +76,16 @@
   display: inline-flex;
   align-items: center;
   min-height: var(--tap);
-  color: var(--color-text);
+  color: var(--color-primary-press);
 }
 
 .profile {
   margin: 0;
-  border-top: 1px solid var(--color-text);
+  border-top: 1px solid var(--color-border);
+}
+
+.profile dd:last-child {
+  border-bottom: 0;
 }
 
 .profile dt {

@@ -75,6 +75,8 @@ export function Bell({ start }: { start: Pulse | null }) {
   }, [open]);
 
   const badge = badgeText(unread);
+  // แจ้งเตือนใหม่เข้ามาระหว่างเปิดหน้าอยู่ กระดิ่งแกว่งหนึ่งครั้งและตัวเลขเด้ง
+  const fresh = (pulse?.newCount ?? 0) > 0;
 
   if (!hydrated) {
     return (
@@ -119,8 +121,14 @@ export function Bell({ start }: { start: Pulse | null }) {
         aria-controls={panelId}
         onClick={toggle}
       >
-        <BellIcon />
-        {badge && <span className="cart-count">{badge}</span>}
+        <span key={pulse?.newCount ?? 0} className={fresh ? styles.swing : styles.still}>
+          <BellIcon />
+        </span>
+        {badge && (
+          <span key={badge} className={fresh ? "cart-count cart-count-bump" : "cart-count"}>
+            {badge}
+          </span>
+        )}
       </button>
       <span aria-live="polite" aria-atomic="true" className="visually-hidden">
         {announcement}

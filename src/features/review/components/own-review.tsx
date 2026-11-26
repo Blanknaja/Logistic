@@ -30,7 +30,7 @@ export function OwnReview({
   return (
     <article className={styles.section}>
       <h1>{review === null ? "เขียนรีวิว" : editing && review.canEdit ? "แก้ไขรีวิว" : "รีวิวของฉัน"}</h1>
-      <div className={styles.item}>
+      <div className={`card ${styles.item}`}>
         {item.coverImageUrl ? <img src={item.coverImageUrl} alt="" /> : <span />}
         <div>
           <p>
@@ -52,11 +52,11 @@ export function OwnReview({
       ) : (
         <>
           {message && (
-            <p role="status" className={styles.notice}>
+            <p role="status" className="notice">
               {message}
             </p>
           )}
-          <ul className={styles.list}>
+          <ul className={`card ${styles.list}`}>
             <ReviewItem review={review} />
           </ul>
           {review.canEdit && (

@@ -14,7 +14,7 @@ export function ReviewItem({ review, meta, children }: { review: Shown; meta?: R
   return (
     <li className={styles.review} id={review.id ? `review-${review.id}` : undefined}>
       <div className={styles.head}>
-        {review.author && <span>{review.author}</span>}
+        {review.author && <span className={styles.author}>{review.author}</span>}
         <Stars rating={review.rating} />
         <time dateTime={review.createdAt} className={styles.muted}>
           {formatThaiDate(review.createdAt)}
@@ -24,7 +24,7 @@ export function ReviewItem({ review, meta, children }: { review: Shown; meta?: R
       {meta && <p className={styles.muted}>{meta}</p>}
       {review.variantLabel && <p className={styles.muted}>{review.variantLabel}</p>}
       {review.hiddenReason != null && (
-        <p className={styles.badge}>
+        <p className={`badge badge-alert ${styles.badge}`}>
           {MESSAGES.hiddenBadge} เหตุผล: {review.hiddenReason}
           {review.hiddenAt && (
             <>

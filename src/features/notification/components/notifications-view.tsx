@@ -27,11 +27,17 @@ export function NotificationsView({ list }: { list: NotificationPage }) {
     <>
       <h1>แจ้งเตือน</h1>
       <div className={styles.toolbar}>
-        <p>{`ยังไม่อ่าน ${list.unread} รายการ`}</p>
+        <p className={list.unread > 0 ? "badge badge-new" : "badge"}>{`ยังไม่อ่าน ${list.unread} รายการ`}</p>
         <MarkAllRead disabled={list.unread === 0} />
       </div>
       <NewNotificationsBanner key={list.latestId} sinceId={list.latestId} />
-      {list.total === 0 ? <EmptyState title={NO_NOTIFICATIONS} /> : <NotificationItems items={list.items} />}
+      {list.total === 0 ? (
+        <EmptyState title={NO_NOTIFICATIONS} />
+      ) : (
+        <div className={`card ${styles.pageList}`}>
+          <NotificationItems items={list.items} />
+        </div>
+      )}
       {list.pageCount > 1 && (
         <nav aria-label="เลือกหน้า" className={styles.pager}>
           <PageLink label="ก่อนหน้า" page={list.page - 1} enabled={list.page > 1} />

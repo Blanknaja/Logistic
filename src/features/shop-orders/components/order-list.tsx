@@ -4,6 +4,7 @@ import type { OrderList, StatusCounts } from "@/features/shop-orders/server/orde
 import { formatBaht, formatThaiDateTime, formatNumber } from "@/shared/format";
 import { ORDER_STATUS } from "@/shared/statuses";
 import { EmptyState } from "@/shared/ui/states";
+import { StatusBadge } from "@/shared/ui/status-badge";
 import { LiveUpdates } from "./live-updates";
 import { SearchForm } from "./search-form";
 import { ShippingActions } from "./shipping-actions";
@@ -63,7 +64,7 @@ export function OrderListView({ params, counts, list, version }: Props) {
       )}
 
       {awaitingPacking > 0 && (
-        <p className={styles.searchResult}>
+        <p className={`notice notice-wait ${styles.searchResult}`}>
           <Link href={ordersHref({ status: "paid" })} className="link-action">
             รอจัดของ {formatNumber(awaitingPacking)} รายการ
           </Link>
@@ -101,7 +102,7 @@ function Results({ params, list, current }: Pick<Props, "params" | "list"> & { c
 /** ทั้งแถวกดไปหน้ารายละเอียด ปุ่มจัดส่งและลิงก์ดูการจัดส่งอยู่เหนือลิงก์ของแถว */
 function OrderTable({ rows, current }: { rows: OrderList["items"]; current: ListParams }) {
   return (
-    <div className={styles.table}>
+    <div className={`card ${styles.table}`}>
       <div className={styles.head} aria-hidden="true">
         <span>เลขคำสั่งซื้อ</span>
         <span>สถานะ</span>
@@ -115,7 +116,9 @@ function OrderTable({ rows, current }: { rows: OrderList["items"]; current: List
             <Link href={orderHref(row.orderNo, current)} className={styles.rowLink}>
               {row.orderNo}
             </Link>
-            <span className={styles.status}>{row.status}</span>
+            <span className={styles.status}>
+              <StatusBadge status={row.status} />
+            </span>
             <span className={styles.when}>
               <span className={styles.cellLabel}>สั่งซื้อเมื่อ </span>
               <time dateTime={row.orderedAt}>{formatThaiDateTime(row.orderedAt)}</time>

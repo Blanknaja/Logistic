@@ -25,7 +25,7 @@ export default async function ShopSettingsPage({ searchParams }: PageProps<"/sel
         <header className={styles.formIntro}>
           <h1>ตั้งค่าร้าน</h1>
           {saved && !suspended && (
-            <p role="status" className={styles.notice}>
+            <p role="status" className="notice">
               บันทึกแล้ว
             </p>
           )}

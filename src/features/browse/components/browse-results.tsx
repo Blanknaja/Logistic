@@ -57,7 +57,7 @@ export function BrowseResults({ params, result, categories, home }: Props) {
       </nav>
 
       {result.categoryNotFound ? (
-        <EmptyState title="ไม่พบหมวดหมู่นี้" message="เลือกหมวดหมู่ใหม่จากรายชื่อด้านบน" />
+        <EmptyState art="search" title="ไม่พบหมวดหมู่นี้" message="เลือกหมวดหมู่ใหม่จากรายชื่อด้านบน" />
       ) : (
         <Results params={params} result={result} />
       )}
@@ -121,7 +121,7 @@ function Results({ params, result, title }: Pick<Props, "params" | "result"> & {
       </div>
 
       {result.total === 0 ? (
-        <EmptyState title="ไม่พบสินค้าที่ตรงกับที่ค้นหา" message={filtered ? undefined : "ลองคำที่สั้นลง หรือคำอื่น"}>
+        <EmptyState art="search" title="ไม่พบสินค้าที่ตรงกับที่ค้นหา" message={filtered ? undefined : "ลองคำที่สั้นลง หรือคำอื่น"}>
           {/* ถ้ามีแค่คำค้น ล้างตัวกรองได้ผลเดิม จึงพาไปดูสินค้าทั้งหมดแทน */}
           {filtered ? (
             <Link href={clearHref} className="button">

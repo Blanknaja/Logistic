@@ -47,7 +47,7 @@ export default async function SellerReviewsPage({ searchParams }: PageProps<"/se
           <EmptyState title={list.counts.all === 0 ? "ร้านของคุณยังไม่มีรีวิว" : "ตอบครบทุกรีวิวแล้ว"} />
         ) : (
           <>
-            <ul className={styles.list}>
+            <ul className={`card ${styles.list}`}>
               {list.reviews.map((review) => (
                 <ReviewItem key={review.id} review={review} meta={`${review.productName} · คำสั่งซื้อ ${review.orderNo}`}>
                   {review.status === REVIEW_STATUS.visible && (

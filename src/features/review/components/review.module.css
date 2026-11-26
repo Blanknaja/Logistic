@@ -1,9 +1,39 @@
 /* รีวิวและคะแนน (REV) ใช้เฉพาะค่าจาก token ใน globals.css */
 
+/* ดาวเป็นรูป ไม่ใช่ตัวหนังสือ: พื้นสีดอกดาวเรือง เส้นขอบสีเข้มทำให้เห็นชัดบนพื้นขาว */
+.starOn,
+.starOff,
+.cardRating::first-letter,
+.starOption {
+  -webkit-text-stroke: calc(var(--space-1) / 3) var(--color-ink);
+  paint-order: stroke fill;
+}
+
+.starOn,
+.cardRating::first-letter {
+  color: var(--color-accent);
+}
+
+.starOff {
+  color: var(--color-surface);
+  -webkit-text-stroke-color: var(--color-border-strong);
+}
+
+/* ::first-letter ใช้ได้กับกล่องที่ไม่ใช่ inline เท่านั้น */
 .cardRating {
-  color: var(--color-muted);
+  display: inline-block;
+  color: var(--color-text);
   font-size: var(--text-label);
+  font-weight: 600;
   white-space: nowrap;
+}
+
+.score {
+  font-weight: 600;
+}
+
+.author {
+  font-weight: 600;
 }
 
 .ratingLink {
@@ -43,7 +73,9 @@
 
 .summary {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-4);
+  max-width: var(--measure);
+  padding: var(--space-4);
 }
 
 .average {
@@ -55,8 +87,19 @@
 }
 
 .averageNumber {
+  font-family: var(--font-display);
   font-size: var(--text-title);
+  font-weight: 700;
   line-height: 1.2;
+}
+
+.average .stars {
+  order: -1;
+  font-size: var(--text-heading);
+}
+
+.averageNumber {
+  order: -2;
 }
 
 .breakdown {
@@ -78,7 +121,26 @@
 
 .breakdown progress {
   width: 100%;
-  accent-color: var(--color-text);
+  height: var(--space-2);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-sunken);
+  appearance: none;
+}
+
+.breakdown progress::-webkit-progress-bar {
+  background: var(--color-surface-sunken);
+}
+
+.breakdown progress::-webkit-progress-value {
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+}
+
+.breakdown progress::-moz-progress-bar {
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
 }
 
 .breakdown > li > :last-child {
@@ -101,13 +163,20 @@
   list-style: none;
 }
 
+.list:global(.card) {
+  padding-inline: var(--space-4);
+}
+
 .review {
   display: grid;
   gap: var(--space-2);
   min-width: 0;
   padding: var(--space-4) 0;
+  scroll-margin-top: calc(var(--header-height) + var(--space-4));
+}
+
+.review + .review {
   border-top: 1px solid var(--color-border);
-  scroll-margin-top: var(--header-height);
 }
 
 .review > p {
@@ -122,7 +191,8 @@
 }
 
 .stars {
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
+  line-height: 1;
   white-space: nowrap;
 }
 
@@ -147,14 +217,23 @@
   height: calc(var(--tap) * 1.5);
   border-radius: var(--radius-s);
   object-fit: cover;
+  transition: transform var(--dur-base) var(--ease-out);
 }
 
+@media (hover: hover) {
+  .images a:hover img {
+    transform: scale(1.04);
+  }
+}
+
+/* คำตอบของร้านอยู่ในกล่องที่จม แยกจากเสียงของผู้ซื้อ */
 .reply {
   display: grid;
   gap: var(--space-1);
   max-width: var(--measure);
-  padding-left: var(--space-4);
-  border-left: 1px solid var(--color-border);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-m);
+  background: var(--color-surface-sunken);
   overflow-wrap: anywhere;
 }
 
@@ -164,15 +243,9 @@
 }
 
 .badge {
-  color: var(--color-danger);
-  font-size: var(--text-label);
-}
-
-.notice {
-  margin: 0;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-s);
-  background: var(--color-surface-sunken);
+  justify-self: start;
+  padding-block: var(--space-1);
+  white-space: normal;
 }
 
 .pager {
@@ -217,6 +290,14 @@
   max-width: var(--measure);
 }
 
+/* ฟอร์มเขียนรีวิวเป็นการ์ดของตัวเอง ฟอร์มตอบและซ่อนที่อยู่ในรายการรีวิวอยู่ในการ์ดของรายการแล้ว */
+.section > .form {
+  padding: var(--space-4);
+  border-radius: var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+}
+
 .form textarea {
   width: 100%;
   min-height: calc(var(--tap) * 3);
@@ -259,15 +340,30 @@
   place-items: center;
   width: var(--tap);
   height: var(--tap);
-  border-radius: var(--radius-s);
-  color: var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--color-surface);
+  -webkit-text-stroke-color: var(--color-border-strong);
   font-size: var(--text-title);
   line-height: 1;
   cursor: pointer;
+  transition: transform var(--dur-base) var(--ease-spring);
 }
 
 .starOption[data-filled="true"] {
-  color: var(--color-text);
+  color: var(--color-accent);
+  -webkit-text-stroke-color: var(--color-ink);
+  transform: scale(1.12);
+}
+
+.starOption:active {
+  transform: scale(0.9);
+  transition-duration: var(--dur-press);
+}
+
+@media (hover: hover) {
+  .starOption:hover {
+    transform: scale(1.2);
+  }
 }
 
 .starOption:has(input:focus-visible) {
@@ -297,6 +393,8 @@
   align-items: center;
   gap: var(--space-3);
   min-width: 0;
+  max-width: var(--measure);
+  padding: var(--space-3);
 }
 
 .item img,
@@ -304,7 +402,7 @@
   flex: none;
   width: calc(var(--tap) * 1.5);
   height: calc(var(--tap) * 1.5);
-  border-radius: var(--radius-s);
+  border-radius: var(--radius-m);
   background: var(--color-surface-sunken);
   object-fit: cover;
 }
@@ -363,6 +461,10 @@
   background: var(--color-disabled);
   box-shadow: none;
   cursor: not-allowed;
+}
+
+.orderItemReview > span {
+  font-weight: 600;
 }
 
 .orderItemReview {

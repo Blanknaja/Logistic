@@ -62,8 +62,12 @@ export function ReviewList({ productId, query }: { productId: number; query: Que
 
   return (
     <>
-      <div className={styles.summary}>
+      <div className={`card ${styles.summary}`}>
         <p className={styles.average}>
+          <span aria-hidden="true" className={styles.stars}>
+            <span className={styles.starOn}>{"★".repeat(Math.round(rating.average))}</span>
+            <span className={styles.starOff}>{"★".repeat(5 - Math.round(rating.average))}</span>
+          </span>
           <span className={styles.averageNumber}>{formatAverage(rating.average)}</span>
           <span className="visually-hidden">จาก 5 ดาว</span>
           <span>{formatNumber(rating.count)} รีวิว</span>
@@ -89,7 +93,7 @@ export function ReviewList({ productId, query }: { productId: number; query: Que
         <p>ยังไม่มีรีวิว {stars} ดาว</p>
       ) : (
         <>
-          <ul className={styles.list}>
+          <ul className={`card ${styles.list}`}>
             {list.reviews.map((review) => (
               <ReviewItem key={review.id} review={review} />
             ))}

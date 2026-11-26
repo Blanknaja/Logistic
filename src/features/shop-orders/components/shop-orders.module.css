@@ -56,6 +56,10 @@
   margin: 0 0 var(--space-4);
 }
 
+.searchResult:global(.notice) {
+  padding-block: 0;
+}
+
 .notice {
   margin: 0 0 var(--space-4);
   color: var(--color-warning);
@@ -68,13 +72,25 @@
   justify-content: center;
   min-height: var(--tap);
   margin-bottom: var(--space-4);
-  border-radius: var(--radius-s);
-  box-shadow: inset 0 0 0 1px var(--color-text);
+  border-radius: var(--radius-m);
+  background: var(--color-accent);
   color: var(--color-text);
   font-size: var(--text-label);
   font-weight: 600;
   text-decoration: none;
+  animation: newOrders var(--dur-base) var(--ease-spring);
   transition: box-shadow var(--dur-fast) var(--ease-out);
+}
+
+@keyframes newOrders {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+.table {
+  padding: var(--space-1) var(--space-4);
 }
 
 /* รายการคำสั่งซื้อ จอแคบเรียงเป็นแถวซ้อน จอกว้างเป็นตารางที่มีหัวคอลัมน์ */
@@ -86,7 +102,6 @@
 .list {
   margin: 0;
   padding: 0;
-  border-top: 1px solid var(--color-border);
   list-style: none;
 }
 
@@ -102,9 +117,12 @@
   column-gap: var(--space-3);
   min-height: var(--tap);
   padding-block: var(--space-3);
-  border-bottom: 1px solid var(--color-border);
   font-size: var(--text-label);
   font-variant-numeric: tabular-nums;
+}
+
+.row + .row {
+  border-top: 1px solid var(--color-border);
 }
 
 /* ทั้งแถวกดได้ ลิงก์เลขคำสั่งซื้อยืดพื้นที่กดเต็มแถว แถวสูงอย่างน้อย --tap */
@@ -112,6 +130,7 @@
   grid-area: number;
   color: var(--color-text);
   font-size: var(--text-body);
+  font-weight: 600;
   text-decoration: underline;
   text-decoration-color: transparent;
   transition: text-decoration-color var(--dur-fast) var(--ease-out);
@@ -124,9 +143,9 @@
 }
 
 .status {
+  display: flex;
   grid-area: status;
-  font-size: var(--text-body);
-  text-align: end;
+  justify-content: flex-end;
 }
 
 .recipient {
@@ -188,7 +207,7 @@
   }
 
   .newOrders:hover {
-    box-shadow: inset 0 0 0 2px var(--color-text);
+    box-shadow: var(--shadow-1);
   }
 }
 
@@ -222,13 +241,14 @@
   }
 
   .head {
-    padding-bottom: var(--space-2);
+    padding-block: var(--space-3);
+    border-bottom: 1px solid var(--color-border);
     color: var(--color-muted);
     font-size: var(--text-label);
   }
 
   .row {
-    padding-block: var(--space-1);
+    padding-block: var(--space-2);
   }
 
   .row > *,
@@ -241,10 +261,12 @@
     grid-column: 6;
   }
 
-  .rowLink,
-  .status {
+  .rowLink {
     font-size: var(--text-label);
-    text-align: start;
+  }
+
+  .status {
+    justify-content: flex-start;
   }
 
   .when {
@@ -274,7 +296,7 @@
   display: grid;
   justify-items: start;
   gap: var(--space-2);
-  margin-bottom: var(--space-7);
+  margin-bottom: var(--space-5);
 }
 
 .intro h1,
@@ -299,7 +321,12 @@
 
 .detail {
   display: grid;
-  gap: var(--space-7);
+  gap: var(--space-4);
+}
+
+.journey {
+  display: flex;
+  margin-bottom: var(--space-3);
 }
 
 .sectionHeading {
@@ -311,6 +338,11 @@
   padding: 0;
   border-top: 1px solid var(--color-border);
   list-style: none;
+}
+
+.item img,
+.noImage {
+  border-radius: var(--radius-m);
 }
 
 .item {
@@ -369,13 +401,19 @@
 
 .grandTotal {
   padding-top: var(--space-2);
-  border-top: 1px solid var(--color-text);
+  border-top: 1px solid var(--color-border);
+}
+
+dd.grandTotal {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: 700;
 }
 
 .aside {
   display: grid;
   align-content: start;
-  gap: var(--space-6);
+  gap: var(--space-4);
 }
 
 .aside p {
@@ -397,7 +435,8 @@
 .facts {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--space-1) var(--space-4);
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
@@ -424,6 +463,7 @@
 @media (min-width: 900px) {
   .detail {
     grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-    column-gap: var(--space-8);
+    column-gap: var(--space-5);
+    align-items: start;
   }
 }

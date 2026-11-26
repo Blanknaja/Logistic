@@ -257,7 +257,7 @@ describe("REV-002 รูปในรีวิว", () => {
   });
 
   test("REV-002 ยังไม่เข้าสู่ระบบ ไฟล์ที่ไม่ใช่รูป หรือรูปเกิน 5 MB ส่งขึ้นไม่ได้", async () => {
-    const post = (body: Uint8Array) => postReviewImage(new Request("http://localhost/review-images", { method: "POST", body }));
+    const post = (body: Uint8Array<ArrayBuffer>) => postReviewImage(new Request("http://localhost/review-images", { method: "POST", body }));
     expect((await post(PNG)).status).toBe(401);
     signInAs(somying);
     const gif = await post(new TextEncoder().encode("GIF89a"));

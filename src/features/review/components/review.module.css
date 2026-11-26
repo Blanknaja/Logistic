@@ -76,8 +76,9 @@
   font-size: var(--text-label);
 }
 
-.breakdown meter {
+.breakdown progress {
   width: 100%;
+  accent-color: var(--color-text);
 }
 
 .breakdown > li > :last-child {

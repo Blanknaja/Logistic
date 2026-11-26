@@ -26,7 +26,7 @@ const BUYER_NAMES = [
 const GOOD = ["ของดีมาก", "คุ้มราคา", "ชอบมาก", "ตรงปก", "คุณภาพดีเกินราคา", "ใช้งานได้ดี", "ประทับใจ", "สวยกว่าในรูป", "งานเรียบร้อย", "แนะนำเลย"];
 const FAIR = ["พอใช้ได้", "ก็โอเคตามราคา", "ธรรมดา ไม่ได้แย่", "ใช้ได้ แต่ไม่ถึงกับว้าว"];
 const POOR = ["ไม่ค่อยตรงปก", "ผิดหวังนิดหน่อย", "คุณภาพไม่สมราคา", "ของมีตำหนิ"];
-const DETAILS = [
+const PRAISE = [
   "ส่งไวมาก",
   "แพ็คมาอย่างดี",
   "ร้านตอบแชทไว",
@@ -36,10 +36,8 @@ const DETAILS = [
   "ใช้มาหนึ่งสัปดาห์ยังดีอยู่",
   "จะกลับมาซื้ออีก",
   "ซื้อเป็นของขวัญ ผู้รับชอบ",
-  "กล่องบุบเล็กน้อยแต่ของไม่เสียหาย",
-  "ส่งช้ากว่าที่คิดไปสองวัน",
-  "วัสดุบางกว่าที่คิด",
 ];
+const COMPLAINTS = ["กล่องบุบเล็กน้อย", "ส่งช้ากว่าที่คิดไปสองวัน", "วัสดุบางกว่าที่คิด", "สีไม่เหมือนในรูป"];
 const THANKS = ["ขอบคุณที่อุดหนุนครับ", "ขอบคุณสำหรับรีวิวค่ะ ไว้มาอุดหนุนใหม่นะคะ", "ขอบคุณมากครับ ดีใจที่ชอบสินค้า"];
 const SORRY = ["ขออภัยในความไม่สะดวกครับ ร้านจะปรับปรุงให้ดีขึ้น", "ขอโทษด้วยนะคะ ทักแชทร้านได้เลย ร้านยินดีดูแลค่ะ"];
 
@@ -211,7 +209,10 @@ export async function addSampleReviews(db: Db, now: number, demoPassword: string
         const used = usedBodies.get(item.productId) ?? new Set<string>();
         usedBodies.set(item.productId, used);
         do {
-          body = `${random.pick(rating >= 4 ? GOOD : rating === 3 ? FAIR : POOR)} ${random.pick(DETAILS)}`;
+          body =
+            rating >= 4
+              ? `${random.pick(GOOD)} ${random.pick(PRAISE)}`
+              : `${random.pick(rating === 3 ? FAIR : POOR)} ${random.pick(rating === 3 ? [...PRAISE, ...COMPLAINTS] : COMPLAINTS)}`;
         } while (used.has(body));
         used.add(body);
       }

@@ -72,7 +72,7 @@ export function ReviewList({ productId, query }: { productId: number; query: Que
           {STARS.map((star) => (
             <li key={star}>
               <span>{star} ดาว</span>
-              <meter min={0} max={rating.count} value={rating.stars[star]} aria-hidden="true" />
+              <progress max={rating.count} value={rating.stars[star]} aria-hidden="true" />
               <span>{formatNumber(rating.stars[star])}</span>
             </li>
           ))}

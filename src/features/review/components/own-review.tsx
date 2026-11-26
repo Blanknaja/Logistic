@@ -33,7 +33,9 @@ export function OwnReview({
       <div className={styles.item}>
         {item.coverImageUrl ? <img src={item.coverImageUrl} alt="" /> : <span />}
         <div>
-          <p>{item.productName}</p>
+          <p>
+            <Link href={`/products/${item.productId}`}>{item.productName}</Link>
+          </p>
           {item.variantLabel && <p className={styles.muted}>{item.variantLabel}</p>}
         </div>
       </div>

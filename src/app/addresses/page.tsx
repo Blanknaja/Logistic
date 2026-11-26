@@ -21,8 +21,10 @@ export default async function AddressesPage({ searchParams }: PageProps<"/addres
   const addresses = listAddresses(getDb(), viewer.id);
   const { notice, delete: confirming } = await searchParams;
   const message = typeof notice === "string" && Object.hasOwn(NOTICES, notice) ? NOTICES[notice] : null;
+  // ระหว่างถามยืนยันลบ ปุ่ม "ไม่ลบ" เป็นปุ่มหลักของหน้า ปุ่มที่ลบจริงไม่ใช้สีเน้น
+  const asking = addresses.some((address) => String(address.id) === confirming);
   const addButton = (
-    <Link href="/addresses/new" className="button">
+    <Link href="/addresses/new" className={asking ? "button button-secondary" : "button"}>
       เพิ่มที่อยู่
     </Link>
   );
@@ -42,36 +44,35 @@ export default async function AddressesPage({ searchParams }: PageProps<"/addres
           {addButton}
           <ul className={styles.list}>
             {addresses.map((address) => (
-              <li key={address.id} className="card">
+              <li key={address.id} className={styles.item}>
                 <p>
-                  <strong>{address.recipientName}</strong>
+                  {address.recipientName} {address.phone}
                   {address.isDefault && <span className={styles.badge}>ที่อยู่หลัก</span>}
                 </p>
-                <p>{address.phone}</p>
-                <p>{fullAddress(address)}</p>
+                <p className={styles.muted}>{fullAddress(address)}</p>
                 {String(address.id) === confirming ? (
                   <div className={styles.actions}>
                     <p>ลบที่อยู่นี้ใช่ไหม</p>
                     <form action={deleteAddressAction}>
                       <input type="hidden" name="addressId" value={address.id} />
-                      <PendingButton label="ยืนยันลบ" pendingLabel="กำลังลบ..." />
+                      <PendingButton label="ยืนยันลบ" pendingLabel="กำลังลบ..." variant="secondary" />
                     </form>
-                    <Link href="/addresses" scroll={false} className="button button-secondary">
+                    <Link href="/addresses" scroll={false} className="button">
                       ไม่ลบ
                     </Link>
                   </div>
                 ) : (
                   <div className={styles.actions}>
-                    <Link href={`/addresses/${address.id}`} className="button button-secondary">
+                    <Link href={`/addresses/${address.id}`} className="link-action">
                       แก้ไข
                     </Link>
-                    <Link href={`/addresses?delete=${address.id}`} scroll={false} className="button button-secondary">
+                    <Link href={`/addresses?delete=${address.id}`} scroll={false} className="link-action">
                       ลบ
                     </Link>
                     {!address.isDefault && (
                       <form action={setDefaultAddressAction}>
                         <input type="hidden" name="addressId" value={address.id} />
-                        <PendingButton label="ตั้งเป็นที่อยู่หลัก" pendingLabel="กำลังตั้ง..." secondary />
+                        <PendingButton label="ตั้งเป็นที่อยู่หลัก" pendingLabel="กำลังตั้ง..." variant="link" />
                       </form>
                     )}
                   </div>

@@ -1,7 +1,7 @@
 import { hashPassword, verifyPassword } from "@/features/account/server/password";
 import { createSession } from "@/features/account/server/sessions";
 import { transaction, type Db } from "@/shared/db";
-import { formatDateTime } from "@/shared/format";
+import { formatTime } from "@/shared/format";
 import type { Checked } from "@/shared/result";
 import { isPhone } from "@/shared/rules";
 import { ACCOUNT_STATUS } from "@/shared/statuses";
@@ -110,7 +110,7 @@ export async function logIn(
 ): Promise<{ ok: true; accountId: number; token: string } | { ok: false; error: string }> {
   const email = input.email.trim();
   const until = lockedUntil(db, email, now);
-  if (until) return { ok: false, error: `ลองผิดหลายครั้งเกินไป ลองใหม่ได้หลัง ${formatDateTime(until).split(" ")[1]}` };
+  if (until) return { ok: false, error: `ลองผิดหลายครั้งเกินไป ลองใหม่ได้หลัง ${formatTime(until)}` };
 
   const account = db.prepare("SELECT id, password_hash, status FROM accounts WHERE email = ?").get(email) as
     | { id: number; password_hash: string; status: string }

@@ -3,6 +3,7 @@
 
 import { deflateSync, crc32 } from "node:zlib";
 import { expect, test, type Page } from "@playwright/test";
+import { stubTiles } from "./osm-tiles";
 
 const SAVE_SCREENSHOTS = process.env.SCREENSHOTS === "1";
 // ฐานข้อมูลของ e2e ถูกล้างทุกครั้ง ชื่อเหล่านี้จึงไม่ซ้ำกับข้อมูลเดิม
@@ -72,6 +73,8 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
   const startedAt = Date.now();
   const sellerPage = await (await browser.newContext()).newPage();
   const buyerPage = await (await browser.newContext()).newPage();
+  await stubTiles(sellerPage);
+  await stubTiles(buyerPage);
 
   await test.step("บัญชีแรกสมัครและเปิดร้าน", async () => {
     const page = sellerPage;
@@ -98,7 +101,7 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
     await page.getByLabel("ชื่อสินค้า").fill(productName);
     await page.getByLabel("รายละเอียด").fill("ผ้าฝ้ายเนื้อนุ่ม ใส่สบาย");
     await page.getByLabel("หมวดหมู่").selectOption({ index: 1 });
-    await page.locator('input[type="file"]').setInputFiles({ name: "shirt.png", mimeType: "image/png", buffer: png(240, 240, [15, 118, 110]) });
+    await page.getByLabel("เพิ่มรูป").setInputFiles({ name: "shirt.png", mimeType: "image/png", buffer: png(240, 240, [15, 118, 110]) });
     await expect(page.getByRole("img").first()).toBeVisible();
     for (const [index, name, values] of [
       [1, "สี", ["ดำ", "ขาว"]],
@@ -125,9 +128,14 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
     const page = sellerPage;
     await page.getByRole("navigation", { name: "เมนูหลังบ้านของร้าน" }).getByRole("link", { name: "สต็อก" }).click();
     const row = page.getByRole("listitem").filter({ hasText: productName }).filter({ hasText: "ดำ L" });
-    await row.getByLabel("ตั้งสต็อกใหม่").fill("10");
-    await row.getByRole("button", { name: "บันทึก" }).click();
-    await expect(row.getByText("สต็อก 10")).toBeVisible();
+    const save = row.getByRole("button", { name: "บันทึก" });
+    // INV-004 ตัวเลขสต็อกอยู่ในช่องกรอกที่เดียว ปุ่มบันทึกขึ้นเมื่อแก้ตัวเลขแล้วเท่านั้น
+    await expect(save).toBeHidden();
+    await row.getByRole("textbox", { name: /^สต็อก/ }).fill("10");
+    await save.click();
+    await expect(row.getByRole("status")).toHaveText("บันทึกแล้ว");
+    await expect(row.getByRole("textbox", { name: /^สต็อก/ })).toHaveValue("10");
+    await expect(save).toBeHidden();
     await shot(page, "stock");
   });
 
@@ -173,6 +181,7 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
 
   await test.step("ผู้ซื้อจ่ายด้วยบัตรทดลองของตัวจำลอง", async () => {
     const page = buyerPage;
+    await expect(page.getByText("กำลังใช้ตัวจำลองการจ่ายเงิน")).toBeVisible();
     await shot(page, "pay-choose-method", { mobile: true });
     await page.getByRole("link", { name: "บัตร", exact: true }).click();
     await page.getByLabel("เลขบัตร").fill("4242 4242 4242 4242");
@@ -209,11 +218,13 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
     ] as const) {
       await page.getByRole("link", { name: `เปลี่ยนเป็น ${status}` }).click();
       await page.getByLabel("สถานที่").fill(status === "ร้านส่งของแล้ว" ? "ไปรษณีย์คลองเตย" : "ศูนย์กระจายสินค้าเชียงใหม่");
+      // MAP-002 ขั้นแรกได้จังหวัดของร้านไว้ให้ก่อน ขั้นหลังจากนี้ได้เชียงใหม่ที่เลือกไว้ครั้งก่อน
+      if (status === "อยู่ระหว่างขนส่ง") await page.getByLabel("จังหวัด").selectOption("เชียงใหม่");
       if (extra) await page.getByLabel("ชื่อผู้รับ").fill(extra);
       if (status === "ส่งสำเร็จ") await shot(page, "parcel-delivered-form");
       await page.getByRole("button", { name: "บันทึก" }).click();
       await expect(page.getByRole("status")).toHaveText("บันทึกแล้ว");
-      await expect(page.getByRole("definition").filter({ hasText: status }).first()).toBeVisible();
+      await expect(page.getByRole("heading", { level: 1 })).toContainText(status);
     }
     await shot(page, "parcel-delivered");
   });
@@ -224,17 +235,21 @@ test("เส้นทางหลัก: เปิดร้าน ลงสิ�
     await expect(page.getByRole("link", { name: new RegExp(shopName) })).toBeVisible();
     await shot(page, "buyer-orders", { mobile: true });
     await page.getByRole("link", { name: new RegExp(shopName) }).click();
-    await expect(page.getByRole("heading", { name: /^คำสั่งซื้อ \d{10}$/ })).toBeVisible();
+    // หัวเรื่องของหน้าคำสั่งซื้อคือสถานะ เลขคำสั่งซื้อเป็นข้อมูลรองใต้หัวเรื่อง
+    await expect(page.getByRole("heading", { level: 1, name: "กำลังจัดส่ง" })).toBeVisible();
+    await expect(page.getByText(/^คำสั่งซื้อ \d{10} · /)).toBeVisible();
     await shot(page, "buyer-order", { mobile: true });
     await page.getByRole("main").getByRole("link", { name: "ติดตามพัสดุ" }).click();
     await expect(page.getByText("ส่งสำเร็จ").first()).toBeVisible();
+    await expect(page.getByText("กรุงเทพมหานคร → เชียงใหม่ (ล่าสุด และปลายทาง)")).toBeVisible();
+    await expect(page.locator('[data-delivery-map="ready"]')).toBeVisible();
     await shot(page, "tracking", { mobile: true });
     await page.getByRole("button", { name: "ได้รับสินค้าแล้ว" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "ยืนยัน" }).click();
     await expect(page.getByRole("button", { name: "ได้รับสินค้าแล้ว" })).toBeHidden();
     await shot(page, "received", { mobile: true });
     await menu(page).getByRole("link", { name: "คำสั่งซื้อ" }).click();
-    await expect(page.getByRole("link", { name: new RegExp(`${shopName} สำเร็จ`) })).toBeVisible();
+    await expect(page.getByRole("link", { name: new RegExp(`^สำเร็จ.*${shopName}`) })).toBeVisible();
   });
 
   // เครื่องกดเร็วกว่าคนมาก ถ้าใช้เกิน 1 ใน 5 ของเวลาที่ให้คน แปลว่ามีหน้าที่ช้าผิดปกติ

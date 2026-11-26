@@ -13,7 +13,7 @@ export default async function SignupPage() {
     <div className={styles.page}>
       <h1>สมัครบัญชี</h1>
       <SignupForm />
-      <p>
+      <p className={styles.more}>
         มีบัญชีแล้ว <Link href="/login">เข้าสู่ระบบ</Link>
       </p>
     </div>

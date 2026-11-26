@@ -19,7 +19,8 @@
 | `pnpm seed --reset` | ลบฐานข้อมูลในเครื่องแล้วสร้างใหม่ |
 | `pnpm check` | ตรวจชนิดข้อมูล ตรวจรูปแบบโค้ด และรัน test ทั้งหมด ต้องผ่านก่อน commit ใช้เวลาราว 20 วินาที |
 | `pnpm test:full` | รัน test ทั้งหมดโดยให้ผู้ซื้อ 20 คนแย่งชิ้นสุดท้ายครบ 100 รอบตาม CHK-Q02 (`pnpm check` รัน 10 รอบ) ต้องผ่านก่อน merge งานที่แตะการสั่งซื้อหรือการจองสต็อก |
-| `pnpm e2e` | เดินเส้นทางหลักผ่านหน้าเว็บจริงด้วย Playwright (`e2e/main-path.spec.ts`) build แอปแล้วเปิดที่พอร์ต 3300 กับฐานข้อมูล `data/e2e.db` ที่ล้างใหม่ทุกครั้ง ใช้ Google Chrome ในเครื่อง ราว 30 วินาที ไม่อยู่ใน `pnpm check` แต่ต้องผ่านก่อน merge งานที่แตะหน้าในเส้นทางหลัก วิธีใช้อื่นอยู่ใน README |
+| `pnpm test:omise` | ลองการจ่ายเงินกับ Omise โหมดทดลองจริง (`src/features/payment/payment.omise.test.ts`) ทั้งบัตร PromptPay การทำเครื่องหมายผล webhook และการรอไม่ทัน ต้องมี `OMISE_PUBLIC_KEY` และ `OMISE_SECRET_KEY` แบบ `_test_` ใน `.env.local` ไม่มีแล้วข้ามพร้อมบอกเหตุ ต้องต่ออินเทอร์เน็ต ราว 30 วินาที ไม่อยู่ใน `pnpm check` ให้รันเมื่อแก้ `src/features/payment/server/` |
+| `pnpm e2e` | เดินเส้นทางหลักผ่านหน้าเว็บจริงด้วย Playwright (`e2e/main-path.spec.ts`) ลองภาพ 3 มิติของสินค้าพร้อมวัด P3D-Q01 P3D-Q02 (`e2e/product-3d.spec.ts`) และลองแผนที่การจัดส่งพร้อมวัด MAP-Q01 ถึง MAP-Q04 (`e2e/delivery-map.spec.ts`) build แอปแล้วเปิดที่พอร์ต 3300 กับฐานข้อมูล `data/e2e.db` ที่ล้างใหม่ทุกครั้ง ใช้ตัวจำลองการจ่ายเงินเสมอแม้มีกุญแจของ Omise ใน `.env.local` ใช้ Google Chrome ในเครื่อง ราว 3 นาที ไม่อยู่ใน `pnpm check` แต่ต้องผ่านก่อน merge งานที่แตะหน้าในเส้นทางหลัก วิธีใช้อื่นอยู่ใน README |
 
 ถ้าทำงานหลาย worktree พร้อมกัน ให้แต่ละ worktree ใช้พอร์ตของตัวเอง ฐานข้อมูลอยู่ที่ `data/blanksong.db` ของแต่ละ worktree จึงไม่ชนกัน
 
@@ -37,11 +38,12 @@ src/
     db/                   เปิดฐานข้อมูล transaction migration และตัวช่วยของ test
     statuses.ts           คำสถานะทุกคำของชุด 1 ใช้จากไฟล์นี้ ห้ามพิมพ์เอง
     provinces.ts          77 จังหวัด ใช้ทั้งที่อยู่ของร้านและที่อยู่จัดส่ง
-    format.ts             formatBaht formatDate formatDateTime formatTimeOrDateTime formatNumber
+    format.ts             formatBaht formatNumber formatThaiDate formatThaiDateTime formatTime formatTimeOrDateTime
     session.ts            getCurrentAccount() requireAccount()
     rules.ts              กฎตรวจที่หลาย feature ใช้ร่วมกัน isPhone detectImageType
     paging.ts             PAGE_SIZE (20) และ pageCount() ของทุกรายการที่แบ่งหน้า
     result.ts             Checked<ค่า, ข้อผิดพลาด> ผล { ok: true } หรือ { ok: false, errors } ของงานที่ตรวจข้อมูลที่กรอก
+    read-body.ts          readBodyUpTo() route ที่รับไฟล์อ่านเนื้อคำขอด้วยตัวนี้ หยุดทันทีที่เกินขนาด ไม่เชื่อ content-length
     ui/states.tsx         EmptyState LoadingState ErrorState NotFoundState
     ui/action-form.tsx    ActionForm Field SubmitButton ACTION_FAILED ฟอร์มที่ส่งไป server action
     ui/timeout.ts         settle() withTimeout() ACTION_TIMEOUT_MS รอผล server action ไม่เกิน 10 วินาที
@@ -59,6 +61,15 @@ src/main-path.test.ts     test รอยต่อระหว่าง feature �
 
 feature ทั้ง 10: `account` `shop` `product-listing` `stock` `browse` `cart` `checkout` `payment` `shop-orders` `delivery`
 
+requirement `delivery-map.md` (MAP) อยู่ในโฟลเดอร์ `delivery` เพราะเพิ่มแค่ช่องจังหวัดในฟอร์มเปลี่ยนสถานะกับแผนที่บนหน้าติดตามพัสดุ
+
+- จังหวัดของแต่ละรายการในประวัติการจัดส่งอยู่ที่คอลัมน์ `parcel_history.province` (migration `0005`) ว่างในรายการที่บันทึกก่อนมีช่องนี้ `changeParcelStatus` รับ `province` ทุกครั้ง และ `createParcelForPaidOrder` ใส่จังหวัดของที่อยู่ต้นทางให้รายการแรก
+- `deliveryRoute()` ใน `delivery/server/route.ts` คิดเส้นทางระดับจังหวัด (จังหวัดที่ผ่านมาแล้วตามลำดับ จังหวัดล่าสุด ปลายทาง หมุด และเส้นประหรือไม่) ที่เดียว `routeText()` เขียนข้อความเส้นทางจากค่านั้นบนเซิร์ฟเวอร์ และ `DeliveryMap` (`delivery/components/delivery-map.tsx`) วาดแผนที่จากค่าเดียวกัน แก้กฎเส้นทางที่ `route.ts` เท่านั้น
+- ตำแหน่งของแต่ละจังหวัดอยู่ใน `delivery/server/province-points/points.ts` ที่มาอยู่ใน `SOURCES.txt` ข้างกัน TypeScript ไม่ยอมถ้าจังหวัดใน `PROVINCES` ไม่มีตำแหน่ง
+- แผนที่ใช้ Leaflet กับภาพแผนที่ของ OpenStreetMap ที่เบราว์เซอร์ขอเอง โหลด Leaflet ด้วย `import()` ใน `useEffect` แบบ `ProductModel` e2e ที่เปิดหน้าติดตามพัสดุต้องเรียก `stubTiles(page)` จาก `e2e/osm-tiles.ts` ก่อนเปิดหน้า เพื่อไม่ขอภาพจาก OpenStreetMap จริง
+
+requirement `product-3d-view.md` (P3D) ไม่มีโฟลเดอร์ของตัวเอง ฝั่งผู้ขาย (ส่งไฟล์ เปลี่ยน เอาออก และลบไฟล์ที่ไม่ใช้) อยู่ใน `product-listing` ฝั่งผู้ซื้อ (ทางเข้าในแกลเลอรีและตัวแสดง 3 มิติ) อยู่ใน `browse` เพราะไฟล์ 3 มิติเป็นช่องหนึ่งของฟอร์มสินค้าและแกลเลอรีหน้าสินค้า ซึ่งสองโฟลเดอร์นี้ดูแลอยู่แล้ว และใช้กฎเดียวกับรูปสินค้า เช่นสิทธิ์ของร้าน (PRD-012) และการเก็บไฟล์ที่ไม่ใช้ (PRD-014)
+
 ทำ ticket ไหน ให้แก้ในโฟลเดอร์ feature ของ ticket นั้นกับ route ของตัวเองใน `src/app/` เป็นหลัก ถ้าจำเป็นต้องแก้ `src/shared/` ให้แก้ให้น้อยที่สุด เพราะ ticket อื่นทำพร้อมกันอยู่ feature หนึ่งเรียกฟังก์ชันใน `server/` ของ feature อื่นได้
 
 ## ที่อยู่หน้าเว็บ
@@ -69,7 +80,7 @@ feature ทั้ง 10: `account` `shop` `product-listing` `stock` `browse` `ca
 |---|---|
 | account | `/login` (รับ `?next=` เพื่อพากลับหน้าเดิม) `/signup` `/profile` `/forgot-password` `/reset-password` |
 | shop | `/open-shop` `/seller` (หน้าแรกของหลังบ้าน) `/seller/settings` `/shops/[shopId]` (หน้าร้าน) |
-| product-listing | `/seller/products` `/seller/products/new` `/seller/products/[productId]` `/product-images/[key]` (รูปที่ผู้ขายส่งขึ้นมา) |
+| product-listing | `/seller/products` `/seller/products/new` `/seller/products/[productId]` `/product-images/[key]` (รูปที่ผู้ขายส่งขึ้นมา) `/product-models/[key]` (ไฟล์ 3 มิติที่ผู้ขายส่งขึ้นมา หน้าฟอร์มส่งไฟล์ด้วย `POST /product-models?name=`) |
 | stock | `/seller/stock` |
 | browse | `/` (หน้าแรก) `/products/[productId]` ส่วนหน้าผลค้นหา BRW เลือกเอง |
 | cart | `/cart` |
@@ -97,7 +108,7 @@ layout ไม่วาดใหม่เมื่อกดลิงก์ไป�
 
 `visibleTo: (viewer) => viewer !== null` ใช้ซ่อนลิงก์ตามคนที่ดู `label` ใส่เป็นฟังก์ชัน `(viewer) => string` ได้เมื่อข้อความขึ้นกับคนที่ดู ในเมนูหลังบ้านใส่เป็น `(shopId) => string` ได้ เช่น "รอจัดของ 5" ลำดับที่จองไว้ (น้อยอยู่ซ้าย)
 
-- แถบด้านบน: browse 10, cart 20, checkout 30, delivery 40, shop 50, account 90 ถึง 99
+- แถบด้านบน: browse 10, checkout 30, delivery 40, shop 50, account 90 ถึง 99 ไอคอนตะกร้าไม่อยู่ในรายการนี้ `SiteHeader` วาดเองนอกเมนูด้วย `cartCount` กับ `cartLabel` จาก `src/features/cart/nav.ts` เพราะต้องเห็นทุกขนาดจอ
 - เมนูหลังบ้าน: product-listing 10, stock 20, shop-orders 30, shop 40 (ตั้งค่าร้าน) และ 50 (หน้าร้าน)
 
 ## เพิ่มหน้า
@@ -124,8 +135,9 @@ export default async function CartPage() {
 - ข้อมูลไม่มีหรือเป็นของคนอื่น ให้เรียก `notFound()` จาก `next/navigation` ทั้งสองกรณี จะได้หน้า "ไม่พบ" แบบเดียวกัน
 - หน้ากำลังโหลด ใช้ `loading.tsx` ที่คืน `<LoadingState />` หรือ `<Suspense fallback={<LoadingState />}>` ถ้า requirement บอกว่าเกิน 10 วินาทีถือว่าโหลดไม่สำเร็จ ห่อด้วย `<LoadingTimeout>`
 - หน้าผิดพลาด ใช้ `<ErrorState />` ปุ่ม "ลองใหม่" โหลดข้อมูลหน้าเดิมใหม่โดยคงที่อยู่หน้าเว็บไว้
+- ไลบรารีที่ใช้ได้เฉพาะในเบราว์เซอร์ (อ่าน `window` `self` หรือ `customElements` ตอนโหลด) ให้โหลดด้วย `import()` ใน `useEffect` ของ client component ไม่ import ไว้บนสุดของไฟล์ เพราะ client component ยังถูกเรนเดอร์บนเซิร์ฟเวอร์ก่อน และไลบรารีจะถูกโหลดเมื่อ component นั้นแสดงเท่านั้น แบบอย่างคือ `ProductModel` ใน `src/features/browse/components/product-model.tsx` ชนิดของ custom element ที่ใช้ใน JSX ประกาศในไฟล์ `.d.ts` แบบ `model-viewer.d.ts` ข้างกัน ให้ประกาศทุก attribute ที่ใช้ รวมถึงชื่อที่มีขีดกลาง เพราะ TypeScript ไม่เตือนชื่อที่มีขีดกลางที่ไม่ได้ประกาศ
 - หน้าและ layout ฝั่งเซิร์ฟเวอร์ import ได้เฉพาะ component จากไฟล์ที่ขึ้นต้นด้วย `"use client"` ค่าอื่นเช่นข้อความหรือค่าคงที่ที่ import มาจะไม่มีค่าจริงฝั่งเซิร์ฟเวอร์ ให้ย้ายค่าไปไว้ในไฟล์ที่ไม่ใช่ client เช่น `server/`
-- สไตล์กลาง (`button` `button-secondary` `card` `field` `input` `field-error` `chips` `chip`) อยู่ใน `src/app/globals.css` สไตล์เฉพาะ feature ให้เขียน `*.module.css` ในโฟลเดอร์ feature ไม่แก้ globals.css
+- สไตล์กลาง (`button` `button-secondary` `link-action` `field` `input` `field-error` `chips` `chip` `visually-hidden`) อยู่ใน `src/app/globals.css` สไตล์เฉพาะ feature ให้เขียน `*.module.css` ในโฟลเดอร์ feature ไม่แก้ globals.css สี ขนาด ระยะ และกฎหน้าตาอยู่ใน `docs/design-system.md` อ่านก่อนเขียน CSS
 - ข้อความที่ผู้ใช้เห็นเป็นภาษาไทยตาม `GLOSSARY.md` ปุ่มสูงอย่างน้อย 44 จุด และหน้าต้องใช้ได้ที่จอกว้าง 360 จุด
 
 ## เพิ่มโมดูลกฎของธุรกิจ
@@ -145,7 +157,7 @@ export function cancelExpiredOrders(db: Db, now: Date = new Date()): number {
 
 - เขียนหลายแถวที่ต้องสำเร็จพร้อมกัน ให้ห่อด้วย `transaction(db, fn)` ซ้อนกันได้ ถ้า `fn` โยน error จะย้อนทั้งหมด `fn` ห้ามเป็น async
 - `node:sqlite` ทำงานแบบ sync และแอปมีการเชื่อมต่อเดียว งานใน transaction เดียวจึงไม่มีคำขออื่นแทรก ใช้กันการแย่งสต็อกชิ้นสุดท้ายได้ และฐานข้อมูลมี `CHECK (stock >= 0)` กันไว้อีกชั้น
-- เวลาเก็บเป็นข้อความ ISO แบบ UTC จาก `date.toISOString()` แสดงผลด้วย `formatDate` หรือ `formatDateTime` ซึ่งใช้เวลาประเทศไทย
+- เวลาเก็บเป็นข้อความ ISO แบบ UTC จาก `date.toISOString()` แสดงผลด้วย `formatThaiDate` ("25 พ.ย.") หรือ `formatThaiDateTime` ("25 พ.ย. 13:07") ซึ่งใช้เวลาประเทศไทยและใส่ปี ค.ศ. เมื่อไม่ใช่ปีนี้ ฟังก์ชันที่รับ `now` ให้ส่ง `now` ต่อไปด้วย ห่อด้วย `<time dateTime={ค่า ISO}>`
 - เงินเก็บเป็นจำนวนเต็มบาท แสดงด้วย `formatBaht(1290)` ได้ `฿1,290`
 - สถานะใช้ค่าจาก `@/shared/statuses` ฐานข้อมูลมี CHECK ที่รับเฉพาะคำเหล่านี้
 - ตารางทั้งหมดอยู่ใน `src/shared/db/migrations/0001-initial-schema.sql` อ่านไฟล์นี้ก่อนเขียน SQL
@@ -197,7 +209,7 @@ export function cancelExpiredOrders(db: Db, now: Date = new Date()): number {
 
 ## เขียน test
 
-ไฟล์ test วางข้างไฟล์ที่ทดสอบ ชื่อ `*.test.ts` หรือ `*.test.tsx` และรันได้โดยไม่ต้องต่ออินเทอร์เน็ต
+ไฟล์ test วางข้างไฟล์ที่ทดสอบ ชื่อ `*.test.ts` หรือ `*.test.tsx` และรันได้โดยไม่ต้องต่ออินเทอร์เน็ต ยกเว้น `*.omise.test.ts` ที่ต่อ Omise จริง ซึ่ง `pnpm check` ไม่รัน รันด้วย `pnpm test:omise` เท่านั้น
 
 ```ts
 import { beforeEach, expect, test } from "vitest";
@@ -222,6 +234,7 @@ test("ผู้ซื้อเห็นรายการในตะกร้�
 - `@/shared/db/builders` สร้างแถวตรงๆ โดยข้ามกฎของธุรกิจ มี `addAccount` `addSession` `addShop` `addProduct` (มีตัวเลือกและแบบย่อย) `addCartItem` `addAddress` `addOrder` `addPayment` `addParcel` lint ห้ามโค้ดของแอปใช้ ถ้าต้องการตัวสร้างเพิ่ม ให้เขียนไว้ในโฟลเดอร์ feature ของตัวเอง ไม่แก้ builders.ts
 - บัญชีที่ `addAccount` สร้างมีรหัสผ่าน `TEST_PASSWORD`
 - component ทดสอบด้วย `renderToStaticMarkup` ดูตัวอย่างใน `src/shared/ui/states.test.tsx`
+- คำตอบปลอมของ Omise ใน test ใช้ `src/features/payment/server/omise-recorded.json` ซึ่งบันทึกจาก Omise โหมดทดลองจริง ถ้า Omise เปลี่ยนรูปคำตอบ ให้บันทึกใหม่จากของจริงและตัดข้อมูลส่วนตัวออก (เช่น `ip`) ไม่เขียนรูปคำตอบเอง
 
 ## บัญชีที่เข้าสู่ระบบอยู่
 
@@ -253,6 +266,6 @@ const buyer: CurrentAccount = await requireAccount(`/orders/${orderNo}`);
 
 ## ข้อมูลตัวอย่าง
 
-`pnpm seed` สร้าง 12 หมวดหมู่ 50 ร้าน 1,000 สินค้าที่ขายอยู่ พร้อมแบบย่อย สต็อก และประวัติสต็อก บัญชีผู้ดูแลแพลตฟอร์ม 1 บัญชี ผู้ขาย 50 บัญชี และผู้ซื้อ 3 บัญชี (อีเมลและรหัสผ่านอยู่ใน README) และคำสั่งซื้อตัวอย่าง 8 รายการของร้าน seller01 ครบทุกสถานะ ที่สร้างผ่านกฎจริง (`src/shared/seed/orders.ts`) รูปเป็น SVG ที่สร้างจากชื่อไฟล์ที่ `/sample-images/<ชื่อ>.svg`
+`pnpm seed` สร้าง 12 หมวดหมู่ 50 ร้าน 1,000 สินค้าที่ขายอยู่ พร้อมแบบย่อย สต็อก และประวัติสต็อก บัญชีผู้ดูแลแพลตฟอร์ม 1 บัญชี ผู้ขาย 50 บัญชี และผู้ซื้อ 3 บัญชี (อีเมลและรหัสผ่านอยู่ใน README) และคำสั่งซื้อตัวอย่าง 8 รายการของร้าน seller01 ครบทุกสถานะ ที่สร้างผ่านกฎจริง (`src/shared/seed/orders.ts`) ร้านอยู่กรุงเทพมหานคร ที่อยู่จัดส่งของ buyer1 buyer2 buyer3 อยู่เชียงใหม่ ขอนแก่น และกรุงเทพมหานคร และทุกรายการในประวัติการจัดส่งมีจังหวัด พัสดุของ buyer1 และ buyer2 จึงผ่าน 3 จังหวัด (MAP-010) รูปสินค้าเป็นรูปถ่ายจริงจาก `src/shared/seed/photos/` เลือกตามคำนามในชื่อสินค้า (`SAMPLE_PHOTOS` ใน `catalog.ts`) และเก็บแบบรูปที่ร้านนั้นส่งขึ้นมาเอง เปิดที่ `/product-images/<key>` ที่มาและสัญญาอนุญาตอยู่ใน `photos/SOURCES.txt` ใช้เฉพาะ CC0 หรือสาธารณสมบัติที่ไม่จำกัดประเทศ เพราะ repo นี้ public (ไม่ใช้ไฟล์ที่เป็นสาธารณสมบัติเฉพาะในสหรัฐอเมริกา test ใน `seed.test.ts` ตรวจป้าย) ชื่อที่ยังไม่มีรูปถ่ายและโลโก้ร้านเป็น SVG ที่สร้างจากชื่อไฟล์ที่ `/sample-images/<ชื่อ>.svg` สินค้า 2 ชิ้นของร้านแรกมีไฟล์ 3 มิติจาก `src/shared/seed/models/` (ที่มาและสัญญาอนุญาตอยู่ใน `SOURCES.txt` ข้างไฟล์ ใช้เฉพาะไฟล์ CC0)
 
 ระบบรู้ว่าเคยสร้างแล้วจากบัญชี `admin@example.com` จึงรันซ้ำได้ ถ้าต้องเพิ่มข้อมูลตัวอย่าง ให้แก้ `src/shared/seed/index.ts` และ test ใน `seed.test.ts`

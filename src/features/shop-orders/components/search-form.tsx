@@ -31,7 +31,7 @@ export function SearchForm({ q, status, error }: { q: string; status: StatusKey 
         placeholder="ค้นหาเลขคำสั่งซื้อ"
         aria-invalid={message ? true : undefined}
       />
-      <button type="submit" className="button">
+      <button type="submit" className="button button-secondary">
         ค้นหา
       </button>
       {message && (

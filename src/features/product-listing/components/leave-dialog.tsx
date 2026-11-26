@@ -20,7 +20,9 @@ export function LeaveDialog({ onLeave, onStay }: { onLeave: () => void; onStay: 
         onStay();
       }}
     >
-      <p id="leave-title">ยังไม่ได้บันทึก ออกจากหน้านี้ใช่ไหม</p>
+      <p id="leave-title" className={styles.dialogTitle}>
+        ยังไม่ได้บันทึก ออกจากหน้านี้ใช่ไหม
+      </p>
       <div className={styles.actions}>
         <button type="button" className="button" onClick={onStay} autoFocus>
           อยู่ต่อ

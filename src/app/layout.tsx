@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Noto_Sans_Thai_Looped, Noto_Serif_Thai } from "next/font/google";
 import { SiteHeader } from "@/shared/layout/site-header";
 import "./globals.css";
 
@@ -10,9 +11,22 @@ export const metadata: Metadata = {
   description: "แพลตฟอร์มซื้อขายของออนไลน์ที่มีหลายร้านในที่เดียว",
 };
 
+// ไฟล์ variable ไฟล์เดียว หน้าตาใช้แค่น้ำหนัก 400 กับ 600 (docs/design-system.md)
+const sans = Noto_Sans_Thai_Looped({
+  subsets: ["thai", "latin"],
+  variable: "--font-sans",
+});
+
+// ตัวมีเชิงใช้กับคำว่า Blanksong ในโลโก้คำเดียว
+const serif = Noto_Serif_Thai({
+  subsets: ["latin"],
+  weight: "600",
+  variable: "--font-serif",
+});
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="th">
+    <html lang="th" className={`${sans.variable} ${serif.variable}`}>
       <body>
         <SiteHeader />
         <main className="container page">{children}</main>

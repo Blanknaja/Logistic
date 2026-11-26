@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CANCEL_REFUSED, type BuyerOrderDetail, type CancelRefusal } from "@/features/checkout/server/buyer-orders";
-import { formatBaht, formatDateTime, formatNumber } from "@/shared/format";
+import { formatBaht, formatThaiDateTime, formatNumber } from "@/shared/format";
 import { ORDER_STATUS } from "@/shared/statuses";
 import { CancelOrderForm } from "./cancel-order-form";
 import { PayButton } from "./pay-button";
@@ -31,24 +31,24 @@ export function OrderDetail({
   const others = order.group.filter((other) => other.orderNo !== order.orderNo);
 
   return (
-    <article>
-      <h1>คำสั่งซื้อ {order.orderNo}</h1>
+    <article className={styles.detail}>
+      <h1>{order.status}</h1>
+      <p className={styles.meta}>
+        คำสั่งซื้อ {order.orderNo} · {order.shopName} · สั่งเมื่อ {formatThaiDateTime(order.orderedAt)}
+      </p>
       {message && (
         <p role="alert" className={styles.notice}>
           {message}
         </p>
       )}
 
-      <section className={`card ${styles.section}`} aria-label="สถานะ">
-        <div className={styles.row}>
-          <strong>{order.shopName}</strong>
-          <span className={styles.status}>{order.status}</span>
-        </div>
-        <p className={styles.muted}>สั่งเมื่อ {formatDateTime(order.orderedAt)}</p>
-        {order.status === ORDER_STATUS.awaitingPayment && <p>จ่ายภายใน {formatDateTime(order.paymentDeadline)}</p>}
+      <section className={styles.now} aria-label="สถานะ">
+        {order.status === ORDER_STATUS.awaitingPayment && (
+          <p className={styles.deadline}>จ่ายภายใน {formatThaiDateTime(order.paymentDeadline)}</p>
+        )}
         {order.status === ORDER_STATUS.cancelled && order.cancelledAt && (
           <p>
-            ยกเลิกเมื่อ {formatDateTime(order.cancelledAt)} เหตุผล: {order.cancelReason}
+            ยกเลิกเมื่อ {formatThaiDateTime(order.cancelledAt)} เหตุผล: {order.cancelReason}
           </p>
         )}
 
@@ -58,14 +58,14 @@ export function OrderDetail({
           ) : (
             <div className={styles.actions}>
               <PayButton orderNo={order.orderNo} groupId={order.groupId} />
-              <Link href={`/orders/${order.orderNo}?cancel=1`} className="button button-secondary">
+              <Link href={`/orders/${order.orderNo}?cancel=1`} className="link-action">
                 ยกเลิกคำสั่งซื้อ
               </Link>
             </div>
           ))}
 
         {order.payable && others.length > 0 && (
-          <p>
+          <p className={styles.muted}>
             คำสั่งซื้ออื่นที่จ่ายรวมกัน:{" "}
             {others.map((other, index) => (
               <span key={other.orderNo}>
@@ -78,58 +78,63 @@ export function OrderDetail({
 
         {order.trackingNo && (
           <div className={styles.actions}>
-            <Link href={`/track/${order.trackingNo}`} className="button button-secondary">
+            <Link href={`/track/${order.trackingNo}`} className="button">
               ติดตามพัสดุ
             </Link>
           </div>
         )}
       </section>
 
-      <section className={`card ${styles.section}`}>
-        <h2>สินค้า</h2>
-        <ul className={styles.items}>
-          {order.items.map((item) => (
-            <li key={item.id} className={styles.item}>
-              {item.coverImageUrl ? <img src={item.coverImageUrl} alt="" /> : <span />}
-              <div>
-                <div>{item.productName}</div>
-                {item.variantLabel && <div className={styles.muted}>{item.variantLabel}</div>}
-                <div className={styles.row}>
-                  <span>
-                    {formatBaht(item.unitPrice)} × {formatNumber(item.quantity)}
-                  </span>
-                  <span>{formatBaht(item.unitPrice * item.quantity)}</span>
+      <div className={styles.columns}>
+        <section className={styles.section}>
+          <h2>สินค้า</h2>
+          <ul className={styles.items}>
+            {order.items.map((item) => (
+              <li key={item.id} className={styles.item}>
+                {item.coverImageUrl ? <img src={item.coverImageUrl} alt="" /> : <span />}
+                <div>
+                  <p>{item.productName}</p>
+                  {item.variantLabel && <p className={styles.muted}>{item.variantLabel}</p>}
+                  {/* ชิ้นเดียว ราคาต่อชิ้นเท่ากับราคาของรายการ จึงบอกแค่จำนวน */}
+                  <p className={styles.muted}>
+                    {item.quantity === 1 ? "1 ชิ้น" : `${formatBaht(item.unitPrice)} × ${formatNumber(item.quantity)}`}
+                  </p>
                 </div>
+                <span>{formatBaht(item.unitPrice * item.quantity)}</span>
+              </li>
+            ))}
+          </ul>
+          <dl className={styles.totals}>
+            {order.items.length > 1 && (
+              <div>
+                <dt>ราคาสินค้า</dt>
+                <dd>{formatBaht(order.itemsTotal)}</dd>
               </div>
-            </li>
-          ))}
-        </ul>
-        <dl className={styles.totals}>
-          <dt>ราคาสินค้า</dt>
-          <dd>{formatBaht(order.itemsTotal)}</dd>
-          <dt>ค่าส่ง</dt>
-          <dd>{formatBaht(order.shippingFee)}</dd>
-          <dt>
-            <strong>ยอดรวม</strong>
-          </dt>
-          <dd>
-            <strong>{formatBaht(order.total)}</strong>
-          </dd>
-        </dl>
-      </section>
+            )}
+            <div>
+              <dt>ค่าส่ง</dt>
+              <dd>{formatBaht(order.shippingFee)}</dd>
+            </div>
+            <div className={styles.total}>
+              <dt>ยอดรวม</dt>
+              <dd>{formatBaht(order.total)}</dd>
+            </div>
+          </dl>
+        </section>
 
-      <section className={`card ${styles.section} ${styles.address}`}>
-        <h2>ที่อยู่จัดส่ง</h2>
-        <p>
-          {order.shipTo.recipientName} {order.shipTo.phone}
-        </p>
-        <p>
-          {order.shipTo.address} {order.shipTo.subdistrict} {order.shipTo.district} {order.shipTo.province}{" "}
-          {order.shipTo.postcode}
-        </p>
-      </section>
+        <section className={styles.section}>
+          <h2>ที่อยู่จัดส่ง</h2>
+          <p>
+            {order.shipTo.recipientName} {order.shipTo.phone}
+          </p>
+          <p className={styles.muted}>
+            {order.shipTo.address} {order.shipTo.subdistrict} {order.shipTo.district} {order.shipTo.province}{" "}
+            {order.shipTo.postcode}
+          </p>
+        </section>
+      </div>
 
-      <Link href="/orders" className="button button-secondary">
+      <Link href="/orders" className="link-action">
         กลับไปรายการคำสั่งซื้อ
       </Link>
     </article>

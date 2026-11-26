@@ -1,7 +1,7 @@
 import type { Db } from "@/shared/db";
 import { PARCEL_STATUS, type ParcelStatus } from "@/shared/statuses";
 
-export type HistoryEntry = { status: ParcelStatus; at: string; location: string; byAccountId?: number };
+export type HistoryEntry = { status: ParcelStatus; at: string; location: string; province?: string; byAccountId?: number };
 
 /**
  * เขียนพัสดุพร้อมประวัติการจัดส่งลงฐานข้อมูลตรงๆ สำหรับ test เท่านั้น
@@ -39,8 +39,10 @@ export function writeParcel(
   const id = Number(inserted.lastInsertRowid);
 
   const addHistory = db.prepare(
-    "INSERT INTO parcel_history (parcel_id, status, location, changed_by_account_id, created_at) VALUES (?, ?, ?, ?, ?)",
+    "INSERT INTO parcel_history (parcel_id, status, location, province, changed_by_account_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
   );
-  for (const entry of input.history) addHistory.run(id, entry.status, entry.location, entry.byAccountId ?? null, entry.at);
+  for (const entry of input.history) {
+    addHistory.run(id, entry.status, entry.location, entry.province ?? null, entry.byAccountId ?? null, entry.at);
+  }
   return { id };
 }

@@ -24,7 +24,8 @@ export default defineConfig({
   webServer: {
     command: `next build && tsx scripts/seed.ts --reset && next start -p ${port}`,
     url: baseURL,
-    env: { DATABASE_PATH: "data/e2e.db", PORT: String(port) },
+    // ค่าว่างชนะกุญแจใน .env.local จึงใช้ตัวจำลองการจ่ายเงินเสมอ e2e ไม่ต่อ Omise จริง
+    env: { DATABASE_PATH: "data/e2e.db", PORT: String(port), OMISE_PUBLIC_KEY: "", OMISE_SECRET_KEY: "" },
     reuseExistingServer: false,
     timeout: 5 * 60 * 1000,
   },

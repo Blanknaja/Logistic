@@ -3,7 +3,7 @@ import { passwordError } from "@/features/account/server/accounts";
 import type { EmailMessage } from "@/features/account/server/email";
 import { hashPassword } from "@/features/account/server/password";
 import { transaction, type Db } from "@/shared/db";
-import { formatDateTime } from "@/shared/format";
+import { formatThaiDateTime } from "@/shared/format";
 
 export const RESET_LINK_SENT = "ถ้าอีเมลนี้มีบัญชี เราส่งลิงก์ตั้งรหัสผ่านใหม่ให้แล้ว";
 
@@ -46,7 +46,7 @@ export function requestPasswordReset(db: Db, email: string, appUrl: string, now:
     subject: "ลิงก์ตั้งรหัสผ่านใหม่ของ Blanksong",
     text: [
       "มีคนขอตั้งรหัสผ่านใหม่ให้บัญชีของอีเมลนี้",
-      `เปิดลิงก์นี้เพื่อตั้งรหัสผ่านใหม่ ใช้ได้ครั้งเดียว ถึง ${formatDateTime(expiresAt)} น.`,
+      `เปิดลิงก์นี้เพื่อตั้งรหัสผ่านใหม่ ใช้ได้ครั้งเดียว ถึง ${formatThaiDateTime(expiresAt, now)} น.`,
       link,
       "ถ้าคุณไม่ได้ขอ ไม่ต้องทำอะไร รหัสผ่านเดิมยังใช้ได้",
     ].join("\n\n"),

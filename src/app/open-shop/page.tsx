@@ -12,12 +12,14 @@ export const metadata: Metadata = { title: "เปิดร้าน" };
 export default async function OpenShopPage() {
   const viewer = await requireAccount("/open-shop");
   if (viewer.shopId !== null) redirect("/seller");
-  if (viewer.isAdmin) return <EmptyState title={SHOP_FORM_MESSAGES.admin} />;
+  if (viewer.isAdmin) return <EmptyState level={1} title={SHOP_FORM_MESSAGES.admin} />;
 
   return (
     <div className={styles.formPage}>
-      <h1>เปิดร้าน</h1>
-      <p className={styles.muted}>กรอกชื่อร้านและที่อยู่ต้นทางที่ใช้ส่งพัสดุ เปิดร้านได้ทันทีไม่ต้องรออนุมัติ</p>
+      <header className={styles.formIntro}>
+        <h1>เปิดร้าน</h1>
+        <p className={styles.muted}>กรอกชื่อร้านและที่อยู่ต้นทางที่ใช้ส่งพัสดุ เปิดร้านได้ทันทีไม่ต้องรออนุมัติ</p>
+      </header>
       <ShopForm mode="open" action={openShopAction} cancelHref="/" />
     </div>
   );

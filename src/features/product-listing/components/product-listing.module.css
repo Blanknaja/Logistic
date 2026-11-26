@@ -1,100 +1,164 @@
+/* หน้ารายการสินค้าและฟอร์มสินค้าของร้าน ใช้ได้ที่จอกว้าง 360 จุด */
+
 .heading {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: var(--space);
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
 }
 
-.heading h1 {
+.heading h1,
+.intro h1 {
   margin: 0;
 }
 
+.intro {
+  display: grid;
+  gap: var(--space-1);
+  margin-bottom: var(--space-5);
+}
+
+.statusLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-5);
+}
+
+.statusLine > form {
+  margin: 0;
+}
+
+.meta {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
 .notice {
-  margin: 0 0 var(--space);
-  padding: 12px var(--space);
-  border-radius: var(--radius);
-  background: #ecfdf3;
-  color: #05603a;
+  margin: 0 0 var(--space-5);
 }
 
-.chipActive {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+/* ตัวกรองกับช่องค้นหา */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-5);
 }
 
-.chips a {
+.toolbar :global(.chips) {
+  margin: 0;
+}
+
+.chip {
   text-decoration: none;
-  color: inherit;
+  font-variant-numeric: tabular-nums;
 }
 
 .search {
   display: flex;
-  gap: 8px;
-  margin-bottom: var(--space);
+  flex: 1 1 18rem;
+  gap: var(--space-2);
+  max-width: 28rem;
 }
 
-.search .input {
+.search :global(.input) {
   flex: 1;
   min-width: 0;
 }
 
+/* รายการสินค้า จอแคบรูปอยู่ซ้าย ข้อมูลเรียงต่อกันใต้ชื่อ จอกว้างเป็นตารางที่มีหัวคอลัมน์ */
+
+.head {
+  display: none;
+}
+
 .list {
-  display: grid;
-  gap: 8px;
   margin: 0;
   padding: 0;
+  border-top: 1px solid var(--color-text);
   list-style: none;
 }
 
 .row {
-  display: grid;
-  grid-template-columns: 64px 1fr;
-  gap: 12px;
-  align-items: start;
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-3);
+  min-height: calc(48px + 2 * var(--space-3));
+  padding: var(--space-3) 0 var(--space-3) calc(48px + var(--space-3));
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
 }
 
 .thumb,
 .noImage {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius);
+  position: absolute;
+  top: var(--space-3);
+  left: 0;
+  width: 48px;
+  height: 48px;
+}
+
+.thumb {
   object-fit: cover;
-  background: var(--color-bg);
 }
 
 .noImage {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  background: var(--color-surface);
   color: var(--color-muted);
-  border: 1px dashed var(--color-border);
+  line-height: 1.2;
+  text-align: center;
 }
 
+/* ทั้งแถวกดได้ ลิงก์ชื่อสินค้ายืดพื้นที่กดเต็มแถว */
 .rowName {
-  margin: 0;
-  font-weight: 600;
-}
-
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  margin: 4px 0 0;
-  color: var(--color-muted);
-  font-size: 0.9rem;
-}
-
-.status {
-  display: inline-block;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: var(--color-bg);
+  flex-basis: 100%;
   color: var(--color-text);
-  font-weight: 600;
+  font-size: var(--text-body);
+  line-height: 1.4;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color var(--duration) var(--ease);
+}
+
+.rowName::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.cell {
+  color: var(--color-text);
+}
+
+.stockLow {
+  color: var(--color-warning);
+}
+
+.stockOut {
+  color: var(--color-danger);
+}
+
+.updated {
+  color: var(--color-muted);
+}
+
+@media (hover: hover) {
+  .row:hover .rowName {
+    text-decoration-color: currentColor;
+  }
 }
 
 .pager {
@@ -102,48 +166,141 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-top: var(--space);
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
 }
 
-/* หน้าฟอร์มสินค้า */
+@media (min-width: 900px) {
+  .table {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) repeat(4, auto);
+    column-gap: var(--space-5);
+  }
+
+  .head,
+  .list,
+  .row {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+  }
+
+  .head {
+    padding-bottom: var(--space-2);
+    color: var(--color-muted);
+    font-size: var(--text-label);
+  }
+
+  .headName {
+    grid-column: 1 / span 2;
+  }
+
+  .row {
+    align-items: center;
+    min-height: 0;
+    padding: var(--space-2) 0;
+  }
+
+  .thumb,
+  .noImage {
+    position: static;
+    width: 56px;
+    height: 56px;
+  }
+
+  .end {
+    text-align: end;
+  }
+
+  .cellLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+
+/* หน้าฟอร์มสินค้า แต่ละส่วนมีหัวส่วน จอกว้างหัวส่วนอยู่ซ้าย ช่องกรอกอยู่ขวาแบบ 4:8 */
 
 .form {
   display: grid;
-  gap: var(--space);
-  max-width: 720px;
+  gap: var(--space-7);
 }
 
 .section {
-  margin: 0;
-  padding: var(--space);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
   min-width: 0;
+  margin: 0;
+  padding: var(--space-5) 0 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
 }
 
+/* legend ที่ float ไม่ถูกวาดทับเส้นขอบบน และกลายเป็นช่องหนึ่งของ grid */
 .section legend {
-  padding: 0 4px;
-  font-weight: 700;
+  float: left;
+  padding: 0;
+  font-size: var(--text-heading);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.section :global(.field) {
+  margin: 0;
+}
+
+.section :global(.field-error) {
+  margin: 0;
+}
+
+.section :global(.input) {
+  max-width: var(--measure);
+}
+
+.section ul.hint {
+  padding: 0;
+  list-style: none;
+}
+
+/* ช่องกว้างตามข้อมูล: ราคา 7 หลัก ชื่อตัวเลือกและค่าตัวเลือก 20 ตัวอักษร */
+.section :global(.input)[inputmode="numeric"] {
+  max-width: 12ch;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.section .select {
+  justify-self: start;
+  width: auto;
+  min-width: 16ch;
+}
+
+.section .short {
+  max-width: 24ch;
 }
 
 .hint {
   margin: 0;
   color: var(--color-muted);
-  font-size: 0.9rem;
+  font-size: var(--text-label);
 }
 
 .textarea {
-  min-height: 120px;
+  min-height: calc(2 * var(--space-8));
   resize: vertical;
 }
 
 .images {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: 8px;
-  margin: 8px 0;
+  grid-template-columns: repeat(auto-fill, minmax(144px, 1fr));
+  gap: var(--space-4) var(--space-3);
+  max-width: var(--measure);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -151,51 +308,64 @@
 .image {
   position: relative;
   display: grid;
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
+  align-content: start;
+  gap: var(--space-1);
+  cursor: grab;
 }
 
 .image img {
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  border-radius: 4px;
 }
 
-.image progress {
+.image progress,
+.modelFile progress {
   width: 100%;
+  accent-color: var(--color-text);
+}
+
+.image :global(.field-error) {
+  margin: 0;
 }
 
 .cover {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  padding: 0 6px;
-  border-radius: 4px;
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  font-size: 0.75rem;
+  top: var(--space-2);
+  left: var(--space-2);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius);
+  background: var(--color-text);
+  color: var(--color-bg);
+  font-size: var(--text-label);
 }
 
 .imageActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  align-items: center;
+  gap: 0 var(--space-3);
 }
 
-.imageActions .button {
-  flex: 1;
-  padding: 0 4px;
+.arrow {
+  justify-content: center;
+  min-width: var(--tap);
+  font-size: var(--text-body);
+  text-decoration: none;
 }
 
 .picker {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
+  color: var(--color-muted);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.picker label {
+  cursor: pointer;
 }
 
 .fileInput {
@@ -205,24 +375,49 @@
   opacity: 0;
 }
 
-.fileInput:focus-visible + .button {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+.fileInput:focus-visible + :global(.button) {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.fileInput:disabled + :global(.button) {
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+  color: var(--color-muted);
+  cursor: not-allowed;
+}
+
+.modelFile {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.modelFile p {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .option {
   display: grid;
-  gap: 8px;
-  padding: 12px 0;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--color-border);
+}
+
+.option:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.option :global(.chips) {
+  margin: 0;
 }
 
 .inline {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
-.inline .input {
+.inline :global(.input) {
   flex: 1;
   min-width: 0;
 }
@@ -230,77 +425,164 @@
 .chipRemove {
   min-width: var(--tap);
   min-height: var(--tap);
-  margin-right: -12px;
+  margin-inline-end: calc(-1 * var(--space-4));
   border: 0;
   background: none;
+  color: inherit;
   font: inherit;
+  font-size: var(--text-body);
   cursor: pointer;
 }
 
 .variants {
   width: 100%;
+  max-width: var(--measure);
   border-collapse: collapse;
+  font-size: var(--text-label);
 }
 
 .variants caption {
-  text-align: left;
-  font-weight: 600;
-  padding-bottom: 8px;
+  padding-bottom: var(--space-2);
+  color: var(--color-muted);
+  text-align: start;
 }
 
 .variants th,
 .variants td {
-  padding: 4px 0;
-  text-align: left;
-  vertical-align: top;
+  padding: var(--space-1) 0;
   border-bottom: 1px solid var(--color-border);
+  text-align: start;
+  vertical-align: middle;
 }
 
-.variants th {
-  padding-right: 8px;
+.variants thead th {
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
+.variants th[scope="row"] {
+  padding-inline-end: var(--space-4);
+  font-size: var(--text-body);
+  font-weight: 400;
+}
+
+.variants thead th:last-child,
+.variants td {
+  text-align: end;
+}
+
+.variants td :global(.input) {
+  margin-inline-start: auto;
+}
+
+.variants td :global(.field-error) {
+  margin: var(--space-1) 0 0;
+}
+
+.alert {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--text-label);
+}
+
+.alert p {
+  margin: 0 0 var(--space-2);
+}
+
+/* ปุ่มบันทึกติดขอบล่างจอทุกขนาด ฟอร์มยาว จึงกดได้โดยไม่ต้องเลื่อนลงไปท้ายฟอร์ม */
+.saveBar {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-2);
+  margin-inline: calc(-1 * var(--gutter));
+  padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.saveButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.saveButtons > :global(.button) {
+  flex: 1 1 auto;
+}
+
+.back {
+  justify-self: start;
+}
+
+@media (min-width: 600px) {
+  .saveButtons > :global(.button) {
+    flex: none;
+  }
+}
+
+@media (min-width: 900px) {
+  .section {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    column-gap: var(--space-7);
+  }
+
+  .section > * {
+    grid-column: 2;
+  }
+
+  .section > legend {
+    grid-row: 1;
+    grid-column: 1;
+    align-self: start;
+  }
+
+  /* ข้อความและปุ่มท้ายฟอร์มเริ่มตรงคอลัมน์ช่องกรอก */
+  .form > :not(.section, .saveBar, dialog) {
+    margin-inline-start: calc((100% - var(--space-7)) / 3 + var(--space-7));
+  }
+
+  .saveBar {
+    margin-inline: 0;
+    padding-inline: calc((100% - var(--space-7)) / 3 + var(--space-7)) 0;
+  }
+}
+
+/* หน้าต่างถามยืนยัน */
+
+.dialog {
+  width: min(calc(100vw - 2 * var(--gutter)), 28rem);
+  padding: var(--space-6);
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.dialog::backdrop {
+  background: color-mix(in srgb, var(--color-text) 50%, transparent);
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: var(--text-heading);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.dialogText {
+  margin: var(--space-2) 0 0;
+  color: var(--color-muted);
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
 }
 
-.alert {
-  margin: 0;
-  padding: 12px var(--space);
-  border-radius: var(--radius);
-  background: #fef3f2;
-  color: var(--color-danger);
-}
-
-.dialog {
-  max-width: min(90vw, 400px);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: var(--space);
-}
-
-.dialog::backdrop {
-  background: rgb(0 0 0 / 40%);
-}
-
-.dialog p {
-  margin: 0 0 var(--space);
-  font-weight: 600;
-}
-
-.alert p {
-  margin: 0 0 8px;
-}
-
-.rowActions {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.rowActions form {
-  margin: 0;
+.actions > :global(.button) {
+  flex: 1 1 auto;
 }

@@ -9,10 +9,7 @@ import {
   type PaymentStatus,
 } from "@/shared/statuses";
 import { validateCard, type CardErrors, type CardFields } from "./card";
-import { ProviderRejected, ProviderUnavailable, type Charge, type PaymentProvider } from "./provider";
-
-/** รอผู้ให้บริการได้นานสุดเท่านี้ เกินแล้วถือว่าล่ม (PAY-007 PAY-008) */
-export const PROVIDER_TIMEOUT_MS = 10_000;
+import { PROVIDER_TIMEOUT_MS, ProviderRejected, ProviderUnavailable, type Charge, type PaymentProvider } from "./provider";
 
 export const UNAVAILABLE_MESSAGE = "จ่ายเงินไม่ได้ตอนนี้ กรุณาลองใหม่ภายหลัง คำสั่งซื้อของคุณยังอยู่";
 export const minutesLeftText = (minutes: number) => `เหลือเวลาจ่าย ${minutes} นาที`;
@@ -306,11 +303,24 @@ function beginPayment(db: Db, buyerId: number, groupId: number, method: PaymentM
   });
 }
 
+/** เก็บเลขอ้างอิงของ Omise ไว้กับการจ่ายเงิน แล้วใช้ผลนั้น */
+function recordCharge(db: Db, paymentId: number, charge: Charge, answeredAt: Date): PaymentStatus {
+  db.prepare("UPDATE payments SET omise_charge_id = ?, card_last4 = ?, qr_image_url = ? WHERE id = ?").run(
+    charge.id,
+    charge.cardLast4,
+    charge.qrImageUrl,
+    paymentId,
+  );
+  return applyCharge(db, paymentId, charge, answeredAt);
+}
+
 async function runCharge(db: Db, started: Started, request: () => Promise<Charge>, now: Date, timeoutMs: number): Promise<PayResult> {
+  const askedAt = Date.now();
+  const charging = Promise.resolve().then(request);
   let charge: Charge;
   let answeredAt: Date;
   try {
-    ({ answer: charge, answeredAt } = await ask(request, timeoutMs, now));
+    ({ answer: charge, answeredAt } = await ask(() => charging, timeoutMs, now));
   } catch (error) {
     if (error instanceof ProviderRejected) {
       markFailed(db, started.paymentId, failureReason(error.code, error.message), now);
@@ -322,15 +332,21 @@ async function runCharge(db: Db, started: Started, request: () => Promise<Charge
       started.paymentId,
       PAYMENT_STATUS.pending,
     );
+    // Omise อาจทำรายการเสร็จหลังเราเลิกรอ ถ้าไม่เก็บเลขอ้างอิง เงินที่ตัดไปแล้วจะไม่มีวันถูกจับคู่ (PAY-007 สถานะ `เลิกรอ`)
+    const lateAt = () => new Date(now.getTime() + Date.now() - askedAt);
+    charging
+      .then(
+        (late) => void recordCharge(db, started.paymentId, late, lateAt()),
+        (lateError) => {
+          if (lateError instanceof ProviderRejected) {
+            markFailed(db, started.paymentId, failureReason(lateError.code, lateError.message), lateAt());
+          }
+        },
+      )
+      .catch(console.error);
     return { kind: "unavailable", minutesLeft: started.minutesLeft };
   }
-  db.prepare("UPDATE payments SET omise_charge_id = ?, card_last4 = ?, qr_image_url = ? WHERE id = ?").run(
-    charge.id,
-    charge.cardLast4,
-    charge.qrImageUrl,
-    started.paymentId,
-  );
-  return { kind: "done", status: applyCharge(db, started.paymentId, charge, answeredAt) };
+  return { kind: "done", status: recordCharge(db, started.paymentId, charge, answeredAt) };
 }
 
 const describe = (groupId: number) => `Blanksong กลุ่มคำสั่งซื้อ ${groupId}`;

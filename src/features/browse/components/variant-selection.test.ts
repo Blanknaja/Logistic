@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   blockedReason,
   findVariant,
+  isValueSoldOut,
   missingOptionMessage,
   priceText,
   stockText,
@@ -47,6 +48,16 @@ describe("BRW-009 ตัวเลือกและสต็อกที่เ�
     expect(stockText(0)).toBe("สินค้าหมด");
     expect(blockedReason(shirt, [BLACK, L], false)).toBe("สินค้าหมด");
     expect(blockedReason({ ...cap, variants: [{ ...cap.variants[0], stock: 0 }] }, [], false)).toBe("สินค้าหมด");
+  });
+
+  test("ค่าตัวเลือกที่ทุกแบบย่อยที่เข้ากับค่าที่เลือกไว้หมดสต็อก เห็นเป็นค่าที่หมด", () => {
+    expect(isValueSoldOut(shirt, [null, null], 0, BLACK)).toBe(false);
+    expect(isValueSoldOut(shirt, [null, null], 1, L)).toBe(false);
+    expect(isValueSoldOut(shirt, [BLACK, null], 1, L)).toBe(true);
+    expect(isValueSoldOut(shirt, [BLACK, null], 1, M)).toBe(false);
+    expect(isValueSoldOut(shirt, [null, L], 0, BLACK)).toBe(true);
+    // ค่าที่เลือกอยู่ของตัวเลือกเดียวกันไม่นับ จึงยังเห็นได้ว่าค่าอื่นของตัวเลือกนั้นมีของ
+    expect(isValueSoldOut(shirt, [BLACK, L], 0, RED)).toBe(false);
   });
 
   test("สินค้าที่ไม่มีตัวเลือก มีแบบย่อยเดียวที่ถือว่าเลือกครบแล้ว", () => {

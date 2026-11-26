@@ -1,10 +1,23 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { SubmitButton } from "@/shared/ui/action-form";
 
-/** ปุ่มส่งของฟอร์มที่ใช้ server action ตรงๆ ระหว่างรอผลกดซ้ำไม่ได้ */
-export function PendingButton(props: { label: string; pendingLabel: string; secondary?: boolean }) {
+const CLASS_NAMES = { primary: "button", secondary: "button button-secondary", link: "link-action" };
+
+/** ปุ่มส่งของฟอร์มที่ใช้ server action ตรงๆ ระหว่างรอผลกดซ้ำไม่ได้ การกระทำรองในแถวรายการใช้ variant="link" */
+export function PendingButton({
+  label,
+  pendingLabel,
+  variant = "primary",
+}: {
+  label: string;
+  pendingLabel: string;
+  variant?: keyof typeof CLASS_NAMES;
+}) {
   const { pending } = useFormStatus();
-  return <SubmitButton pending={pending} {...props} />;
+  return (
+    <button type="submit" className={CLASS_NAMES[variant]} disabled={pending}>
+      {pending ? pendingLabel : label}
+    </button>
+  );
 }

@@ -39,7 +39,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
               {profile.phone ?? (
                 <>
                   ยังไม่ได้ใส่เบอร์โทร
-                  <Link href="/profile?edit=1" className="button button-secondary">
+                  <Link href="/profile?edit=1" className="link-action">
                     เพิ่มเบอร์โทร
                   </Link>
                 </>

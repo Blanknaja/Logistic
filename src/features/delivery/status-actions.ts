@@ -24,6 +24,7 @@ export async function changeParcelStatusAction(formData: FormData): Promise<Stat
     from: text(formData, "from"),
     to: text(formData, "to"),
     location: text(formData, "location"),
+    province: text(formData, "province"),
     receiverName: text(formData, "receiverName"),
     reason: text(formData, "reason"),
   });

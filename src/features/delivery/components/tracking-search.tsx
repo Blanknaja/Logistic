@@ -5,7 +5,7 @@ export const SEARCH_HINT = "พิมพ์เลขติดตามพัส�
 /** ช่องค้นหาพัสดุ (DLV-011) error เป็น null ก่อนค้นหาครั้งแรก */
 export function TrackingSearch({ value, error }: { value: string; error: string | null }) {
   return (
-    <div className={styles.page}>
+    <div className={styles.searchPage}>
       <h1>ติดตามพัสดุ</h1>
       <form action="/track" method="get" className={styles.search}>
         <div className={`field ${styles.searchField}`}>
@@ -16,6 +16,8 @@ export function TrackingSearch({ value, error }: { value: string; error: string 
             className="input"
             defaultValue={value}
             autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
             aria-invalid={error ? true : undefined}
             aria-describedby="tracking-no-message"
           />
@@ -24,7 +26,7 @@ export function TrackingSearch({ value, error }: { value: string; error: string 
           ค้นหา
         </button>
       </form>
-      <p id="tracking-no-message" role={error ? "alert" : undefined} className={error ? "field-error" : styles.hint}>
+      <p id="tracking-no-message" role={error ? "alert" : undefined} className={error ? "field-error" : styles.note}>
         {error ?? SEARCH_HINT}
       </p>
     </div>

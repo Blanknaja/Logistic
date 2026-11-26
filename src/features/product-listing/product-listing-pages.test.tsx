@@ -17,6 +17,7 @@ import { ProductForm } from "@/features/product-listing/components/product-form"
 import { listCategories } from "@/features/product-listing/server/categories";
 import { saveImageFile } from "@/features/product-listing/server/image-files";
 import { variantCombos, type ProductValues } from "@/features/product-listing/server/product-rules";
+import { streamedBody } from "@/features/product-listing/server/testing";
 import type { Db } from "@/shared/db";
 import { addAccount, addProduct, addShop } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
@@ -198,6 +199,7 @@ describe("PRD-002 สร้างสินค้าและเปิดขา�
       images: [upload(shopId)],
       options: [],
       prices: { "[]": "250" },
+      model: null,
     };
 
     const result = await submit(createProductAction(randomUUID(), "publish", values));
@@ -206,7 +208,22 @@ describe("PRD-002 สร้างสินค้าและเปิดขา�
     const page = text((await open(listPage({ notice: "published" }))).html);
     expect(page).toContain("เปิดขายสินค้าแล้ว");
     expect(page.indexOf("เสื้อยืดคอกลม")).toBeLessThan(page.indexOf("ของเก่า"));
-    expect(page).toContain("฿250 สต็อก 0 ขายอยู่");
+    expect(page).toContain("฿250 สต็อก 0 หมด ขายอยู่");
+  });
+
+  test("PRD-001 สต็อกรวมที่ใกล้หมดหรือหมดมีป้ายตามเกณฑ์ของ INV-002 สต็อกปกติและร่างไม่มีป้าย", async () => {
+    const { shopId } = signInSeller();
+    addProduct(db, { shopId, name: "มีเยอะ", stock: 6 });
+    addProduct(db, { shopId, name: "ใกล้หมดแล้ว", stock: 5 });
+    addProduct(db, { shopId, name: "ไม่เหลือ", stock: 0 });
+    addProduct(db, { shopId, name: "ร่างใหม่", stock: 0, status: PRODUCT_STATUS.draft });
+
+    const html = (await open(listPage())).html;
+    const line = (name: string) => text(html.split("<li").find((part) => part.includes(`>${name}<`)) ?? "");
+    expect(line("มีเยอะ")).not.toMatch(/ใกล้หมด|หมด/);
+    expect(line("ใกล้หมดแล้ว")).toContain("สต็อก 5 ใกล้หมด");
+    expect(line("ไม่เหลือ")).toContain("สต็อก 0 หมด");
+    expect(line("ร่างใหม่")).toContain("สต็อก 0 ร่าง");
   });
 
   test("PRD-002 ข้อมูลไม่ครบ ยังอยู่ที่หน้าฟอร์มพร้อมข้อความ และยังไม่มีสินค้าใหม่", async () => {
@@ -218,6 +235,7 @@ describe("PRD-002 สร้างสินค้าและเปิดขา�
       images: [upload(shopId)],
       options: [],
       prices: { "[]": "0" },
+      model: null,
     };
 
     const result = await submit(createProductAction(randomUUID(), "publish", values));
@@ -283,6 +301,17 @@ describe("PRD-003 ส่งรูปขึ้นและเปิดดูร�
     expect(count("product_image_files")).toBe(0);
   });
 
+  test("PRD-003 รูปเกิน 5 MB ที่ส่งมาทีละก้อนโดยไม่บอกขนาด ไม่ถูกรับ และเซิร์ฟเวอร์หยุดอ่านทันทีที่เกิน", async () => {
+    signInSeller();
+    const { body, stats } = streamedBody(jpgBody(30 * 1024 * 1024));
+    const large = await uploadImage(new Request("http://localhost/product-images", { method: "POST", body, duplex: "half" } as RequestInit));
+
+    expect(large.status).toBe(413);
+    expect(await large.json()).toEqual({ error: "รูปต้องมีขนาดไม่เกิน 5 MB" });
+    expect(stats.sent).toBeLessThanOrEqual(7 * 1024 * 1024);
+    expect(count("product_image_files")).toBe(0);
+  });
+
   test("PRD-003 ที่อยู่รูปที่ไม่มีอยู่ ได้ ไม่พบ", async () => {
     const image = await getImage(new Request("http://localhost/product-images/x"), {
       params: Promise.resolve({ key: "x" }),
@@ -294,7 +323,7 @@ describe("PRD-003 ส่งรูปขึ้นและเปิดดูร�
     const html = renderToStaticMarkup(
       <ProductForm
         categories={[]}
-        initial={{ name: "เสื้อยืดคอกลม", description: "", categoryId: null, images: ["/a", "/b", "/c"], options: [], prices: {} }}
+        initial={{ name: "เสื้อยืดคอกลม", description: "", categoryId: null, images: ["/a", "/b", "/c"], options: [], prices: {}, model: null }}
         save={async () => ({ errors: {} })}
       />,
     );
@@ -308,7 +337,7 @@ describe("PRD-004 ตัวเลือกในหน้าฟอร์ม", ()
     renderToStaticMarkup(
       <ProductForm
         categories={[]}
-        initial={{ name: "เสื้อยืดคอกลม", description: "", categoryId: null, images: [], options, prices: {} }}
+        initial={{ name: "เสื้อยืดคอกลม", description: "", categoryId: null, images: [], options, prices: {}, model: null }}
         save={async () => ({ errors: {} })}
       />,
     );
@@ -342,7 +371,7 @@ describe("PRD-004 ตัวเลือกในหน้าฟอร์ม", ()
 describe("PRD-005 บันทึกร่างผ่านหน้าเว็บ", () => {
   test("PRD-005 กด บันทึกร่าง เห็นข้อความ และรายการแสดงสินค้าเป็น ร่าง พร้อมรูปแทนว่ายังไม่มีรูป", async () => {
     signInSeller();
-    const values: ProductValues = { name: "หมวกแก๊ป", description: "", categoryId: null, images: [], options: [], prices: { "[]": "120" } };
+    const values: ProductValues = { name: "หมวกแก๊ป", description: "", categoryId: null, images: [], options: [], prices: { "[]": "120" }, model: null };
 
     expect((await submit(createProductAction(randomUUID(), "draft", values))).redirect).toBe("/seller/products?notice=draft");
     const page = text((await open(listPage({ notice: "draft" }))).html);
@@ -352,7 +381,7 @@ describe("PRD-005 บันทึกร่างผ่านหน้าเว�
 
   test("PRD-005 ไม่กรอกชื่อ เห็นข้อความ และยังไม่มีสินค้าใหม่ในร้าน", async () => {
     signInSeller();
-    const values: ProductValues = { name: "", description: "", categoryId: null, images: [], options: [], prices: { "[]": "120" } };
+    const values: ProductValues = { name: "", description: "", categoryId: null, images: [], options: [], prices: { "[]": "120" }, model: null };
 
     const result = await submit(createProductAction(randomUUID(), "draft", values));
     expect(result.state?.errors).toEqual({ name: "กรอกชื่อสินค้าก่อนบันทึกร่าง" });
@@ -380,7 +409,7 @@ describe("PRD-012 จัดการได้เฉพาะสินค้า�
     signInAs(addAccount(db).id);
     expect((await open(listPage())).redirect).toBe("/open-shop");
     expect((await open(NewProductPage())).redirect).toBe("/open-shop");
-    const values: ProductValues = { name: "หมวก", description: "", categoryId: null, images: [], options: [], prices: {} };
+    const values: ProductValues = { name: "หมวก", description: "", categoryId: null, images: [], options: [], prices: {}, model: null };
     expect((await submit(createProductAction(randomUUID(), "draft", values))).redirect).toBe("/open-shop");
     expect((await uploadImage(new Request("http://localhost/product-images", { method: "POST", body: "x" }))).status).toBe(401);
     expect(count("products")).toBe(0);
@@ -395,7 +424,7 @@ describe("PRD-012 จัดการได้เฉพาะสินค้า�
   test("PRD-012 ยังไม่เข้าสู่ระบบ ถูกพาไปหน้าเข้าสู่ระบบก่อน แล้วกลับมาหน้าเดิม", async () => {
     expect((await open(listPage())).redirect).toBe("/login?next=%2Fseller%2Fproducts");
     expect((await open(NewProductPage())).redirect).toBe("/login?next=%2Fseller%2Fproducts%2Fnew");
-    const values: ProductValues = { name: "หมวก", description: "", categoryId: null, images: [], options: [], prices: {} };
+    const values: ProductValues = { name: "หมวก", description: "", categoryId: null, images: [], options: [], prices: {}, model: null };
     expect((await submit(createProductAction(randomUUID(), "draft", values))).redirect).toBe(
       "/login?next=%2Fseller%2Fproducts%2Fnew&notice=relogin",
     );
@@ -411,6 +440,7 @@ describe("PRD-012 จัดการได้เฉพาะสินค้า�
       images: [upload(other.id)],
       options: [],
       prices: { "[]": "100" },
+      model: null,
     };
     expect((await submit(createProductAction(randomUUID(), "publish", values))).state?.errors.images).toBe("ไม่พบรูปบางรูป ลบรูปนั้นแล้วใส่ใหม่");
     expect(count("products")).toBe(0);
@@ -454,7 +484,7 @@ describe("PRD-Q01 ความเร็วของหน้าฟอร์ม�
     const html = renderToStaticMarkup(
       <ProductForm
         categories={listCategories(db)}
-        initial={{ name: "เสื้อ", description: "ผ้า", categoryId: 1, images, options, prices }}
+        initial={{ name: "เสื้อ", description: "ผ้า", categoryId: 1, images, options, prices, model: null }}
         save={async () => ({ errors: {} })}
       />,
     );

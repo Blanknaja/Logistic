@@ -4,33 +4,13 @@ import { useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { LIMITS, MESSAGES } from "@/features/product-listing/server/product-rules";
 import { moveItem, screenFiles, UPLOAD_TIMEOUT_MS, type ImageItem } from "./form-state";
 import styles from "./product-listing.module.css";
+import { uploadFile } from "./upload-file";
 
 let nextId = 0;
 const newId = () => `image-${++nextId}`;
 
 /** รูปที่มีที่อยู่แล้ว เช่นรูปเดิมของสินค้าที่เปิดมาแก้ */
 export const savedImage = (url: string): ImageItem => ({ id: newId(), preview: url, url, file: null, status: "done", progress: 100 });
-
-// fetch บอกความคืบหน้าตอนส่งไม่ได้ จึงใช้ XMLHttpRequest
-function uploadImage(file: File, onProgress: (percent: number) => void): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open("POST", "/product-images");
-    request.timeout = UPLOAD_TIMEOUT_MS;
-    request.responseType = "json";
-    request.setRequestHeader("Content-Type", file.type);
-    request.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
-    };
-    request.onload = () => {
-      const body = request.response as { url?: string; error?: string } | null;
-      if (request.status === 200 && body?.url) resolve(body.url);
-      else reject(new Error(body?.error ?? MESSAGES.uploadFailed));
-    };
-    request.onerror = request.ontimeout = request.onabort = () => reject(new Error(MESSAGES.uploadFailed));
-    request.send(file);
-  });
-}
 
 /** เพิ่ม เรียง และลบรูปสินค้า รูปส่งขึ้นเซิร์ฟเวอร์ทันทีที่เลือก (PRD-003) */
 export function ImagePicker({
@@ -50,7 +30,7 @@ export function ImagePicker({
 
   const send = (id: string, file: File) => {
     update(id, { status: "uploading", progress: 0, error: undefined });
-    uploadImage(file, (progress) => update(id, { progress })).then(
+    uploadFile("/product-images", file, UPLOAD_TIMEOUT_MS, MESSAGES.uploadFailed, (progress) => update(id, { progress })).then(
       (url) => update(id, { status: "done", url, progress: 100 }),
       (failure: Error) => update(id, { status: "failed", error: failure.message }),
     );
@@ -111,14 +91,14 @@ export function ImagePicker({
               )}
               <div className={styles.imageActions}>
                 {item.status === "failed" && item.file && (
-                  <button type="button" className="button button-secondary" onClick={() => send(item.id, item.file as File)}>
+                  <button type="button" className="link-action" onClick={() => send(item.id, item.file as File)}>
                     ลองใหม่
                   </button>
                 )}
                 {index > 0 && (
                   <button
                     type="button"
-                    className="button button-secondary"
+                    className={`link-action ${styles.arrow}`}
                     aria-label={`เลื่อนรูปที่ ${index + 1} ไปก่อน`}
                     onClick={() => move(index, index - 1)}
                   >
@@ -128,7 +108,7 @@ export function ImagePicker({
                 {index < items.length - 1 && (
                   <button
                     type="button"
-                    className="button button-secondary"
+                    className={`link-action ${styles.arrow}`}
                     aria-label={`เลื่อนรูปที่ ${index + 1} ไปหลัง`}
                     onClick={() => move(index, index + 1)}
                   >
@@ -137,7 +117,7 @@ export function ImagePicker({
                 )}
                 <button
                   type="button"
-                  className="button button-secondary"
+                  className="link-action"
                   aria-label={`ลบรูปที่ ${index + 1}`}
                   onClick={() => remove(item)}
                 >

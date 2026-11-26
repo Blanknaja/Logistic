@@ -22,37 +22,38 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
   const viewer = await requireAccount(filterHref(status));
   const page = listBuyerOrders(getDb(), viewer.id, { status });
 
+  // ยังไม่เคยสั่งซื้อ ตัวกรองไม่มีอะไรให้กรอง หัวเรื่องบอกคำตอบแล้วพาไปเลือกซื้อ
+  if (!status && page.orders.length === 0) {
+    return (
+      <>
+        <h1>ยังไม่มีคำสั่งซื้อ</h1>
+        <Link href="/" className="button">
+          ไปเลือกซื้อสินค้า
+        </Link>
+      </>
+    );
+  }
+
   return (
     <>
       <h1>คำสั่งซื้อ</h1>
       <nav aria-label="กรองตามสถานะ">
-        <ul className="chips">
-          {FILTERS.map((filter) => {
-            const active = filter.status === status;
-            return (
-              <li key={filter.label}>
-                <Link
-                  href={filterHref(filter.status)}
-                  className={`chip ${styles.chipLink} ${active ? styles.chipActive : ""}`}
-                  aria-current={active ? "page" : undefined}
-                >
-                  {filter.label}
-                </Link>
-              </li>
-            );
-          })}
+        <ul className={`chips ${styles.filters}`}>
+          {FILTERS.map((filter) => (
+            <li key={filter.label}>
+              <Link
+                href={filterHref(filter.status)}
+                className={`chip ${styles.chipLink}`}
+                aria-current={filter.status === status ? "page" : undefined}
+              >
+                {filter.label}
+              </Link>
+            </li>
+          ))}
         </ul>
       </nav>
       {page.orders.length === 0 ? (
-        status ? (
-          <EmptyState title="ไม่มีคำสั่งซื้อในสถานะนี้" />
-        ) : (
-          <EmptyState title="ยังไม่มีคำสั่งซื้อ">
-            <Link href="/" className="button">
-              ไปเลือกซื้อสินค้า
-            </Link>
-          </EmptyState>
-        )
+        <EmptyState title="ไม่มีคำสั่งซื้อในสถานะนี้" />
       ) : (
         <OrderList key={status ?? ""} initial={{ ...page, failed: false }} status={status} />
       )}

@@ -1,18 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import browse from "@/features/browse/components/browse.module.css";
 import { loadMoreShopProductsAction } from "@/features/shop/actions";
 import { ShopLogo } from "@/features/shop/components/shop-logo";
 import styles from "@/features/shop/components/shop.module.css";
 import { StorefrontProducts } from "@/features/shop/components/storefront-products";
 import { getStorefront, listStorefrontProducts } from "@/features/shop/server/storefront";
 import { getDb } from "@/shared/db";
-import { formatDate, formatNumber } from "@/shared/format";
+import { formatThaiDate, formatNumber } from "@/shared/format";
 import { getCurrentAccount } from "@/shared/session";
 import { SHOP_STATUS } from "@/shared/statuses";
 import { EmptyState } from "@/shared/ui/states";
 
-/** หน้าร้านที่ทุกคนเปิดดูได้ (SHP-011 SHP-012 SHP-014) */
+/** หน้าร้านที่ทุกคนเปิดดูได้ ข้อมูลร้านสั้นๆ แล้วสินค้าเริ่มในจอแรก (SHP-011 SHP-012 SHP-014) */
 export default async function StorefrontPage({ params }: PageProps<"/shops/[shopId]">) {
   const { shopId } = await params;
   const db = getDb();
@@ -20,19 +19,20 @@ export default async function StorefrontPage({ params }: PageProps<"/shops/[shop
   if (!shop) notFound();
   const viewer = await getCurrentAccount();
   const isOwner = viewer?.shopId === shop.id;
-
-  const identity = (
-    <div className={styles.identity}>
-      <ShopLogo name={shop.name} logoUrl={shop.logoUrl} />
-      <h1>{shop.name}</h1>
-    </div>
+  const otherShops = (
+    <Link href="/" className="button">
+      ดูสินค้าจากร้านอื่น
+    </Link>
   );
 
   if (shop.status === SHOP_STATUS.suspended) {
     return (
       <>
-        {identity}
-        <EmptyState title="ร้านนี้ถูกระงับ ซื้อสินค้าจากร้านนี้ไม่ได้ในขณะนี้" />
+        <header className={styles.identity}>
+          <ShopLogo name={shop.name} logoUrl={shop.logoUrl} />
+          <h1>{shop.name}</h1>
+        </header>
+        <EmptyState title="ร้านนี้ถูกระงับ ซื้อสินค้าจากร้านนี้ไม่ได้ในขณะนี้">{otherShops}</EmptyState>
       </>
     );
   }
@@ -40,26 +40,35 @@ export default async function StorefrontPage({ params }: PageProps<"/shops/[shop
   const first = listStorefrontProducts(db, shop.id);
   return (
     <>
-      {identity}
-      <p className={browse.description}>{shop.description || "ร้านนี้ยังไม่มีคำอธิบาย"}</p>
-      <ul className="chips">
-        <li className="chip">{shop.province}</li>
-        <li className="chip">เปิดร้านเมื่อ {formatDate(shop.openedAt)}</li>
-        <li className="chip">สินค้า {formatNumber(shop.productCount)} ชิ้น</li>
-      </ul>
-      {isOwner && (
-        <div className={styles.actions}>
-          <Link href="/seller/settings" className="button button-secondary">
+      <header className={styles.identity}>
+        <ShopLogo name={shop.name} logoUrl={shop.logoUrl} />
+        <div>
+          <h1>{shop.name}</h1>
+          <p className={styles.meta}>
+            <span>{shop.province}</span>
+            <span>
+              เปิดร้านเมื่อ <time dateTime={shop.openedAt}>{formatThaiDate(shop.openedAt)}</time>
+            </span>
+            <span>สินค้า {formatNumber(shop.productCount)} ชิ้น</span>
+          </p>
+        </div>
+      </header>
+      <div className={styles.about}>
+        <p className={shop.description ? styles.description : styles.muted}>{shop.description || "ร้านนี้ยังไม่มีคำอธิบาย"}</p>
+        {isOwner && (
+          <Link href="/seller/settings" className="link-action">
             แก้ไขร้าน
           </Link>
-        </div>
-      )}
+        )}
+      </div>
       {first.items.length === 0 ? (
         <EmptyState title="ร้านนี้ยังไม่มีสินค้า">
-          {isOwner && (
+          {isOwner ? (
             <Link href="/seller/products/new" className="button">
               ลงสินค้าชิ้นแรก
             </Link>
+          ) : (
+            otherShops
           )}
         </EmptyState>
       ) : (

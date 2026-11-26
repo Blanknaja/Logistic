@@ -28,6 +28,15 @@ describe("หน้าสถานะกลาง", () => {
     expect(html).toContain('role="alert"');
   });
 
+  test("กล่องที่เป็นเนื้อหาทั้งหน้ามี h1 กล่องที่วางในหน้าที่มี h1 แล้วเป็น h2", () => {
+    expect(renderToStaticMarkup(<NotFoundState />)).toContain('<h1 class="state-title">ไม่พบ</h1>');
+    expect(renderToStaticMarkup(<ErrorState action={null} />)).toContain("<h1");
+    expect(renderToStaticMarkup(<LoadingState />)).toContain("<h1");
+    expect(renderToStaticMarkup(<EmptyState title="ว่าง" />)).toContain("<h2");
+    expect(renderToStaticMarkup(<EmptyState level={1} title="ว่าง" />)).toContain("<h1");
+    expect(renderToStaticMarkup(<ErrorState level={2} action={null} />)).toContain("<h2");
+  });
+
   test('หน้า "ไม่พบ" มีลิงก์กลับหน้าแรก และเปลี่ยนหัวข้อได้', () => {
     expect(renderToStaticMarkup(<NotFoundState />)).toContain("ไม่พบ");
     const html = renderToStaticMarkup(<NotFoundState title="ไม่พบสินค้านี้" />);

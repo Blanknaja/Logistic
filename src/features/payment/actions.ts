@@ -16,7 +16,7 @@ import {
 } from "@/features/payment/server/payments";
 import type { Simulator, SimulatorMode } from "@/features/payment/server/simulator";
 import { getDb } from "@/shared/db";
-import { formatDateTime } from "@/shared/format";
+import { formatThaiDateTime } from "@/shared/format";
 import { requireAccount } from "@/shared/session";
 
 export type PayFormState = { errors?: CardErrors; message?: string; retry?: boolean };
@@ -60,7 +60,7 @@ export async function checkStatusAction(formData: FormData): Promise<PayFormStat
   const { buyerId, groupId } = await buyerAndGroup(formData);
   const result = await checkPaymentStatus(getDb(), getPaymentProvider(), { buyerId, groupId });
   if (result.kind === "error") return { message: "เช็คสถานะไม่ได้ตอนนี้ กรุณาลองใหม่" };
-  if (result.kind === "still-pending") return { message: `ยังไม่ได้รับเงิน เช็คล่าสุด ${formatDateTime(result.checkedAt)}` };
+  if (result.kind === "still-pending") return { message: `ยังไม่ได้รับเงิน เช็คล่าสุด ${formatThaiDateTime(result.checkedAt)}` };
   redirect(`/pay/${groupId}`);
 }
 

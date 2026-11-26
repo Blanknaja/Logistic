@@ -1,53 +1,131 @@
 /* หน้าแรก ผลการค้นหา และหน้ารายละเอียดสินค้า ใช้ได้ที่จอกว้าง 360 จุด (BRW-Q03) */
 
-.search {
-  display: flex;
-  gap: 8px;
-  margin-bottom: var(--space);
+/* หน้าแรกและผลการค้นหา: หมวดหมู่ บรรทัดจำนวนผลลัพธ์กับตัวกรอง แล้วสินค้า ทั้งหมดอยู่ในจอแรก */
+
+.categories :global(.chips) {
+  margin: 0;
 }
 
-.search input {
-  flex: 1;
-  min-width: 0;
+.categories + :global(.state) {
+  margin-top: var(--space-5);
 }
 
 .chipLink {
   color: var(--color-text);
+  white-space: nowrap;
   text-decoration: none;
 }
 
-.chipActive {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  font-weight: 600;
+@media (hover: hover) {
+  .chipLink:not([aria-current]):hover {
+    box-shadow: inset 0 0 0 1px var(--color-text);
+  }
 }
 
-.filters {
+/* จอเล็กกว่า 900 หมวดหมู่เป็นแถวเดียวที่เลื่อนซ้ายขวา สินค้าจึงขึ้นในจอแรก */
+@media (max-width: 899px) {
+  .categories :global(.chips) {
+    flex-wrap: nowrap;
+    margin-inline: calc(-1 * var(--gutter));
+    padding-inline: var(--gutter);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .categories :global(.chips) > li {
+    flex: none;
+  }
+}
+
+.toolbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  margin-block: var(--space-3) var(--space-5);
+}
+
+.count {
+  min-width: 0;
+}
+
+.count p {
+  margin: 0;
+}
+
+.active {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 8px var(--space);
-  margin-bottom: var(--space);
+  align-items: center;
+  gap: 0 var(--space-3);
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.filterBox {
+  flex: none;
+}
+
+.filterToggle {
+  gap: var(--space-2);
+  color: var(--color-text);
+  list-style: none;
+  cursor: pointer;
+}
+
+.filterToggle::-webkit-details-marker {
+  display: none;
+}
+
+.filterBox[open] > .filterToggle {
+  box-shadow: inset 0 0 0 1px var(--color-text);
+}
+
+@media (hover: hover) {
+  .filterToggle:hover {
+    box-shadow: inset 0 0 0 1px var(--color-text);
+  }
+}
+
+/* จอเล็ก ตัวกรองกางเป็นแผ่นเต็มความกว้างใต้บรรทัดจำนวนผลลัพธ์ ทับสินค้าไว้จนกว่าจะกดใช้หรือปิด
+   ปุ่ม "ตัวกรอง" จึงอยู่ที่เดิมตอนกาง ไม่กระโดดหนีนิ้ว */
+.filters {
+  position: absolute;
+  inset-inline: calc(-1 * var(--gutter));
+  top: 100%;
+  z-index: 5;
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--gutter) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
 }
 
 .price {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
+  min-width: 0;
   margin: 0;
   padding: 0;
   border: 0;
 }
 
+.price legend,
+.sort {
+  font-size: var(--text-label);
+}
+
 .price legend {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
   padding: 0;
 }
 
-.price .input {
-  width: 7.5em;
+.price :global(.input) {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .price .priceError {
@@ -57,47 +135,79 @@
 
 .sort {
   display: grid;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
-.summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
+/* จอ 900 ขึ้นไป ตัวกรองกางอยู่ในแถวเดียวกับจำนวนผลลัพธ์ เบราว์เซอร์ที่กาง details ด้วย CSS ไม่ได้ยังเห็นปุ่ม "ตัวกรอง" */
+@media (min-width: 900px) {
+  @supports selector(::details-content) {
+    .filterToggle {
+      display: none;
+    }
+
+    .filterBox::details-content {
+      content-visibility: visible;
+    }
+  }
+
+  .filters {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-5);
+    padding: 0;
+    border: 0;
+  }
+
+  /* legend ที่ลอยอยู่กลายเป็นของในแถว จึงอยู่หน้าช่องราคาได้ */
+  .price legend {
+    float: left;
+    margin: 0 var(--space-1) 0 0;
+  }
+
+  .price :global(.input) {
+    flex: none;
+    width: 10ch;
+  }
+
+  .sort {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .sort :global(.input) {
+    width: auto;
+  }
 }
 
-.summary p {
-  margin: 0;
-}
-
+/* การ์ดสินค้า: รูป ชื่อ ราคา ชื่อร้าน ไม่มีกรอบ แยกกันด้วยช่องว่าง */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6) var(--space-4);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .card {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
   color: inherit;
   text-decoration: none;
+  transition: transform var(--duration) var(--ease);
+}
+
+.card:active {
+  transform: scale(0.98);
 }
 
 .cardBody {
   display: grid;
-  gap: 2px;
-  padding: 8px 12px 12px;
+  gap: var(--space-1);
 }
 
 .cardName {
@@ -105,28 +215,27 @@
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--duration) var(--ease);
 }
 
-.priceText {
-  color: var(--color-primary-dark);
-  font-weight: 700;
-}
-
-.bigPrice {
-  margin: 0 0 var(--space);
-  color: var(--color-primary-dark);
-  font-size: 1.6rem;
-  font-weight: 700;
+@media (hover: hover) {
+  .card:hover .cardName {
+    text-decoration-color: currentColor;
+  }
 }
 
 .muted {
   color: var(--color-muted);
-  font-size: 0.9rem;
+  font-size: var(--text-label);
 }
 
 .soldOut {
   color: var(--color-danger);
-  font-weight: 600;
+  font-size: var(--text-label);
 }
 
 .image,
@@ -134,16 +243,15 @@
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  background: var(--color-bg);
+  background: var(--color-surface);
 }
 
 .noImage {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #e9ecf0;
   color: var(--color-muted);
-  font-size: 0.9rem;
+  font-size: var(--text-label);
 }
 
 .pagination {
@@ -151,58 +259,191 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 8px 12px;
-  margin-top: var(--space);
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-7);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
 }
 
-/* หน้ารายละเอียดสินค้า */
+.pagination > span {
+  font-size: var(--text-label);
+}
+
+@media (min-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-7) var(--space-5);
+  }
+}
+
+/* หน้ารายละเอียดสินค้า จอเล็กเรียง ชื่อ รูป ส่วนซื้อ จอ 900 ขึ้นไปรูปอยู่ซ้าย ชื่อกับส่วนซื้ออยู่ขวาในจอแรก
+   ร้านกับรายละเอียดอยู่ข้างล่าง */
 
 .detail {
   display: grid;
-  gap: var(--space);
+  gap: var(--section-gap);
 }
 
-@media (min-width: 720px) {
-  .detail {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: start;
-  }
+.buyArea {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.name {
+  margin: 0;
+}
+
+.gallery {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+}
+
+/* กรอบรูปสี่เหลี่ยมจัตุรัสสีกระดาษ สลับรูปกับแบบ 3 มิติแล้วหน้าไม่กระโดด รูปใหญ่แสดงทั้งรูป รูปแนวตั้งจึงอยู่บนพื้นกรอบ ไม่ลอยกลางพื้นขาว */
+.plate {
+  display: flex;
+  justify-content: center;
+  aspect-ratio: 1;
+  margin-inline: calc(-1 * var(--gutter));
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.plate > .image {
+  height: 100%;
+  object-fit: contain;
 }
 
 .thumbs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 8px 0 0;
+  gap: var(--space-3);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .thumb {
-  width: 64px;
-  height: 64px;
+  position: relative;
+  display: block;
+  width: 56px;
+  height: 56px;
   padding: 0;
-  overflow: hidden;
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius);
+  border: 0;
   background: none;
   cursor: pointer;
 }
 
-.thumb[aria-pressed="true"] {
-  border-color: var(--color-primary);
+.thumb > * {
+  outline: 1px solid var(--color-border);
+  outline-offset: -1px;
+  transition: outline-color var(--duration) var(--ease);
+}
+
+/* วงของรูปย่อที่เลือกอยู่วาดบนชั้นเหนือรูป เพราะ box-shadow แบบ inset ของ img ถูกรูปบัง */
+.thumb[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: var(--selected-ring);
+}
+
+.view3d {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 56px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-label);
+  cursor: pointer;
+  transition:
+    box-shadow var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
+}
+
+.view3d svg {
+  flex: none;
+}
+
+.view3d[aria-pressed="true"] {
+  box-shadow: var(--selected-ring);
+}
+
+.view3d:active {
+  transform: scale(0.98);
+}
+
+@media (hover: hover) {
+  .thumb:hover > * {
+    outline-color: var(--color-text);
+  }
+
+  .view3d:hover:not([aria-pressed="true"]) {
+    box-shadow: inset 0 0 0 1px var(--color-text);
+  }
+}
+
+/* ส่วนซื้อ: ราคา ค่าส่ง สต็อก ตัวเลือก จำนวนกับปุ่มใส่ตะกร้า แล้วสต็อกของแต่ละแบบย่อย */
+
+.purchase {
+  display: grid;
+  align-content: start;
+  gap: var(--space-5);
+}
+
+.priceBlock {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.priceBlock p {
+  margin: 0;
+}
+
+.bigPrice {
+  font-size: var(--text-heading);
+  line-height: 1.3;
+}
+
+.stock {
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.choose {
+  display: grid;
+  align-content: start;
+  gap: var(--space-5);
+  min-width: 0;
 }
 
 .option {
-  margin: 0 0 8px;
+  min-width: 0;
+  margin: 0;
   padding: 0;
   border: 0;
 }
 
 .option legend {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-2);
   padding: 0;
-  font-weight: 600;
+  font-size: var(--text-label);
+}
+
+.option :global(.chips) {
+  margin: 0;
 }
 
 .choice {
@@ -220,54 +461,204 @@
   cursor: pointer;
 }
 
-.choice:has(input:checked) {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  font-weight: 600;
+.choice:has(input:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
-.choice:has(input:focus-visible) {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+/* ค่าที่ไม่มีแบบย่อยเหลือ ยังกดเลือกได้เพื่อให้เห็นคำว่าสินค้าหมด */
+.choiceSoldOut {
+  box-shadow: inset 0 0 0 1px var(--color-border);
+  color: var(--color-muted);
+  text-decoration: line-through;
+}
+
+@media (hover: hover) {
+  .choice:hover {
+    box-shadow: inset 0 0 0 1px var(--color-text);
+  }
+}
+
+.buyBar {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.buyBar > p {
+  margin: 0;
+}
+
+.buyBar > :global(.button) {
+  justify-self: start;
+}
+
+.actions {
+  display: flex;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.quantity {
+  display: grid;
+  flex: none;
+  gap: var(--space-1);
+  width: 112px;
+  font-size: var(--text-label);
+}
+
+.quantity :global(.input) {
+  height: var(--control-main);
+}
+
+.actions > :global(.button) {
+  flex: 1;
+  min-height: var(--control-main);
+  font-size: var(--text-body);
+}
+
+.variants summary {
+  padding-block: var(--space-3);
+  font-size: var(--text-label);
+  cursor: pointer;
 }
 
 .variantList {
   display: grid;
-  gap: 4px;
-  margin: 0 0 var(--space);
+  margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 0.95rem;
+  color: var(--color-muted);
+  font-size: var(--text-label);
 }
 
 .variantList li {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 0 8px;
-  padding: 4px 8px;
-  border-radius: var(--radius);
-  background: var(--color-bg);
+  gap: 0 var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .faded {
   opacity: 0.5;
 }
 
-.quantity {
-  max-width: 8em;
+/* ร้านกับหมวดหมู่ แล้วรายละเอียด */
+
+.facts {
+  display: grid;
+  margin: 0;
+  max-width: var(--measure);
+}
+
+.facts > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.facts dt {
+  flex: none;
+  width: 6em;
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+.facts a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+}
+
+.story {
+  display: grid;
+  gap: var(--space-3);
+  max-width: var(--measure);
+}
+
+.story h2 {
+  margin: 0;
 }
 
 .description {
+  margin: 0;
   white-space: pre-line;
+}
+
+@media (min-width: 600px) {
+  .plate {
+    width: min(100%, 640px);
+    margin-inline: 0;
+  }
+
+  .thumb {
+    width: 72px;
+  }
+
+  .thumb,
+  .view3d {
+    height: 72px;
+  }
+}
+
+/* จอแคบ ปุ่มใส่ตะกร้าติดขอบล่างจอ กดได้โดยไม่ต้องเลื่อนผ่านรูปและตัวเลือก */
+@media (max-width: 899px) {
+  .detail {
+    margin-bottom: var(--space-8);
+  }
+
+  .buyBar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 10;
+    padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg);
+  }
+
+  .quantity {
+    grid-template-columns: auto 72px;
+    align-items: center;
+    gap: var(--space-2);
+    width: auto;
+  }
+}
+
+@media (min-width: 900px) {
+  .buyArea {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "gallery name"
+      "gallery buy";
+    column-gap: var(--space-7);
+    row-gap: var(--space-4);
+  }
+
+  .name {
+    grid-area: name;
+  }
+
+  .gallery {
+    grid-area: gallery;
+  }
+
+  .purchase {
+    grid-area: buy;
+  }
 }
 
 /* โครงสีเทาระหว่างรอข้อมูล (BRW-012) */
 
 .skeleton {
-  border-radius: var(--radius);
-  background: #e3e7ec;
+  background: var(--color-surface);
   animation: pulse 1.2s ease-in-out infinite;
 }
 
@@ -280,12 +671,11 @@
 .skeletonChip {
   width: 96px;
   height: var(--tap);
-  border-radius: 999px;
 }
 
 .skeletonLine {
   height: 1.4em;
-  margin: 8px 0;
+  margin: var(--space-2) 0;
 }
 
 .skeletonShort {
@@ -293,17 +683,14 @@
 }
 
 .skeletonCard {
-  aspect-ratio: 3 / 4;
-}
-
-.skeletonSquare {
   aspect-ratio: 1;
+  margin-bottom: var(--space-3);
 }
 
 .skeletonButton {
   width: 160px;
   height: var(--tap);
-  margin-top: var(--space);
+  margin-top: var(--space-4);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,121 +1,200 @@
-/* หน้าสต็อกและประวัติสต็อก ใช้ได้ที่จอกว้าง 360 จุด โดยไม่ต้องเลื่อนซ้ายขวา */
+/* หน้าสต็อกและประวัติสต็อก ใช้ได้ที่จอกว้าง 360 จุด โดยไม่ต้องเลื่อนซ้ายขวา
+   จอแคบชื่ออยู่ซ้าย ช่องสต็อกอยู่ขวา จอกว้างเป็นตารางที่มีหัวคอลัมน์ */
+
+.chip {
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--space-3);
+  padding-bottom: var(--space-2);
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.headReserved {
+  display: none;
+}
+
+.headStock {
+  grid-column: 2;
+  text-align: end;
+}
 
 .rows,
 .history {
-  display: grid;
-  gap: 12px;
   margin: 0;
   padding: 0;
+  border-top: 1px solid var(--color-text);
   list-style: none;
 }
 
 .row {
   display: grid;
-  gap: 8px;
-}
-
-.rowHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "name field"
+    "meta field"
+    "controls controls"
+    "messages messages";
+  column-gap: var(--space-3);
+  padding-block: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .name {
+  grid-area: name;
   margin: 0;
-  font-weight: 600;
+  padding-top: var(--space-2);
+  line-height: 1.4;
 }
 
 .variant {
-  font-weight: 400;
   color: var(--color-muted);
 }
 
-.numbers {
+.meta {
+  grid-area: meta;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
+  align-items: center;
+  gap: 0 var(--space-3);
   margin: 0;
-}
-
-.badgeLow,
-.badgeOut {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-on-primary);
+  color: var(--color-muted);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
 }
 
 .badgeLow {
-  background: var(--color-warning);
+  color: var(--color-warning);
 }
 
 .badgeOut {
-  background: var(--color-danger);
+  color: var(--color-danger);
 }
 
+/* form ไม่มีกล่องของตัวเอง ช่องกรอก ปุ่ม และข้อความจึงวางในตารางของแถวได้ */
 .form {
-  display: grid;
-  gap: 4px;
+  display: contents;
 }
 
-.label {
-  font-size: 0.9rem;
-  color: var(--color-muted);
-}
-
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.field {
+  grid-area: field;
+  align-self: center;
 }
 
 .input {
-  flex: 1 1 96px;
-  width: auto;
-  min-width: 0;
+  width: 9ch;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.controls {
+  grid-area: controls;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+}
+
+/* สคริปต์ของแถวทำงานแล้ว (data-hydrated) ปุ่มขึ้นเมื่อแก้ตัวเลขเท่านั้น สคริปต์ไม่ทำงาน ปุ่มอยู่ตลอดเพื่อให้บันทึกได้ */
+.row[data-hydrated]:not([data-dirty]) .controls {
+  display: none;
+}
+
+.messages {
+  grid-area: messages;
+  padding-top: var(--space-1);
 }
 
 .saved,
-.alert {
+.alert,
+.messages :global(.field-error) {
   margin: 0;
-  font-size: 0.9rem;
-}
-
-.saved {
-  color: var(--color-primary);
+  font-size: var(--text-label);
 }
 
 .alert {
   color: var(--color-danger);
 }
 
-.historyLink,
+/* หน้าประวัติสต็อก */
+
 .back {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--tap);
-  justify-self: start;
+  margin-bottom: var(--space-2);
 }
 
-.chipActive {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  font-weight: 600;
+.intro {
+  display: grid;
+  gap: var(--space-1);
+  margin-bottom: var(--space-5);
+}
+
+.intro h1 {
+  margin: 0 0 var(--space-2);
+}
+
+.subject {
+  margin: 0;
+}
+
+.current {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.historyHead {
+  display: none;
 }
 
 .entry {
   display: grid;
-  gap: 2px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "reason change"
+    "when after"
+    "order order";
+  column-gap: var(--space-3);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  font-variant-numeric: tabular-nums;
 }
 
-.entry time,
+.reason {
+  grid-area: reason;
+}
+
+.change {
+  grid-area: change;
+  text-align: end;
+}
+
+.when {
+  grid-area: when;
+}
+
+.after {
+  grid-area: after;
+  text-align: end;
+}
+
+.orderNo {
+  grid-area: order;
+}
+
+.when,
+.after,
 .orderNo {
   color: var(--color-muted);
-  font-size: 0.9rem;
+  font-size: var(--text-label);
 }
 
 .pager {
@@ -123,6 +202,122 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-top: var(--space);
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 900px) {
+  .table {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) repeat(5, auto);
+    column-gap: var(--space-5);
+  }
+
+  .head,
+  .rows,
+  .history,
+  .row,
+  .entry {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    grid-template-areas: none;
+  }
+
+  .headReserved {
+    display: block;
+    grid-column: 3;
+    text-align: end;
+  }
+
+  .headStock {
+    grid-column: 4;
+  }
+
+  .row {
+    align-items: center;
+    padding-block: var(--space-1);
+  }
+
+  .row > *,
+  .meta > *,
+  .form > * {
+    grid-row: 1;
+  }
+
+  .name {
+    grid-column: 1;
+    padding-top: 0;
+  }
+
+  .meta {
+    display: contents;
+  }
+
+  .row .badgeLow,
+  .row .badgeOut {
+    grid-column: 2;
+  }
+
+  .reserved {
+    grid-column: 3;
+    text-align: end;
+  }
+
+  .field {
+    grid-column: 4;
+  }
+
+  .controls {
+    grid-column: 5;
+    padding-top: 0;
+  }
+
+  .historyLink {
+    grid-column: 6;
+  }
+
+  .form > .messages {
+    grid-row: 2;
+    grid-column: 3 / -1;
+    padding-bottom: var(--space-2);
+  }
+
+  /* ประวัติสต็อก: เวลา เหตุ จำนวนที่เปลี่ยน สต็อกหลังเปลี่ยน คำสั่งซื้อ */
+  .table:has(.history) {
+    grid-template-columns: auto minmax(0, 1fr) repeat(3, auto);
+  }
+
+  .historyHead {
+    display: grid;
+  }
+
+  .entry {
+    align-items: baseline;
+    padding-block: var(--space-2);
+  }
+
+  .entry > * {
+    grid-area: auto;
+  }
+
+  .when,
+  .after,
+  .orderNo {
+    font-size: var(--text-body);
+  }
+
+  .end {
+    text-align: end;
+  }
+
+  .cellLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
 }

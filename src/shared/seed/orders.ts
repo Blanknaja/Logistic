@@ -5,8 +5,9 @@ import { confirmReceipt } from "@/features/delivery/server/receipt";
 import { payByCard } from "@/features/payment/server/payments";
 import { createSimulator } from "@/features/payment/server/simulator";
 import type { Db } from "@/shared/db";
-import { addAddress, addCartItem } from "@/shared/db/builders";
+import { addAddress, addCartItem, SAMPLE_ADDRESS } from "@/shared/db/builders";
 import { PARCEL_STATUS, PRODUCT_STATUS, type ParcelStatus } from "@/shared/statuses";
+import { LOCATIONS } from "./catalog";
 
 const MINUTE = 60 * 1000;
 const DAY = 24 * 60 * MINUTE;
@@ -30,13 +31,26 @@ const STORIES: [ParcelStatus | "received" | null, number][] = [
 const STEPS: ParcelStatus[] = [S.awaitingPacking, S.handedOver, S.inTransit, S.outForDelivery];
 
 /**
+ * ที่อยู่จัดส่งของผู้ซื้อตัวอย่าง (0 คือ buyer1) กับจังหวัดของศูนย์คัดแยกระหว่างทาง
+ * ร้าน seller01 อยู่กรุงเทพมหานคร พัสดุของ buyer1 และ buyer2 จึงผ่าน 3 จังหวัด (MAP-010) ส่วน buyer3 เป็นการจัดส่งภายในจังหวัด
+ */
+const DESTINATIONS = [
+  { address: { ...SAMPLE_ADDRESS, ...LOCATIONS[1] }, hub: "นครสวรรค์" },
+  { address: { ...SAMPLE_ADDRESS, ...LOCATIONS[2] }, hub: "นครราชสีมา" },
+  { address: SAMPLE_ADDRESS, hub: "กรุงเทพมหานคร" },
+];
+
+/**
  * คำสั่งซื้อตัวอย่างของร้าน seller01 จากผู้ซื้อตัวอย่าง ครบทุกสถานะ ผ่านกฎจริงของการสั่งซื้อ จ่ายเงิน และจัดส่ง
  * สต็อก ประวัติ การจ่ายเงิน และพัสดุจึงตรงกันเหมือนคนกดเอง ไม่มีคำสั่งซื้อที่รอจ่ายเงินเพราะจะหมดเวลาใน 30 นาที
  */
 export async function addSampleOrders(db: Db, now: number): Promise<void> {
   const seller = db
-    .prepare("SELECT a.id, s.id AS shop_id FROM accounts a JOIN shops s ON s.owner_account_id = a.id WHERE a.email = 'seller01@example.com'")
-    .get() as { id: number; shop_id: number };
+    .prepare(
+      `SELECT a.id, s.id AS shop_id, s.origin_province FROM accounts a JOIN shops s ON s.owner_account_id = a.id
+       WHERE a.email = 'seller01@example.com'`,
+    )
+    .get() as { id: number; shop_id: number; origin_province: string };
   const buyers = (db.prepare("SELECT id FROM accounts WHERE email LIKE 'buyer%@example.com' ORDER BY id").all() as { id: number }[]).map(
     (row) => row.id,
   );
@@ -50,7 +64,7 @@ export async function addSampleOrders(db: Db, now: number): Promise<void> {
   ).map((row) => row.id);
   const sellerActor = { id: seller.id, isAdmin: false, shopId: seller.shop_id };
   const provider = createSimulator();
-  for (const buyerId of buyers) addAddress(db, { accountId: buyerId, isDefault: true });
+  buyers.forEach((buyerId, i) => addAddress(db, { accountId: buyerId, isDefault: true, address: DESTINATIONS[i].address }));
 
   for (const [i, [story, buyer]] of STORIES.entries()) {
     const buyerId = buyers[buyer];
@@ -78,6 +92,12 @@ export async function addSampleOrders(db: Db, now: number): Promise<void> {
     };
     const target = story === "received" ? S.delivered : story;
     const path = target === S.delivered || target === S.failed ? [...STEPS, target] : STEPS.slice(0, STEPS.indexOf(target) + 1);
+    const { address, hub } = DESTINATIONS[buyer];
+    const stops = [
+      { location: "ไปรษณีย์ใกล้ร้าน", province: seller.origin_province },
+      { location: `ศูนย์คัดแยก${hub}`, province: hub },
+      { location: "ศูนย์กระจายสินค้าปลายทาง", province: address.province },
+    ];
     for (let step = 1; step < path.length; step++) {
       const result = changeParcelStatus(
         db,
@@ -86,7 +106,7 @@ export async function addSampleOrders(db: Db, now: number): Promise<void> {
           actor: sellerActor,
           from: path[step - 1],
           to: path[step],
-          location: step === 1 ? "ไปรษณีย์ใกล้ร้าน" : "ศูนย์กระจายสินค้าปลายทาง",
+          ...stops[Math.min(step, stops.length) - 1],
           receiverName: "ผู้ซื้อตัวอย่าง",
           reason: "ไม่มีคนรับ โทรไม่ติด",
         },

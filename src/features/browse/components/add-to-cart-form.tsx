@@ -10,6 +10,7 @@ import { formatBaht } from "@/shared/format";
 import {
   blockedReason,
   findVariant,
+  isValueSoldOut,
   missingOptionMessage,
   priceText,
   stockText,
@@ -23,11 +24,13 @@ type Props = {
   isOwnShop: boolean;
   /** หน้าเข้าสู่ระบบที่พากลับมาหน้าสินค้านี้ (BRW-014) */
   loginHref: string;
+  /** ค่าส่งต่อหนึ่งคำสั่งซื้อ หนึ่งคำสั่งซื้อต่อร้าน (CHK-001) */
+  shippingFee: number;
   addToCart: AddToCart;
 };
 
-/** ราคา ตัวเลือก สต็อก จำนวน และปุ่ม "ใส่ตะกร้า" ของหน้ารายละเอียดสินค้า (BRW-008 ถึง BRW-010) */
-export function AddToCartForm({ product, signedIn, isOwnShop, loginHref, addToCart }: Props) {
+/** ราคา ค่าส่ง ตัวเลือก สต็อก จำนวน และปุ่ม "ใส่ตะกร้า" ของหน้ารายละเอียดสินค้า (BRW-008 ถึง BRW-010) */
+export function AddToCartForm({ product, signedIn, isOwnShop, loginHref, shippingFee, addToCart }: Props) {
   const [selection, setSelection] = useState<Selection>(() => product.options.map(() => null));
   const [quantity, setQuantity] = useState("1");
   const [result, setResult] = useState<AddToCartResult | null>(null);
@@ -57,79 +60,93 @@ export function AddToCartForm({ product, signedIn, isOwnShop, loginHref, addToCa
   }
 
   return (
-    <form onSubmit={submit} noValidate>
-      <p className={styles.bigPrice}>{priceText(variant ? [variant] : product.variants)}</p>
+    <form onSubmit={submit} noValidate className={styles.purchase}>
+      <div className={styles.priceBlock}>
+        <p className={styles.bigPrice}>{priceText(variant ? [variant] : product.variants)}</p>
+        <p className={styles.stock}>ค่าส่ง {formatBaht(shippingFee)} ต่อร้าน</p>
+        {complete && (
+          <p className={variant && variant.stock > 0 ? styles.stock : styles.soldOut}>{stockText(variant?.stock ?? 0)}</p>
+        )}
+      </div>
 
-      {product.options.map((option, optionIndex) => (
-        <fieldset key={option.id} className={styles.option}>
-          <legend>{option.name}</legend>
-          <div className="chips">
-            {option.values.map((value) => (
-              <label key={value.id} className={`chip ${styles.choice}`}>
-                <input
-                  type="radio"
-                  name={`option-${option.id}`}
-                  checked={selection[optionIndex] === value.id}
-                  onChange={() => choose(optionIndex, value.id)}
-                />
-                {value.value}
-              </label>
-            ))}
+      <div className={styles.choose}>
+        {product.options.map((option, optionIndex) => (
+          <fieldset key={option.id} className={styles.option}>
+            <legend>{option.name}</legend>
+            <div className="chips">
+              {option.values.map((value) => {
+                const soldOut = isValueSoldOut(product, selection, optionIndex, value.id);
+                return (
+                  <label key={value.id} className={`chip ${styles.choice} ${soldOut ? styles.choiceSoldOut : ""}`}>
+                    <input
+                      type="radio"
+                      name={`option-${option.id}`}
+                      checked={selection[optionIndex] === value.id}
+                      onChange={() => choose(optionIndex, value.id)}
+                    />
+                    {value.value}
+                    {soldOut && <span className="visually-hidden"> สินค้าหมด</span>}
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+        ))}
+
+        <div className={styles.buyBar}>
+          <div className={styles.actions}>
+            <label className={styles.quantity}>
+              จำนวน
+              <input
+                className="input"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                name="quantity"
+                value={quantity}
+                onChange={(event) => setQuantity(event.target.value)}
+              />
+            </label>
+            {signedIn || blocked ? (
+              <button type="submit" className="button" disabled={blocked !== null || pending}>
+                ใส่ตะกร้า
+              </button>
+            ) : (
+              <Link href={loginHref} className="button">
+                ใส่ตะกร้า
+              </Link>
+            )}
           </div>
-        </fieldset>
-      ))}
 
-      {product.options.length > 0 && (
-        <ul className={styles.variantList} aria-label="สต็อกของแต่ละแบบย่อย">
-          {product.variants.map((v) => (
-            <li key={v.id} className={v.stock > 0 ? undefined : styles.faded}>
-              <span>{v.label}</span>
-              <span>
-                {formatBaht(v.price)} · {stockText(v.stock)}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+          {isOwnShop && <p className="field-error">{blocked}</p>}
+          {result && (
+            <p role={result.ok ? "status" : "alert"} className={result.ok ? undefined : "field-error"}>
+              {result.message}
+            </p>
+          )}
+          {result?.message === ACTION_FAILED && (
+            <button type="submit" className="button button-secondary" disabled={pending}>
+              ลองใหม่
+            </button>
+          )}
+        </div>
 
-      {complete && (
-        <p className={variant && variant.stock > 0 ? undefined : styles.soldOut}>{stockText(variant?.stock ?? 0)}</p>
-      )}
-
-      <label className="field">
-        จำนวน
-        <input
-          className={`input ${styles.quantity}`}
-          type="number"
-          inputMode="numeric"
-          min={1}
-          name="quantity"
-          value={quantity}
-          onChange={(event) => setQuantity(event.target.value)}
-        />
-      </label>
-
-      {signedIn || blocked ? (
-        <button type="submit" className="button" disabled={blocked !== null || pending}>
-          ใส่ตะกร้า
-        </button>
-      ) : (
-        <Link href={loginHref} className="button">
-          ใส่ตะกร้า
-        </Link>
-      )}
-
-      {isOwnShop && <p className="field-error">{blocked}</p>}
-      {result && (
-        <p role={result.ok ? "status" : "alert"} className={result.ok ? undefined : "field-error"}>
-          {result.message}
-        </p>
-      )}
-      {result?.message === ACTION_FAILED && (
-        <button type="submit" className="button button-secondary" disabled={pending}>
-          ลองใหม่
-        </button>
-      )}
+        {product.options.length > 0 && (
+          <details className={styles.variants}>
+            <summary>สต็อกของแต่ละแบบย่อย</summary>
+            <ul className={styles.variantList} aria-label="สต็อกของแต่ละแบบย่อย">
+              {product.variants.map((v) => (
+                <li key={v.id} className={v.stock > 0 ? undefined : styles.faded}>
+                  <span>{v.label}</span>
+                  <span>
+                    {formatBaht(v.price)} · {stockText(v.stock)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+      </div>
     </form>
   );
 }

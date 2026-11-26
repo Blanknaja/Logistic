@@ -1,0 +1,379 @@
+รูปถ่ายสินค้าของข้อมูลตัวอย่าง มาจาก Wikimedia Commons ทุกไฟล์
+สัญญาอนุญาตอ่านจากหน้าของไฟล์นั้นเอง ทั้งป้ายสัญญาอนุญาตในเนื้อหน้าและข้อมูลสัญญาอนุญาตของหน้า เมื่อ 2026-11-25
+ย่อให้ด้านยาวไม่เกิน 1000 จุด บีบอัดเป็น JPEG ใหม่ และลบข้อมูล EXIF ไฟล์ที่เขียนว่า "ตัดขอบ" ตัดเฉพาะขอบรูป
+
+baby-clothes.jpg
+  สินค้า: ชุดเด็กอ่อน
+  ที่มา: https://commons.wikimedia.org/wiki/File:Lace_bodysuits_among_other_items_for_newborn_photography_-_20241116.jpg
+  ผู้สร้าง: Tobias ToMar Maier
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+backpack.jpg
+  สินค้า: กระเป๋าเป้
+  ที่มา: https://commons.wikimedia.org/wiki/File:Noordik_tas_210.jpg
+  ผู้สร้าง: Marco van der waal
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+bed-sheet.jpg
+  สินค้า: ผ้าปูที่นอน
+  ที่มา: https://commons.wikimedia.org/wiki/File:Colorful_Bed_sheets.jpg
+  ผู้สร้าง: Peter Griffin
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-0}})
+
+candle.jpg
+  สินค้า: เทียนหอม
+  ที่มา: https://commons.wikimedia.org/wiki/File:Candle-Vela.jpg
+  ผู้สร้าง: ViajeroExtraviado
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-0}})
+
+cat-food.jpg
+  สินค้า: อาหารแมว
+  ที่มา: https://commons.wikimedia.org/wiki/File:Aozi_Cat_Food.jpg
+  ผู้สร้าง: Lim0103
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+charging-cable.jpg
+  สินค้า: สายชาร์จ
+  ที่มา: https://commons.wikimedia.org/wiki/File:USB-C_cable_2017_A.jpg
+  ผู้สร้าง: Fructibus
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+chili-paste.jpg
+  สินค้า: น้ำพริกเผา
+  ที่มา: https://commons.wikimedia.org/wiki/File:Jar_of_Red_Shatta_Paste.jpg
+  ผู้สร้าง: 2kbfloppadisk
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+coffee.jpg
+  สินค้า: กาแฟคั่วบด
+  ที่มา: https://commons.wikimedia.org/wiki/File:Coffee-206142.jpg
+  ผู้สร้าง: Elias Shariff Falla Mardini ( eliasfalla )
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{Pixabay|1=206142|status=confirmed|reviewer=INeverCry|date=2016-01-10}}) ผู้ตรวจสัญญาอนุญาตของ Wikimedia Commons ยืนยันว่าไฟล์นี้เป็น CC0 ที่ Pixabay ตรวจหน้าของไฟล์เมื่อ 2026-11-26
+
+colored-pencils.jpg
+  สินค้า: ดินสอสี
+  ที่มา: https://commons.wikimedia.org/wiki/File:Colored_pencils_lined_up_on_pink_surface.jpg
+  ผู้สร้าง: Artsy Crafty
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+desk-fan.jpg
+  สินค้า: พัดลมตั้งโต๊ะ
+  ที่มา: https://commons.wikimedia.org/wiki/File:Edison_electric_table_fan,_c._1885_(NMAH_EM.328749).jpg
+  ผู้สร้าง: Crawdad Blues
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{Cc-zero}}) ตัดขอบ
+
+diaper.jpg
+  สินค้า: ผ้าอ้อม
+  ที่มา: https://commons.wikimedia.org/wiki/File:Luier_met_opengewerkte_rand,_BK-NM-5448-37.jpg
+  ผู้สร้าง: Rijksmuseum
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{CC-zero}})
+
+dress-2.jpg
+  สินค้า: ชุดเดรส
+  ที่มา: https://commons.wikimedia.org/wiki/File:1949_Norman_Norell_red_silk_dress_with_cartridge_pleated_skirt_03.jpg
+  ผู้สร้าง: Photographer for the Rhode Island School of Design - Museum of Art
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+dress-shirt.jpg
+  สินค้า: เสื้อเชิ้ต
+  ที่มา: https://commons.wikimedia.org/wiki/File:GOGA_77_Guard_Shirt_and_Tie_(6ac7fabe-a7c7-47dc-d945-9746a534ea70).jpg
+  ผู้สร้าง: NPS Photo
+  สัญญาอนุญาต: สาธารณสมบัติ (ป้าย {{PD-USGov-NPS}})
+
+dress.jpg
+  สินค้า: ชุดเดรส
+  ที่มา: https://commons.wikimedia.org/wiki/File:Spring-Summer_1951_Jacques_Griffe_cocktail_dress_with_trumpet_hem.jpg
+  ผู้สร้าง: Staff photographer, Rhode Island School of Design Museum of Art
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+dumbbell.jpg
+  สินค้า: ดัมเบล
+  ที่มา: https://commons.wikimedia.org/wiki/File:Exercise_equipment_(rubber_ball,_light-weight_dumbbells,_jump_rope).jpg
+  ผู้สร้าง: CDC/ Debora Cartagena
+  สัญญาอนุญาต: สาธารณสมบัติ (ป้าย {{PD-USGov-CDC}})
+
+face-wash.jpg
+  สินค้า: โฟมล้างหน้า
+  ที่มา: https://commons.wikimedia.org/wiki/File:Blue_liquid_soap_in_a_plastic_dispenser_2.jpg
+  ผู้สร้าง: Ser Amantio di Nicolao
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{CC0}})
+
+folder.jpg
+  สินค้า: แฟ้มเอกสาร
+  ที่มา: https://commons.wikimedia.org/wiki/File:A4_swing_clip_folder_-_purple_-_A.jpg
+  ผู้สร้าง: Fructibus
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}}) ตัดขอบ
+
+football.jpg
+  สินค้า: ลูกฟุตบอล
+  ที่มา: https://commons.wikimedia.org/wiki/File:Soccer_ball_on_ground.jpg
+  ผู้สร้าง: Petey21
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{Cc-zero}})
+
+glass.jpg
+  สินค้า: แก้วน้ำ
+  ที่มา: https://commons.wikimedia.org/wiki/File:Glass_bottle.jpg
+  ผู้สร้าง: Yesseruser
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+green-tea-2.jpg
+  สินค้า: ชาเขียว
+  ที่มา: https://commons.wikimedia.org/wiki/File:Green_tea_3_appearances.jpg
+  ผู้สร้าง: Alessandro Martini
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+green-tea.jpg
+  สินค้า: ชาเขียว
+  ที่มา: https://commons.wikimedia.org/wiki/File:Xue_Long_Snow_Dragon_-_Zelen%C3%BD_%C4%8Daj.jpg
+  ผู้สร้าง: Vypij.cz
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+hanger-2.jpg
+  สินค้า: ไม้แขวนเสื้อ
+  ที่มา: https://commons.wikimedia.org/wiki/File:MC_%E6%BE%B3%E9%96%80_Macau_%E6%BE%B3%E9%96%80%E5%8D%8A%E5%B3%B6_Macao_Peninsula_%E5%BE%97%E5%8B%9D%E9%A6%AC%E8%B7%AF_2_Estrada_da_Vit%C3%B3ria_%E7%9A%87%E9%83%BD%E9%85%92%E5%BA%97_Royal_Macau_Hotel_%E9%9B%99%E4%BA%BA%E5%BA%8A_double_bed_room_%E6%9C%A8%E8%A3%BD_%E8%A1%A3%E6%9E%B6_brown_wooden_clothes_hangers_November_2024_R12S_01.jpg
+  ผู้สร้าง: JohnLEE Brothers
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}}) ตัดขอบ
+
+hanger.jpg
+  สินค้า: ไม้แขวนเสื้อ
+  ที่มา: https://commons.wikimedia.org/wiki/File:%D9%81%D9%86%D8%AF%D9%82_%D8%AA%D8%B1%D9%88%D8%A8%D9%8A%D8%AA%D8%A7%D9%84_%D8%B3%D9%87%D9%84_%D8%AD%D8%B4%D9%8A%D8%B4_15.jpg
+  ผู้สร้าง: ديفيد عادل وهبة خليل 2
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+honey-2.jpg
+  สินค้า: น้ำผึ้งป่า
+  ที่มา: https://commons.wikimedia.org/wiki/File:Small_Honey_Jar_with_Honeycomb.jpg
+  ผู้สร้าง: Alabama Extension
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+honey.jpg
+  สินค้า: น้ำผึ้งป่า
+  ที่มา: https://commons.wikimedia.org/wiki/File:Runny_hunny.jpg
+  ผู้สร้าง: Scott Bauer, USDA ARS
+  สัญญาอนุญาต: สาธารณสมบัติ (ป้าย {{PD-USGov-USDA-ARS}})
+
+jasmine-rice-2.jpg
+  สินค้า: ข้าวหอมมะลิ
+  ที่มา: https://commons.wikimedia.org/wiki/File:Thai_Jasmine_Rice.jpg
+  ผู้สร้าง: Miansari66
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+jasmine-rice.jpg
+  สินค้า: ข้าวหอมมะลิ
+  ที่มา: https://commons.wikimedia.org/wiki/File:%D0%A0%D0%B0%D0%B7%D0%BD%D0%BE%D0%B2%D0%B8%D0%B4%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%80%D0%B8%D1%81%D0%BE%D0%B2%D0%BE%D0%B9_%D0%BA%D1%80%D1%83%D0%BF%D1%8B_%D0%B2_%D1%80%D0%BE%D0%B7%D0%BD%D0%B8%D1%87%D0%BD%D0%BE%D0%B9_%D0%BF%D1%80%D0%BE%D0%B4%D0%B0%D0%B6%D0%B5_(%D0%B2_%D0%A0%D0%BE%D1%81%D1%81%D0%B8%D0%B8)_04.JPG
+  ผู้สร้าง: Ural-66
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+kettle.jpg
+  สินค้า: กาต้มน้ำไฟฟ้า
+  ที่มา: https://commons.wikimedia.org/wiki/File:Electric_water_boiler_2014.JPG
+  ผู้สร้าง: Lesekreis
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+keyboard.jpg
+  สินค้า: คีย์บอร์ด
+  ที่มา: https://commons.wikimedia.org/wiki/File:Keyboard_Close_Up.jpg
+  ผู้สร้าง: Alexander-design
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{Pixabay|1983410|status=confirmed|reviewer=Mdaniels5757|date=2020-05-12}}) ผู้ตรวจสัญญาอนุญาตของ Wikimedia Commons ยืนยันว่าไฟล์นี้เป็น CC0 ที่ Pixabay ตรวจหน้าของไฟล์เมื่อ 2026-11-26
+
+keychain-2.jpg
+  สินค้า: พวงกุญแจ
+  ที่มา: https://commons.wikimedia.org/wiki/File:Pinut_key_fob.JPG
+  ผู้สร้าง: Alf van Beem
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{CC-zero}})
+
+keychain.jpg
+  สินค้า: พวงกุญแจ
+  ที่มา: https://commons.wikimedia.org/wiki/File:Plastic_key_fobs_with_labels_-_red-black-yellow.jpg
+  ผู้สร้าง: Fructibus
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+leather-shoes.jpg
+  สินค้า: รองเท้าหนัง
+  ที่มา: https://commons.wikimedia.org/wiki/File:A_leather_shoe.jpg
+  ผู้สร้าง: Ojfootwears
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+lipstick.jpg
+  สินค้า: ลิปสติก
+  ที่มา: https://commons.wikimedia.org/wiki/File:DifferentColorsOfLipsticks.JPG
+  ผู้สร้าง: Raysonho @ Open Grid Scheduler / Grid Engine
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+mouse.jpg
+  สินค้า: เมาส์ไร้สาย
+  ที่มา: https://commons.wikimedia.org/wiki/File:Mouse,_No_Tail.jpg
+  ผู้สร้าง: Alan Levine
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+novel.jpg
+  สินค้า: นิยายแปล
+  ที่มา: https://commons.wikimedia.org/wiki/File:Old_Books_01.JPG
+  ผู้สร้าง: Ch. Maderthoner
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+perfume-2.jpg
+  สินค้า: น้ำหอม
+  ที่มา: https://commons.wikimedia.org/wiki/File:Perfume_Bottle_MET_47_90_97.jpg
+  ผู้สร้าง: The Metropolitan Museum of Art
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{Cc-zero}})
+
+perfume.jpg
+  สินค้า: น้ำหอม
+  ที่มา: https://commons.wikimedia.org/wiki/File:Perfume_Bottle_MET_DP242904.jpg
+  ผู้สร้าง: The Metropolitan Museum of Art
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{Cc-zero}})
+
+phone-case.jpg
+  สินค้า: เคสมือถือ
+  ที่มา: https://commons.wikimedia.org/wiki/File:Phone_case.jpg
+  ผู้สร้าง: Mbouendi Malika
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+phone-stand.jpg
+  สินค้า: ที่ตั้งมือถือ
+  ที่มา: https://commons.wikimedia.org/wiki/File:Souvenir._The_phone_stand._The_Obelisk_to_the_Hero_City_of_Leningrad.jpg
+  ผู้สร้าง: Walter-Walter T.T.
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+pia-2.jpg
+  สินค้า: ขนมเปี๊ยะ
+  ที่มา: https://commons.wikimedia.org/wiki/File:7032Poblacion_Baliuag_Bulacan_45.jpg
+  ผู้สร้าง: Judgefloro
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+pia.jpg
+  สินค้า: ขนมเปี๊ยะ
+  ที่มา: https://commons.wikimedia.org/wiki/File:Egg_yolk_pastry_(20240913).jpg
+  ผู้สร้าง: Fumikas Sagisavas
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+picture-frame.jpg
+  สินค้า: กรอบรูป
+  ที่มา: https://commons.wikimedia.org/wiki/File:Picture_Frame_MET_86W_214R2M.jpg
+  ผู้สร้าง: Southern Italy
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{Cc-zero}})
+
+pillow.jpg
+  สินค้า: หมอนหนุน
+  ที่มา: https://commons.wikimedia.org/wiki/File:Crochet_pillow.jpg
+  ผู้สร้าง: Thisicek
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+plate.jpg
+  สินค้า: จานเซรามิก
+  ที่มา: https://commons.wikimedia.org/wiki/File:Chocolate_cake_on_white_plate.jpg
+  ผู้สร้าง: Peulle
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+plush-doll-2.jpg
+  สินค้า: ตุ๊กตาผ้า
+  ที่มา: https://commons.wikimedia.org/wiki/File:Guatemala_worry_doll.JPG
+  ผู้สร้าง: Kakarinka
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+plush-doll.jpg
+  สินค้า: ตุ๊กตาผ้า
+  ที่มา: https://commons.wikimedia.org/wiki/File:Knitted_rag_doll.jpg
+  ผู้สร้าง: Petey21
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{Cc-zero}})
+
+potted-plant-2.jpg
+  สินค้า: ต้นไม้ในกระถาง
+  ที่มา: https://commons.wikimedia.org/wiki/File:Potted_plant._(Maceta).jpg
+  ผู้สร้าง: Omar García
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+potted-plant.jpg
+  สินค้า: ต้นไม้ในกระถาง
+  ที่มา: https://commons.wikimedia.org/wiki/File:Stevia_rebaudiana_(potted_plant).jpg
+  ผู้สร้าง: Gabriela F. Ruellan
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+power-bank.jpg
+  สินค้า: พาวเวอร์แบงก์
+  ที่มา: https://commons.wikimedia.org/wiki/File:Eboot_Solar_powerbank_usb_front.jpg
+  ผู้สร้าง: Pinguinguy
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+rice-cooker.jpg
+  สินค้า: หม้อหุงข้าว
+  ที่มา: https://commons.wikimedia.org/wiki/File:Gyozas_in_a_Rice_Cooker.jpg
+  ผู้สร้าง: Kyethepie21
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}}) ตัดขอบ
+
+sandals.jpg
+  สินค้า: รองเท้าแตะ
+  ที่มา: https://commons.wikimedia.org/wiki/File:Thong_sandal_-_Museo_Egizio_(Turin)_C_6510_02_p08.jpg
+  ผู้สร้าง: Museo Egizio
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{Cc-zero}})
+
+shoulder-bag-2.jpg
+  สินค้า: กระเป๋าสะพาย
+  ที่มา: https://commons.wikimedia.org/wiki/File:1935-45_Prada_handbag,_tooled_and_gilded_leather_02.jpg
+  ผู้สร้าง: Photographer for the Rhode Island School of Design - Museum of Art
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+shoulder-bag.jpg
+  สินค้า: กระเป๋าสะพาย
+  ที่มา: https://commons.wikimedia.org/wiki/File:Tooled_leather_handbag_by_N._Raddi,_late_1930s-early_1940s_01.jpg
+  ผู้สร้าง: RISD Museum of Art photographer
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+skirt-2.jpg
+  สินค้า: กระโปรง
+  ที่มา: https://commons.wikimedia.org/wiki/File:Ho_(woman%27s_tube_skirt)_from_Vietnam,_Honolulu_Museum_of_Art_12632.1.JPG
+  ผู้สร้าง: Hiart
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{Cc-zero}})
+
+skirt.jpg
+  สินค้า: กระโปรง
+  ที่มา: https://commons.wikimedia.org/wiki/File:Woman%27s_summer_skirt_from_China,_Honolulu_Museum_of_Art_5152.1.JPG
+  ผู้สร้าง: Hiart
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{Cc-zero}})
+
+sneakers.jpg
+  สินค้า: รองเท้าผ้าใบ
+  ที่มา: https://commons.wikimedia.org/wiki/File:Garrison_high-top_sneakers,_1940,_US_Army,_manufacturer_unknown_-_Bata_Shoe_Museum_-_DSC00771.JPG
+  ผู้สร้าง: Daderot
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+storage-box.jpg
+  สินค้า: กล่องเก็บของ
+  ที่มา: https://commons.wikimedia.org/wiki/File:Box_of_Marbles.jpg
+  ผู้สร้าง: Saral Shots
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+t-shirt.jpg
+  สินค้า: เสื้อยืด
+  ที่มา: https://commons.wikimedia.org/wiki/File:T-shirt_mocup_gray.jpg
+  ผู้สร้าง: EdaBojci
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}}) ตัดขอบ
+
+tent.jpg
+  สินค้า: เต็นท์
+  ที่มา: https://commons.wikimedia.org/wiki/File:Camping_lasy.jpg
+  ผู้สร้าง: Mizrahim23
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+umbrella.jpg
+  สินค้า: ร่มพับ
+  ที่มา: https://commons.wikimedia.org/wiki/File:Folded_Umbrella.jpg
+  ผู้สร้าง: Swethasakthivel
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+water-bottle.jpg
+  สินค้า: ขวดน้ำกีฬา
+  ที่มา: https://commons.wikimedia.org/wiki/File:A_bottle_of_cold_water_with_droplets.jpg
+  ผู้สร้าง: Philsacor
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+wooden-toy.jpg
+  สินค้า: ของเล่นไม้
+  ที่มา: https://commons.wikimedia.org/wiki/File:Wooden_toys_with_wheels.jpg
+  ผู้สร้าง: LakshanaRamasamy
+  สัญญาอนุญาต: CC0 1.0 (ป้าย {{cc-zero}})
+
+CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/legalcode ใช้ได้โดยไม่ต้องให้เครดิต
+สาธารณสมบัติ: ไม่มีลิขสิทธิ์ตามป้ายในหน้าของไฟล์ ใช้ได้โดยไม่ต้องขออนุญาต
+ใช้เฉพาะ CC0 หรือสาธารณสมบัติที่ไม่จำกัดประเทศ ไม่ใช้ป้ายที่เป็นสาธารณสมบัติเฉพาะในสหรัฐอเมริกา ({{PD-US-not}} {{PD-US-expired}}) และไม่ใช้ {{PD-Art}} กับรูปถ่ายของวัตถุสามมิติ

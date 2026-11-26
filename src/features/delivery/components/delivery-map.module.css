@@ -1,0 +1,127 @@
+/* แผนที่การจัดส่ง (MAP-004 MAP-005) กรอบสีพื้นขนาดเท่าแผนที่อยู่ตั้งแต่สคริปต์ของหน้าเริ่มทำงาน หน้าจึงไม่กระโดดตอนภาพแผนที่มา
+   แผนที่เป็นแผ่นใหญ่แบบกรอบรูป ไม่มีมุม ไม่มีเงา ของบนแผนที่ใช้ตัวหนังสือ ขนาด และระยะชุดเดียวกับหน้า */
+
+.map {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--color-surface);
+}
+
+.map .canvas {
+  position: absolute;
+  inset: 0;
+  background: var(--color-surface);
+  font-family: inherit;
+  font-size: var(--text-label);
+}
+
+.map :global(.state) {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0;
+  border: 0;
+}
+
+/* ปุ่มซูมสูงเท่าสิ่งที่กดได้ทั้งแอป มุมและขอบแบบปุ่มรอง ไม่มีเงา */
+.map :global(.leaflet-bar) {
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.map :global(.leaflet-bar a) {
+  width: var(--tap);
+  height: var(--tap);
+  border-bottom-color: var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: 400 var(--text-heading) / var(--tap) var(--font);
+  transition: background-color var(--duration) var(--ease);
+}
+
+.map :global(.leaflet-bar a:first-child),
+.map :global(.leaflet-bar a:last-child) {
+  border-radius: 0;
+}
+
+@media (hover: hover) {
+  .map :global(.leaflet-bar a:hover) {
+    background: var(--color-surface);
+  }
+}
+
+/* เครดิตของ OpenStreetMap ต้องอยู่บนแผนที่ (delivery-map.md ข้อจำกัด) ใช้ขนาดเล็กสุดของแอปและสีตัวหนังสือรอง */
+.map :global(.leaflet-control-attribution) {
+  padding: 0 var(--space-1);
+  background: var(--color-bg);
+  color: var(--color-muted);
+  font-size: var(--text-label);
+  line-height: var(--line-height);
+}
+
+.map :global(.leaflet-control-attribution a) {
+  color: inherit;
+}
+
+.solid {
+  stroke: var(--color-text);
+  stroke-width: 3;
+}
+
+.dashed {
+  stroke: var(--color-text);
+  stroke-width: 2;
+  stroke-dasharray: 6 8;
+}
+
+.pin {
+  fill: var(--color-bg);
+  fill-opacity: 1;
+  stroke: var(--color-text);
+  stroke-width: 2;
+}
+
+.latest {
+  fill: var(--color-text);
+  fill-opacity: 1;
+  stroke: var(--color-bg);
+  stroke-width: 3;
+}
+
+/* ชื่อจังหวัดเป็นป้ายพื้นขาวไม่มีขอบ จังหวัดล่าสุดกลับสีให้เด่นแทนการใช้ตัวหนา */
+.map .label {
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius);
+  box-shadow: none;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--text-label);
+  line-height: var(--line-height);
+}
+
+.map .label::before {
+  content: none;
+}
+
+.map .labelLatest {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+@media (min-width: 600px) {
+  .map {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* จอ 900 ขึ้นไปแผนที่อยู่คอลัมน์ซ้ายที่แคบลง กลับเป็นสัดส่วนสูงขึ้น */
+@media (min-width: 900px) {
+  .map {
+    aspect-ratio: 4 / 3;
+  }
+}

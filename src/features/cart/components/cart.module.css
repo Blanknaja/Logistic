@@ -1,27 +1,49 @@
 /* หน้าตะกร้า ใช้ได้ที่จอกว้าง 360 จุด ทุกปุ่มและช่องเลือกอย่างน้อย 44 คูณ 44 จุด (CRT-Q03) */
 
+/* จอแคบเป็น block ไม่ใช่ grid เพราะแถบยอดรวมติดขอบล่างได้ไกลแค่กล่องที่ห่ออยู่ */
+.layout {
+  display: block;
+}
+
+.selectAll {
+  padding-bottom: var(--space-2);
+  font-size: var(--text-label);
+}
+
 .shop {
-  margin-bottom: var(--space);
-  padding: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.shop + .shop {
+  margin-top: var(--space-5);
 }
 
 .shopHeader {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0 8px;
-  padding: 0 12px;
-  border-bottom: 1px solid var(--color-border);
+  gap: 0 var(--space-3);
+  padding-top: var(--space-2);
 }
 
-.shopHeader a {
-  min-width: 0;
-  font-weight: 600;
+/* ชื่อร้านเล็กกว่าชื่อสินค้า ผู้ซื้อมาดูสินค้า ร้านเป็นแค่ที่มา */
+.shopName {
+  margin: 0;
+  font-size: var(--text-label);
+  font-weight: 400;
+}
+
+.shopName a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--color-muted);
 }
 
 .shopTotal {
   margin-left: auto;
-  padding: 8px 0;
+  color: var(--color-muted);
+  font-size: var(--text-label);
 }
 
 .items {
@@ -33,13 +55,14 @@
 .item {
   display: grid;
   grid-template-columns: var(--tap) 64px minmax(0, 1fr);
-  gap: 8px 12px;
+  gap: var(--space-2) var(--space-3);
   align-items: start;
-  padding: 12px;
+  padding-block: var(--space-3) var(--space-4);
 }
 
 .item + .item {
   border-top: 1px solid var(--color-border);
+  padding-top: var(--space-4);
 }
 
 .faded .thumb,
@@ -47,20 +70,69 @@
   opacity: 0.5;
 }
 
+/* ช่องเลือกจริงโปร่งใสคลุมทั้งป้าย กล่องที่เห็นวาดเอง */
 .check {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
   min-width: var(--tap);
   min-height: var(--tap);
   cursor: pointer;
 }
 
 .check input {
-  width: 20px;
-  height: 20px;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.box {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+  transition: box-shadow var(--duration) var(--ease);
+}
+
+.box::after {
+  content: "";
+  width: 6px;
+  height: 11px;
+  margin-top: -3px;
+  border: solid var(--color-text);
+  border-width: 0 2px 2px 0;
+  opacity: 0;
+  transform: rotate(45deg);
+}
+
+.check input:checked + .box {
+  box-shadow: var(--selected-ring);
+}
+
+.check input:checked + .box::after {
+  opacity: 1;
+}
+
+.check input:disabled,
+.check:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+.check input:disabled + .box {
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+.check:has(input:focus-visible) .box {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
 .thumb {
@@ -69,17 +141,25 @@
   width: 64px;
   height: 64px;
   object-fit: cover;
-  border-radius: var(--radius);
-  background: var(--color-bg);
   color: var(--color-muted);
-  font-size: 0.75rem;
+  font-size: var(--text-label);
+  text-align: center;
+}
+
+div.thumb {
+  background: var(--color-surface);
+}
+
+.details {
+  display: grid;
+  gap: var(--space-1);
 }
 
 .name {
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  font-weight: 600;
+  line-height: 1.4;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -94,7 +174,7 @@
 .warning,
 .reason {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--text-label);
 }
 
 .muted {
@@ -107,7 +187,6 @@
 
 .reason {
   color: var(--color-danger);
-  font-weight: 600;
 }
 
 .controls {
@@ -115,15 +194,14 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2) var(--space-4);
 }
 
 .stepper {
   display: inline-flex;
   align-items: stretch;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius);
-  background: var(--color-surface);
 }
 
 .stepper button {
@@ -133,12 +211,14 @@
   background: none;
   color: var(--color-text);
   font: inherit;
-  font-size: 1.2rem;
+  font-size: var(--text-heading);
+  line-height: 1;
   cursor: pointer;
+  transition: background-color var(--duration) var(--ease);
 }
 
 .stepper button:disabled {
-  opacity: 0.35;
+  color: var(--color-border-strong);
   cursor: not-allowed;
 }
 
@@ -146,26 +226,23 @@
   width: 3em;
   min-height: var(--tap);
   border: 0;
-  border-inline: 1px solid var(--color-border);
+  border-inline: 1px solid var(--color-border-strong);
+  border-radius: 0;
   background: none;
+  color: var(--color-text);
   font: inherit;
   text-align: center;
 }
 
-.lineTotal {
-  margin-left: auto;
-  font-weight: 600;
-}
-
+/* พื้นที่กดกว้างอย่างน้อย 44 จุดแม้คำว่า "ลบ" สั้น */
 .remove {
   min-width: var(--tap);
   min-height: var(--tap);
-  padding: 0 8px;
-  border: 0;
-  background: none;
-  color: var(--color-danger);
-  font: inherit;
-  cursor: pointer;
+  justify-content: center;
+}
+
+.lineTotal {
+  margin-left: auto;
 }
 
 .message {
@@ -173,67 +250,122 @@
   margin: 0;
 }
 
+@media (hover: hover) {
+  .stepper button:hover:not(:disabled) {
+    background: var(--color-surface);
+  }
+
+  .check:hover input:not(:checked, :disabled) + .box {
+    box-shadow: inset 0 0 0 1px var(--color-text);
+  }
+}
+
+/* แถบยอดรวม: จอแคบติดขอบล่างจอ ยอดรวมกับปุ่มอยู่แถวบน ค่าสินค้ากับค่าส่งอยู่แถวล่าง */
 .summary {
   position: sticky;
   bottom: 0;
   z-index: 1;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "retry retry"
+    "grand action"
+    "items ship";
   align-items: center;
-  gap: 8px 12px;
-  margin: 0 calc(var(--space) * -1);
-  padding: 8px var(--space);
+  gap: var(--space-1) var(--space-3);
+  margin: var(--space-6) calc(-1 * var(--gutter)) 0;
+  padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
   border-top: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: var(--color-bg);
 }
 
-.summary > [role="alert"] {
-  flex-basis: 100%;
+.retry {
+  grid-area: retry;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin: 0;
+  gap: var(--space-2);
 }
 
 .totals {
-  margin-left: auto;
-  text-align: right;
+  display: contents;
+}
+
+.totals dd {
+  margin: 0;
+}
+
+.part {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-1);
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.part:first-child {
+  grid-area: items;
+}
+
+.part + .part {
+  grid-area: ship;
+  justify-self: end;
+}
+
+.grand {
+  grid-area: grand;
   line-height: 1.3;
 }
 
-.grandTotal {
-  font-size: 1.15rem;
-  font-weight: 700;
+.grand dt {
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.grand dd {
+  font-size: var(--text-heading);
+  font-weight: 600;
+}
+
+.summary > :global(.button) {
+  grid-area: action;
+  min-height: var(--control-main);
+  padding-inline: var(--space-5);
+  font-size: var(--text-body);
 }
 
 .dialog {
-  max-width: calc(100vw - 32px);
-  border: 1px solid var(--color-border);
+  width: min(100% - 2 * var(--gutter), 420px);
+  padding: var(--space-5);
+  border: 0;
   border-radius: var(--radius);
-  padding: var(--space);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.dialog p {
+  margin: 0 0 var(--space-5);
 }
 
 .dialog::backdrop {
-  background: rgb(0 0 0 / 0.4);
+  background: color-mix(in srgb, var(--color-text) 40%, transparent);
 }
 
 .dialogActions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .skeleton {
-  border-radius: var(--radius);
-  background: #e3e7ec;
+  background: var(--color-surface);
   animation: pulse 1.2s ease-in-out infinite;
 }
 
 .skeletonShop {
   height: 180px;
-  margin-bottom: var(--space);
+  margin-bottom: var(--space-5);
 }
 
 .skeletonBar {
@@ -249,5 +381,76 @@
 @media (prefers-reduced-motion: reduce) {
   .skeleton {
     animation: none;
+  }
+}
+
+@media (min-width: 600px) {
+  .item {
+    grid-template-columns: var(--tap) 96px minmax(0, 1fr);
+  }
+
+  /* รูปกินสองแถว ปุ่มจำนวนจึงอยู่ใต้ชื่อข้างรูป ไม่ตกไปใต้รูป */
+  .item > .thumb {
+    grid-row: span 2;
+    width: 96px;
+    height: 96px;
+  }
+
+  .controls,
+  .message {
+    grid-column: 3 / -1;
+  }
+}
+
+/* จอกว้าง: รายการซ้าย 7 สรุปยอดขวา 5 บนแผ่นสีกระดาษ */
+@media (min-width: 900px) {
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    column-gap: var(--space-7);
+    align-items: start;
+  }
+
+  .summary {
+    top: var(--space-5);
+    bottom: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "retry"
+      "items"
+      "ship"
+      "grand"
+      "action";
+    gap: var(--space-2);
+    margin: 0;
+    padding: var(--space-5);
+    border-top: 0;
+    background: var(--color-surface);
+  }
+
+  .part {
+    justify-content: space-between;
+    color: var(--color-text);
+    font-size: var(--text-body);
+  }
+
+  .part + .part {
+    justify-self: stretch;
+  }
+
+  .grand {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0 var(--space-3);
+    margin-bottom: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .grand dt {
+    color: var(--color-text);
+    font-size: var(--text-body);
   }
 }

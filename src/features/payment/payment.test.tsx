@@ -25,6 +25,8 @@ import { CLIENT_TIMEOUT_MS } from "@/features/payment/components/pay-form";
 import { POLL_INTERVAL_MS } from "@/features/payment/components/payment-poller";
 import { QrImage } from "@/features/payment/components/qr-image";
 import type { CardFields } from "@/features/payment/server/card";
+import { createOmiseProvider } from "@/features/payment/server/omise";
+import recorded from "@/features/payment/server/omise-recorded.json";
 import {
   abandonPendingPayments,
   checkPaymentStatus,
@@ -33,9 +35,9 @@ import {
   markGroupPaid,
   payByCard,
   payByPromptPay,
-  PROVIDER_TIMEOUT_MS,
   syncGroupPayments,
 } from "@/features/payment/server/payments";
+import { LATE_ANSWER_MARGIN_MS, PROVIDER_TIMEOUT_MS } from "@/features/payment/server/provider";
 import { createSimulator, type Simulator } from "@/features/payment/server/simulator";
 import { openDb, type Db } from "@/shared/db";
 import { addAccount, addOrder, addPayment, addProduct, addShop } from "@/shared/db/builders";
@@ -99,7 +101,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-/** เวลาประเทศไทยของวันที่ 24/11/2026 เช่น at("14:05") */
+/** เวลาประเทศไทยของวันที่ 24 พ.ย. 2026 เช่น at("14:05") */
 function at(time: string): Date {
   const [hour, minute, second = 0] = time.split(":").map(Number);
   return new Date(Date.UTC(2026, 10, 24, hour - 7, minute, second));
@@ -222,15 +224,15 @@ describe("PAY-001 หน้าจ่ายเงิน", () => {
     expect(renderToStaticMarkup(<PayLoading />)).toContain("กำลังโหลด");
   });
 
-  test("PAY-001 หน้าว่าง: จ่ายแล้วตั้งแต่ 14:06 เปิดเวลา 14:20 เห็นไม่มียอดที่ต้องจ่าย ผลการจ่าย 450 บาท และไม่มีปุ่มจ่ายเงิน", async () => {
+  test("PAY-001 หน้าว่าง: จ่ายแล้วตั้งแต่ 14:06 เปิดเวลา 14:20 เห็นผลการจ่าย 450 บาท และไม่มีปุ่มจ่ายเงิน", async () => {
     const group = addGroup("14:00");
     signInAs(group.buyerId);
     await payCard(group.groupId, GOOD, "14:06");
     setNow("14:20");
     const html = await payPage(group.groupId);
 
-    expect(html).toContain("ไม่มียอดที่ต้องจ่าย");
     expect(html).toContain("จ่ายแล้ว ฿450");
+    expect(html).not.toContain("ยอดที่ต้องจ่าย");
     expect(html).not.toMatch(PAY_BUTTON);
     expect(html).not.toContain("เลือกวิธีจ่าย");
   });
@@ -253,6 +255,42 @@ describe("PAY-001 หน้าจ่ายเงิน", () => {
     expect(html).not.toContain("จ่ายเงิน<");
     expect(orderStatuses(group.groupId)).toEqual(["รอจ่ายเงิน", "รอจ่ายเงิน"]);
     expect(stock(group.variantIds)).toEqual(before);
+  });
+});
+
+describe("หน้าจ่ายเงินให้ข้อมูลที่ผู้ซื้อมาหาตั้งแต่จอแรก", () => {
+  test("ยังไม่เลือกวิธีจ่าย เปิดแบบกรอกบัตรไว้ก่อน และยอดที่ต้องจ่ายอยู่ข้างปุ่มจ่ายเงิน", async () => {
+    const group = addGroup("14:00");
+    signInAs(group.buyerId);
+    setNow("14:05");
+    const html = await payPage(group.groupId);
+
+    expect(html).toMatch(/class="chip" aria-current="true"[^>]*>บัตร</);
+    expect(html.match(/<input [^>]*name="(number|name|expiry|securityCode)"/g)).toHaveLength(4);
+    expect(html).toMatch(/<p class="_due_\w+">ยอดที่ต้องจ่าย ฿450<\/p><button type="submit" class="button">จ่ายเงิน<\/button>/);
+    expect(html.match(/฿450/g)).toHaveLength(1);
+  });
+
+  test("ช่องเดือนปีหมดอายุกับรหัสหลังบัตรอยู่แถวเดียวกันและกว้างไม่เกิน 12 ตัวอักษร", async () => {
+    const group = addGroup("14:00");
+    signInAs(group.buyerId);
+    setNow("14:05");
+    const html = await payPage(group.groupId, { method: "card" });
+    const css = readFileSync(join(process.cwd(), "src/features/payment/components/payment.module.css"), "utf8");
+
+    expect(html).toMatch(/<div class="_pair_\w+">.*class="input _short_\w+"[^>]*name="expiry".*class="input _short_\w+"[^>]*name="securityCode"/);
+    expect(Number(css.match(/\.short \{\s*max-width: (\d+)ch/)?.[1])).toBeLessThanOrEqual(12);
+  });
+
+  test("เวลาที่เหลือเป็นสถานะปกติ และเป็นสีเตือนเมื่อเหลือไม่เกิน 5 นาที", async () => {
+    const group = addGroup("14:00");
+    signInAs(group.buyerId);
+    const deadline = /<p class="([^"]*)">เหลือเวลาจ่าย/;
+
+    setNow("14:24");
+    expect((await payPage(group.groupId)).match(deadline)?.[1]).not.toMatch(/deadlineSoon/);
+    setNow("14:25");
+    expect((await payPage(group.groupId)).match(deadline)?.[1]).toMatch(/deadlineSoon/);
   });
 });
 
@@ -323,7 +361,7 @@ describe("PAY-004 จ่ายด้วย PromptPay และหน้ารอ
     const html = await payPage(group.groupId);
 
     expect(html).toMatch(/<img [^>]*src="data:image\/svg\+xml/);
-    for (const text of ["฿450", "กำลังรอผลการจ่ายเงิน เหลือเวลา 25 นาที", "หน้าจัดการของ Omise", "เช็คสถานะการจ่ายเงิน", "เปลี่ยนวิธีจ่าย"]) {
+    for (const text of ["฿450", "กำลังรอผลการจ่ายเงิน เหลือเวลาจ่าย 25 นาที", "หน้าจัดการของ Omise", "เช็คสถานะการจ่ายเงิน", "เปลี่ยนวิธีจ่าย"]) {
       expect(html).toContain(text);
     }
     expect(getPayPage(db, group.buyerId, group.groupId)?.poll).toBe(true);
@@ -371,7 +409,7 @@ describe("PAY-005 จ่ายสำเร็จ", () => {
     await payCard(group.groupId, GOOD, "14:06");
     const html = await payPage(group.groupId);
 
-    expect(html).toMatch(/จ่ายแล้ว ฿450 ด้วยบัตรลงท้าย 4242 เวลา 24\/11\/2026 14:06/);
+    expect(html).toMatch(/จ่ายแล้ว ฿450 ด้วยบัตรลงท้าย 4242 เวลา 24 พ.ย. 14:06/);
     for (const orderNo of group.orderNos) expect(html).toContain(orderNo);
     expect(orderStatuses(group.groupId)).toEqual(["จ่ายแล้ว", "จ่ายแล้ว"]);
     expect(payments(group.groupId).map((p) => p.status)).toEqual(["สำเร็จ"]);
@@ -465,6 +503,23 @@ describe("PAY-007 Omise ล่มหรือตอบช้า", () => {
     expect(payments(group.groupId).map((p) => p.status)).toEqual(["เลิกรอ"]);
   });
 
+  test("PAY-007 Omise ตัดบัตรสำเร็จหลังระบบเลิกรอไปแล้ว ระบบยังจับคู่เงินนั้นได้ คำสั่งซื้อเป็นจ่ายแล้ว", async () => {
+    // คำตอบจริงของ Omise ที่มาถึงหลังหมดเวลารอ ลองกับ Omise จริงแล้วเกิดได้ (charge สำเร็จ แต่ระบบไม่รู้เลขอ้างอิง)
+    const late = (async (url: string) => {
+      if (url.endsWith("/tokens")) return Response.json(recorded.token);
+      await new Promise((done) => setTimeout(done, 60));
+      return Response.json(recorded.cardSuccessful);
+    }) as typeof fetch;
+    const omise = createOmiseProvider({ publicKey: "pkey_test_a", secretKey: "skey_test_b", fetch: late });
+    const group = addGroup("14:00");
+
+    const result = await payByCard(db, omise, { buyerId: group.buyerId, groupId: group.groupId, card: GOOD }, at("14:06"), 30);
+
+    expect(result).toEqual({ kind: "unavailable", minutesLeft: 24 });
+    await vi.waitFor(() => expect(payments(group.groupId).map((p) => [p.status, p.omise_charge_id])).toEqual([["สำเร็จ", recorded.cardSuccessful.id]]));
+    expect(orderStatuses(group.groupId)).toEqual(["จ่ายแล้ว", "จ่ายแล้ว"]);
+  });
+
   test("PAY-007 Omise ล่มยาวถึง 14:40 ลองใหม่กี่ครั้งก็จ่ายไม่ได้ ไม่ต่อเวลาหมดเขต และ 14:30 จ่ายไม่ได้แล้ว", async () => {
     const group = addGroup("14:00");
     signInAs(group.buyerId);
@@ -477,6 +532,108 @@ describe("PAY-007 Omise ล่มหรือตอบช้า", () => {
     });
     expect((await payCard(group.groupId, GOOD, "14:30")).redirect).toBe(`/pay/${group.groupId}`);
     expect(await payPage(group.groupId)).toContain("คำสั่งซื้อถูกยกเลิกแล้ว จ่ายเงินไม่ได้");
+  });
+});
+
+describe("PAY-007 คำตอบของ Omise ที่มาหลังระบบเลิกรอ ด้วยเวลารอและเวลาตัดคำขอที่ใช้จริง", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
+    // นาฬิกาปลอมของ Vitest ไม่ครอบ AbortSignal.timeout
+    vi.spyOn(AbortSignal, "timeout").mockImplementation((ms) => {
+      const cutOff = new AbortController();
+      setTimeout(() => cutOff.abort(new DOMException("หมดเวลา", "TimeoutError")), ms);
+      return cutOff.signal;
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /** Omise ที่ตอบคำขอตัดเงินหลังผ่านไป afterMs และเลิกทำเมื่อคำขอถูกตัด เหมือน fetch จริง */
+  function slowOmise(afterMs: number, answer: () => Response = () => new Response(null, { status: 599 })) {
+    const charging = Promise.withResolvers<AbortSignal>();
+    const send = (async (url: string, init: RequestInit) => {
+      if (url.endsWith("/tokens")) return Response.json(recorded.token);
+      const signal = init.signal!;
+      charging.resolve(signal);
+      return new Promise<Response>((resolve, reject) => {
+        signal.addEventListener("abort", () => reject(signal.reason));
+        setTimeout(() => resolve(answer()), afterMs);
+      });
+    }) as typeof fetch;
+    return { omise: createOmiseProvider({ publicKey: "pkey_test_a", secretKey: "skey_test_b", fetch: send }), charging: charging.promise };
+  }
+
+  /** กดจ่ายด้วยบัตรตอนเวลา time แล้วเดินนาฬิกาจนระบบเลิกรอ */
+  async function payAndGiveUp(slow: ReturnType<typeof slowOmise>, time: string) {
+    const group = addGroup("14:00");
+    const paying = payByCard(db, slow.omise, { buyerId: group.buyerId, groupId: group.groupId, card: GOOD }, setNow(time));
+    await slow.charging;
+    await vi.advanceTimersByTimeAsync(PROVIDER_TIMEOUT_MS);
+    expect((await paying).kind).toBe("unavailable");
+    expect(payments(group.groupId).map((p) => [p.status, p.omise_charge_id])).toEqual([["เลิกรอ", null]]);
+    return group;
+  }
+
+  const outcome = (groupId: number) =>
+    db.prepare("SELECT status, omise_charge_id, failure_reason, resolved_at FROM payments WHERE group_id = ?").all(groupId);
+
+  test("PAY-007 Omise ตัดบัตรสำเร็จแต่ตอบวินาทีที่ 12 ระบบเลิกรอที่วินาทีที่ 10 แล้วยังได้คำตอบนั้น การจ่ายเงินเป็นสำเร็จ", async () => {
+    const group = await payAndGiveUp(slowOmise(12_000, () => Response.json(recorded.cardSuccessful)), "14:06");
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    await vi.waitFor(() =>
+      expect(outcome(group.groupId)).toEqual([
+        { status: "สำเร็จ", omise_charge_id: recorded.cardSuccessful.id, failure_reason: null, resolved_at: at("14:06:12").toISOString() },
+      ]),
+    );
+    expect(orderStatuses(group.groupId)).toEqual(["จ่ายแล้ว", "จ่ายแล้ว"]);
+  });
+
+  test("PAY-007 คำตอบที่มาช้าบอกว่า Omise ไม่รับรายการ การจ่ายเงินเปลี่ยนจากเลิกรอเป็นไม่สำเร็จพร้อมเหตุผล", async () => {
+    const rejected = () => Response.json({ object: "error", code: "invalid_card", message: "number is invalid" }, { status: 400 });
+    const group = await payAndGiveUp(slowOmise(12_000, rejected), "14:06");
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    await vi.waitFor(() =>
+      expect(outcome(group.groupId)).toEqual([
+        {
+          status: "ไม่สำเร็จ",
+          omise_charge_id: null,
+          failure_reason: "บัตรถูกปฏิเสธ: ข้อมูลบัตรไม่ถูกต้อง หรือไม่ใช่บัตรทดลองของ Omise",
+          resolved_at: at("14:06:12").toISOString(),
+        },
+      ]),
+    );
+    expect(orderStatuses(group.groupId)).toEqual(["รอจ่ายเงิน", "รอจ่ายเงิน"]);
+  });
+
+  test("PAY-007 PAY-010 กดจ่าย 14:29:55 คำตอบว่าสำเร็จมาถึง 14:30:07 หลังหมดเขตจ่าย เงินนั้นเป็นสำเร็จแต่ไม่ถูกใช้ และมีเลขอ้างอิงไว้คืนเงิน", async () => {
+    const group = await payAndGiveUp(slowOmise(12_000, () => Response.json(recorded.cardSuccessful)), "14:29:55");
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    await vi.waitFor(() =>
+      expect(outcome(group.groupId)).toEqual([
+        { status: "สำเร็จแต่ไม่ถูกใช้", omise_charge_id: recorded.cardSuccessful.id, failure_reason: null, resolved_at: at("14:30:07").toISOString() },
+      ]),
+    );
+    expect(orderStatuses(group.groupId)).toEqual(["รอจ่ายเงิน", "รอจ่ายเงิน"]);
+  });
+
+  test("PAY-007 Omise ไม่ตอบเลย คำขอตัดเงินถูกตัดเมื่อครบเวลารอบวกเวลาเผื่อ การจ่ายเงินยังเป็นเลิกรอ และจ่ายใหม่ได้", async () => {
+    const slow = slowOmise(3_600_000);
+    const group = await payAndGiveUp(slow, "14:06");
+    const signal = await slow.charging;
+
+    await vi.advanceTimersByTimeAsync(LATE_ANSWER_MARGIN_MS - 1);
+    expect(signal.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(signal.aborted).toBe(true);
+
+    expect(payments(group.groupId).map((p) => [p.status, p.omise_charge_id])).toEqual([["เลิกรอ", null]]);
+    await payByCard(db, sim, { buyerId: group.buyerId, groupId: group.groupId, card: GOOD }, at("14:07"));
+    expect(orderStatuses(group.groupId)).toEqual(["จ่ายแล้ว", "จ่ายแล้ว"]);
   });
 });
 
@@ -500,7 +657,7 @@ describe("PAY-008 เช็คสถานะการจ่ายเงิน",
     setNow("14:07");
 
     expect((await submit(checkStatusAction(form({ groupId: group.groupId })))).state).toEqual({
-      message: "ยังไม่ได้รับเงิน เช็คล่าสุด 24/11/2026 14:07",
+      message: "ยังไม่ได้รับเงิน เช็คล่าสุด 24 พ.ย. 14:07",
     });
     expect(await payPage(group.groupId)).toContain(payments(group.groupId)[0].qr_image_url?.slice(0, 30));
   });
@@ -775,7 +932,7 @@ describe("PAY-012 เลิกรอและเปลี่ยนวิธี�
 
     expect(payments(group.groupId).map((p) => p.status)).toEqual(["สำเร็จ"]);
     expect(orderStatuses(group.groupId)).toEqual(["จ่ายแล้ว", "จ่ายแล้ว"]);
-    expect(await payPage(group.groupId)).toContain("จ่ายแล้ว ฿450 ด้วยPromptPay");
+    expect(await payPage(group.groupId)).toContain("จ่ายแล้ว ฿450 ด้วย PromptPay");
   });
 });
 
@@ -1030,7 +1187,9 @@ describe("PAY-Q07 เครื่องหมายเงินทดลอง�
   });
 
   test("PAY-Q07 สไตล์ของหน้าจ่ายเงินไม่มีความกว้างตายตัวที่เกินจอ 360 จุด", () => {
-    const css = readFileSync(join(process.cwd(), "src/features/payment/components/payment.module.css"), "utf8");
+    const css = readFileSync(join(process.cwd(), "src/features/payment/components/payment.module.css"), "utf8")
+      // เงื่อนไขของ @media คือจุดเปลี่ยนจอ ไม่ใช่ความกว้างของสิ่งที่อยู่บนหน้า
+      .replace(/@media[^{]*/g, "");
     const fixed = [...css.matchAll(/(?<!max-)width:\s*(\d+)px/g)].map((match) => Number(match[1]));
     expect(fixed.filter((px) => px > 328)).toEqual([]);
   });

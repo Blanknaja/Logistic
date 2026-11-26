@@ -1,7 +1,10 @@
+import { readFileSync } from "node:fs";
 import { hashPassword } from "@/features/account/server/password";
+import { saveImageFile } from "@/features/product-listing/server/image-files";
+import { saveModelFile } from "@/features/product-listing/server/model-files";
 import { transaction, type Db } from "@/shared/db";
 import { addAccount, addProduct, addShop } from "@/shared/db/builders";
-import { CATEGORIES, LOCATIONS, PERSON_FIRST, PERSON_LAST, SHOP_NAME_FIRST, SHOP_NAME_LAST } from "./catalog";
+import { CATEGORIES, LOCATIONS, PERSON_FIRST, PERSON_LAST, SAMPLE_PHOTOS, SHOP_NAME_FIRST, SHOP_NAME_LAST } from "./catalog";
 import { addSampleOrders } from "./orders";
 
 /** รหัสผ่านสาธิตของบัญชีตัวอย่าง ห้ามใช้กับระบบจริง (เขียนไว้ใน README) */
@@ -13,6 +16,12 @@ const SHOP_COUNT = 50;
 const PRODUCTS_PER_SHOP = 20;
 const BUYER_COUNT = 3;
 const MINUTE = 60 * 1000;
+
+/** สินค้าตัวอย่างที่มีไฟล์ 3 มิติ (P3D-006) index คือลำดับสินค้าในร้านแรก ไฟล์และที่มาอยู่ใน models/SOURCES.txt */
+const SAMPLE_MODELS = [
+  { index: 5, name: "เก้าอี้ผ้ากำมะหยี่", file: "SheenChair.glb" },
+  { index: 11, name: "แจกันแก้วใส่ดอกไม้", file: "GlassVaseFlowers.glb" },
+];
 
 // สุ่มแบบกำหนดเมล็ด รันกี่ครั้งก็ได้ข้อมูลหน้าตาเดิม
 function createRandom(seedValue: number) {
@@ -78,10 +87,26 @@ export async function seed(db: Db): Promise<{ created: boolean }> {
         openedAt: new Date(now - 30 * 24 * 60 * MINUTE).toISOString(),
       });
 
+      // รูปที่ส่งขึ้นมาเป็นของร้านที่ส่ง (PRD-012) จึงเก็บรูปถ่ายร้านละชุด
+      const photoUrls = new Map<string, string>();
+      const photoUrl = (file: string, savedAt: Date) => {
+        const known = photoUrls.get(file);
+        if (known) return known;
+        const saved = saveImageFile(db, shop.id, readFileSync(new URL(`./photos/${file}`, import.meta.url)), savedAt);
+        if (!saved.ok) throw new Error(`${file}: ${saved.error}`);
+        photoUrls.set(file, saved.url);
+        return saved.url;
+      };
+
       for (let p = 0; p < PRODUCTS_PER_SHOP; p++) {
         const index = s * PRODUCTS_PER_SHOP + p;
         const category = CATEGORIES[index % CATEGORIES.length];
-        const name = `${random.pick(category.nouns)} ${random.pick(category.details)}`;
+        const sample = SAMPLE_MODELS.find((model) => model.index === index);
+        // สุ่มชื่อทุกชิ้นแม้ชิ้นที่ใช้ชื่อของไฟล์ 3 มิติ ลำดับการสุ่มของชิ้นอื่นจึงไม่เปลี่ยน
+        const noun = random.pick(category.nouns);
+        const randomName = `${noun} ${random.pick(category.details)}`;
+        const name = sample?.name ?? randomName;
+        const photos = SAMPLE_PHOTOS[sample?.name ?? noun];
         const basePrice = nicePrice(random.int(category.minPrice, category.maxPrice));
         const withOptions = index % 8 === 0;
         const soldOut = index % 50 === 25;
@@ -90,8 +115,9 @@ export async function seed(db: Db): Promise<{ created: boolean }> {
         const lastOptionSize = options.at(-1)?.values.length ?? 1;
         const step = Math.max(10, Math.round(basePrice / 100) * 10);
         const createdAt = new Date(now - (SHOP_COUNT * PRODUCTS_PER_SHOP - index) * 37 * MINUTE).toISOString();
+        const imageCount = 1 + (index % 3);
 
-        addProduct(db, {
+        const product = addProduct(db, {
           shopId: shop.id,
           categoryId: category.categoryId,
           name,
@@ -102,11 +128,19 @@ export async function seed(db: Db): Promise<{ created: boolean }> {
             price: basePrice + (v % lastOptionSize) * step,
             stock: soldOut ? 0 : random.int(1, 10) === 1 ? random.int(1, 5) : random.int(6, 80),
           })),
-          images: Array.from({ length: 1 + (index % 3) }, (_, i) => `/sample-images/s${index + 1}-${i + 1}.svg`),
+          images: photos
+            ? photos.slice(0, imageCount).map((file) => photoUrl(file, new Date(createdAt)))
+            : Array.from({ length: imageCount }, (_, i) => `/sample-images/s${index + 1}-${i + 1}.svg`),
           recordStockHistory: true,
           createdAt,
           publishedAt: createdAt,
         });
+        if (sample) {
+          const bytes = readFileSync(new URL(`./models/${sample.file}`, import.meta.url));
+          const saved = saveModelFile(db, shop.id, sample.file, bytes, new Date(createdAt));
+          if (!saved.ok) throw new Error(`${sample.file}: ${saved.error}`);
+          db.prepare("UPDATE products SET model_url = ? WHERE id = ?").run(saved.url, product.id);
+        }
       }
     }
   });

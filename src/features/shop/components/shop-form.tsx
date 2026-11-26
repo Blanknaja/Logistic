@@ -50,6 +50,7 @@ export function ShopForm({ mode, action, shop, readOnly = false, cancelHref }: P
   const [logoError, setLogoError] = useState<string | null>(null);
   const [sentLogo, setSentLogo] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const form = useRef<HTMLFormElement>(null);
   // pending จะเป็น true หลัง React วาดใหม่ ส่วนนี้กันการกดซ้ำที่มาก่อนนั้น (SHP-005)
   const busy = useRef(false);
 
@@ -63,12 +64,20 @@ export function ShopForm({ mode, action, shop, readOnly = false, cancelHref }: P
   }, [preview]);
 
   const errors: ShopErrors = "errors" in state ? state.errors : {};
+
+  // ช่องที่ผิดอาจอยู่เหนือจอเมื่อกดปุ่มที่ติดขอบล่าง จึงพาไปช่องแรกที่ผิด
+  useEffect(() => {
+    if ("errors" in state && Object.keys(state.errors).length > 0) {
+      form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+    }
+  }, [state]);
   const message = formMessage(mode, state, sentLogo);
   const savedLogo = removeLogo ? null : (shop?.logoUrl ?? null);
   const name = shop?.name ?? "";
 
   return (
     <form
+      ref={form}
       method="post"
       encType="multipart/form-data"
       noValidate
@@ -87,7 +96,9 @@ export function ShopForm({ mode, action, shop, readOnly = false, cancelHref }: P
       {shop && <input type="hidden" name="shopId" value={shop.id} />}
       <input type="hidden" name="removeLogo" value={removeLogo ? "1" : "0"} />
       <fieldset disabled={readOnly} className={styles.fieldset}>
-        <Field label="ชื่อร้าน" name="name" defaultValue={shop?.name} autoComplete="organization" error={errors.name} />
+        <div className={styles.medium}>
+          <Field label="ชื่อร้าน" name="name" defaultValue={shop?.name} autoComplete="organization" error={errors.name} />
+        </div>
         <div className="field">
           <label htmlFor="field-description">คำอธิบายร้าน (ไม่บังคับ)</label>
           <textarea
@@ -108,6 +119,7 @@ export function ShopForm({ mode, action, shop, readOnly = false, cancelHref }: P
 
         <div className="field">
           <label htmlFor="field-logo">โลโก้ร้าน (ไม่บังคับ) JPG หรือ PNG ไม่เกิน 2 MB</label>
+          {/* ช่องเลือกไฟล์ของเบราว์เซอร์เป็นภาษาอังกฤษ จึงซ่อนไว้แล้วให้ป้าย "เลือกรูป" เปิดแทน ใช้ได้แม้ไม่มี JavaScript */}
           <div className={styles.logoPicker}>
             {(preview || name) && <ShopLogo name={name} logoUrl={preview} />}
             <input
@@ -116,7 +128,7 @@ export function ShopForm({ mode, action, shop, readOnly = false, cancelHref }: P
               name="logo"
               type="file"
               accept={LOGO_TYPES.join(",")}
-              className="input"
+              className="visually-hidden"
               aria-invalid={logoError || errors.logo ? true : undefined}
               aria-describedby={logoError || errors.logo ? "field-logo-error" : undefined}
               onChange={(event) => {
@@ -134,10 +146,13 @@ export function ShopForm({ mode, action, shop, readOnly = false, cancelHref }: P
                 setPreview(URL.createObjectURL(file));
               }}
             />
+            <label htmlFor="field-logo" className={`button button-secondary ${styles.pick}`}>
+              {preview ? "เปลี่ยนรูป" : "เลือกรูป"}
+            </label>
             {preview && (
               <button
                 type="button"
-                className="button button-secondary"
+                className="link-action"
                 onClick={() => {
                   if (fileInput.current) fileInput.current.value = "";
                   setRemoveLogo(true);
@@ -160,67 +175,77 @@ export function ShopForm({ mode, action, shop, readOnly = false, cancelHref }: P
 
       <fieldset disabled={readOnly} className={styles.fieldset}>
         <legend>ที่อยู่ต้นทาง</legend>
-        <Field label="ชื่อผู้ส่ง" name="senderName" defaultValue={shop?.senderName} autoComplete="name" error={errors.senderName} />
-        <Field
-          label="เบอร์โทร"
-          name="phone"
-          type="tel"
-          inputMode="numeric"
-          autoComplete="tel"
-          placeholder="ตัวเลข 10 หลัก ขึ้นต้นด้วย 0"
-          defaultValue={shop?.phone}
-          error={errors.phone}
-        />
-        <Field label="รายละเอียดที่อยู่" name="address" defaultValue={shop?.address} autoComplete="street-address" error={errors.address} />
-        <Field label="ตำบลหรือแขวง" name="subdistrict" defaultValue={shop?.subdistrict} error={errors.subdistrict} />
-        <Field label="อำเภอหรือเขต" name="district" defaultValue={shop?.district} error={errors.district} />
-        <div className="field">
-          <label htmlFor="field-province">จังหวัด</label>
-          <select
-            id="field-province"
-            name="province"
-            className="input"
-            defaultValue={shop?.province ?? ""}
-            aria-invalid={errors.province ? true : undefined}
-            aria-describedby={errors.province ? "field-province-error" : undefined}
-          >
-            <option value="">เลือกจังหวัด</option>
-            {PROVINCES.map((province) => (
-              <option key={province} value={province}>
-                {province}
-              </option>
-            ))}
-          </select>
-          {errors.province && (
-            <p id="field-province-error" className="field-error">
-              {errors.province}
-            </p>
-          )}
+        <div className={styles.pair}>
+          <Field label="ชื่อผู้ส่ง" name="senderName" defaultValue={shop?.senderName} autoComplete="name" error={errors.senderName} />
+          <Field
+            label="เบอร์โทร"
+            name="phone"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel"
+            placeholder="ตัวเลข 10 หลัก ขึ้นต้นด้วย 0"
+            defaultValue={shop?.phone}
+            error={errors.phone}
+          />
         </div>
-        <Field
-          label="รหัสไปรษณีย์"
-          name="postcode"
-          inputMode="numeric"
-          autoComplete="postal-code"
-          defaultValue={shop?.postcode}
-          error={errors.postcode}
-        />
+        <Field label="รายละเอียดที่อยู่" name="address" defaultValue={shop?.address} autoComplete="street-address" error={errors.address} />
+        <div className={styles.pair}>
+          <Field label="ตำบลหรือแขวง" name="subdistrict" defaultValue={shop?.subdistrict} error={errors.subdistrict} />
+          <Field label="อำเภอหรือเขต" name="district" defaultValue={shop?.district} error={errors.district} />
+        </div>
+        <div className={styles.pair}>
+          <div className="field">
+            <label htmlFor="field-province">จังหวัด</label>
+            <select
+              id="field-province"
+              name="province"
+              className="input"
+              defaultValue={shop?.province ?? ""}
+              aria-invalid={errors.province ? true : undefined}
+              aria-describedby={errors.province ? "field-province-error" : undefined}
+            >
+              <option value="">เลือกจังหวัด</option>
+              {PROVINCES.map((province) => (
+                <option key={province} value={province}>
+                  {province}
+                </option>
+              ))}
+            </select>
+            {errors.province && (
+              <p id="field-province-error" className="field-error">
+                {errors.province}
+              </p>
+            )}
+          </div>
+          <div className={styles.short}>
+            <Field
+              label="รหัสไปรษณีย์"
+              name="postcode"
+              inputMode="numeric"
+              autoComplete="postal-code"
+              defaultValue={shop?.postcode}
+              error={errors.postcode}
+            />
+          </div>
+        </div>
       </fieldset>
 
-      {message && (
-        <div role="alert" className={styles.failed}>
-          <p>{message}</p>
-        </div>
-      )}
-      <div className={styles.actions}>
-        {!readOnly && (
-          <button type="submit" className="button" disabled={pending || !hydrated}>
-            {pending ? "กำลังบันทึก" : mode === "open" ? "เปิดร้าน" : "บันทึก"}
-          </button>
+      <div className={styles.submitBar}>
+        {message && (
+          <div role="alert" className={styles.failed}>
+            <p>{message}</p>
+          </div>
         )}
-        <Link href={cancelHref} className="button button-secondary">
-          {readOnly ? "กลับ" : "ยกเลิก"}
-        </Link>
+        <div className={styles.actions}>
+          {!readOnly && (
+            <button type="submit" className="button" disabled={pending || !hydrated}>
+              {pending ? "กำลังบันทึก" : mode === "open" ? "เปิดร้าน" : "บันทึก"}
+            </button>
+          )}
+          <Link href={cancelHref} className="button button-secondary">
+            {readOnly ? "กลับ" : "ยกเลิก"}
+          </Link>
+        </div>
       </div>
       <LeaveGuard when={dirty && !readOnly} />
     </form>

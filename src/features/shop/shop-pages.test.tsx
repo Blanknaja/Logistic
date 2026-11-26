@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import ErrorPage from "@/app/error";
 import OpenShopLoading from "@/app/open-shop/loading";
 import OpenShopPage from "@/app/open-shop/page";
@@ -30,7 +30,6 @@ import { createTestDb } from "@/shared/db/testing";
 import { SiteHeader } from "@/shared/layout/site-header";
 import { SESSION_COOKIE } from "@/shared/session";
 import { ORDER_STATUS, SHOP_STATUS } from "@/shared/statuses";
-import { formatThaiDate } from "@/shared/format";
 
 const request = vi.hoisted(() => ({
   db: undefined as Db | undefined,
@@ -68,6 +67,9 @@ vi.mock("@/shared/db", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/shared/db")>()),
   getDb: () => request.db,
 }));
+
+// บาง test ตรึงวันที่ไว้ในปี 2026 เพราะวันที่ของปีนี้แสดงโดยไม่มีปี
+afterEach(() => void vi.useRealTimers());
 
 let db: Db;
 
@@ -339,6 +341,18 @@ describe("SHP-006 หน้าแรกของหลังบ้าน", () =>
     expect(home.indexOf("สต็อกหมด")).toBeLessThan(home.indexOf("สินค้าที่ขายอยู่"));
   });
 
+  test("SHP-006 นับคำสั่งซื้อไม่สำเร็จตอนร้านยังไม่มีสินค้า ปุ่มลองใหม่เป็นปุ่มรอง หน้าจึงมีปุ่มสีเน้นปุ่มเดียวคือ ลงสินค้าชิ้นแรก", async () => {
+    await somchaiOpensShop();
+    db.exec("ALTER TABLE orders RENAME TO orders_broken");
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const html = (await open(sellerHome())).html ?? "";
+
+    expect(html).toContain('<button type="button" class="button button-secondary">ลองใหม่</button>');
+    expect(html.match(/class="button"/g)).toHaveLength(1);
+    expect(html).toMatch(/<a class="button" href="\/seller\/products\/new">ลงสินค้าชิ้นแรก<\/a>/);
+  });
+
   test("SHP-006 นับคำสั่งซื้อไม่สำเร็จ แสดง – โหลดไม่สำเร็จ และปุ่มลองใหม่ ส่วนอื่นยังแสดง", async () => {
     const { shopId } = await somchaiOpensShop();
     addProduct(db, { shopId, price: 100 });
@@ -350,6 +364,7 @@ describe("SHP-006 หน้าแรกของหลังบ้าน", () =>
 
     expect(home).toContain("คำสั่งซื้อที่รอร้านจัดของ – โหลดไม่สำเร็จ");
     expect(html.match(/>ลองใหม่<\/button>/g)).toHaveLength(1);
+    expect(html).toContain('<button type="button" class="button">ลองใหม่</button>');
     expect(home).toContain("ร้านสมชายผ้าไทย");
     expect(home).toContain("สินค้าที่ขายอยู่ 1");
     expect((await open(layout())).html).toContain('href="/seller/settings"');
@@ -509,6 +524,7 @@ describe("SHP-011 หน้าร้าน", () => {
   }
 
   test("SHP-011 คนที่ยังไม่เข้าสู่ระบบเห็นข้อมูลร้าน สินค้า 20 ชิ้นแรก ป้ายสินค้าหมด และกดดูเพิ่มได้อีก 3 ชิ้น", async () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-26T12:00:00+07:00") });
     const { shopId, ids } = somchaiShopWith(23);
 
     const { html = "" } = await open(storefront(shopId));
@@ -516,7 +532,7 @@ describe("SHP-011 หน้าร้าน", () => {
     expect(text(html)).toContain("ร้านสมชายผ้าไทย");
     expect(html).toContain("ร้านนี้ยังไม่มีคำอธิบาย");
     expect(html).toContain("กรุงเทพมหานคร");
-    expect(text(html)).toContain(`เปิดร้านเมื่อ ${formatThaiDate("2026-11-24T02:00:00.000Z")}`);
+    expect(text(html)).toContain("เปิดร้านเมื่อ 24 พ.ย.");
     expect(html).toContain('dateTime="2026-11-24T02:00:00.000Z"');
     expect(html).toContain("สินค้า 23 ชิ้น");
     expect(html.match(/href="\/products\/\d+"/g)).toHaveLength(20);

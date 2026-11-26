@@ -80,8 +80,8 @@ export default async function SellerHomePage({ searchParams }: PageProps<"/selle
           </div>
         ))}
       </dl>
-      {/* ปุ่มเดียวโหลดทุกตัวเลขใหม่ หน้าจึงมีปุ่มสีเน้นไม่เกินหนึ่งปุ่ม */}
-      {numbers.some((number) => number.value === null) && <RetryButton />}
+      {/* ปุ่มเดียวโหลดทุกตัวเลขใหม่ และเป็นปุ่มรองเมื่อมีปุ่ม "ลงสินค้าชิ้นแรก" หน้าจึงมีปุ่มสีเน้นไม่เกินหนึ่งปุ่ม */}
+      {numbers.some((number) => number.value === null) && <RetryButton secondary={products.listed === 0} />}
       {products.listed === 0 && (
         <EmptyState title="ร้านของคุณยังไม่มีสินค้า">
           <Link href="/seller/products/new" className="button">

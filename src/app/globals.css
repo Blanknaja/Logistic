@@ -961,7 +961,7 @@ label.field {
   line-height: 1.3;
 }
 
-.journey > li {
+.journey > * {
   position: relative;
   display: grid;
   flex: 1 1 0;
@@ -971,7 +971,7 @@ label.field {
   text-align: center;
 }
 
-.journey > li::before {
+.journey > *::before {
   content: "";
   position: absolute;
   top: 8px;
@@ -981,11 +981,11 @@ label.field {
   background: var(--color-border);
 }
 
-.journey > li:first-child::before {
+.journey > *:first-child::before {
   display: none;
 }
 
-.journey > li[data-done]::before {
+.journey > *[data-done]::before {
   background: var(--color-primary);
   transform-origin: left;
   animation: journey-fill var(--dur-move) var(--ease-out) both;
@@ -1002,23 +1002,23 @@ label.field {
   box-shadow: inset 0 0 0 2px var(--color-border-strong);
 }
 
-.journey > li[data-done] .journey-dot {
+.journey > *[data-done] .journey-dot {
   background: var(--color-primary);
   box-shadow: inset 0 0 0 4px var(--color-primary-soft);
 }
 
-.journey > li[aria-current] {
+.journey > *[aria-current] {
   color: var(--color-text);
   font-weight: 600;
 }
 
-.journey > li[aria-current] .journey-dot {
+.journey > *[aria-current] .journey-dot {
   background: var(--color-accent);
   box-shadow: inset 0 0 0 2px var(--color-ink);
   transform: scale(1.25);
 }
 
-.journey > li[aria-current] .journey-dot::after {
+.journey > *[aria-current] .journey-dot::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -1037,7 +1037,21 @@ label.field {
 }
 
 .journey-compact {
-  width: 120px;
+  flex: none;
+  width: 96px;
+}
+
+.journey-compact .journey-dot {
+  width: 10px;
+  height: 10px;
+}
+
+.journey-compact > *::before {
+  top: 4px;
+}
+
+.journey-compact > [data-done] .journey-dot {
+  box-shadow: none;
 }
 
 @keyframes journey-fill {

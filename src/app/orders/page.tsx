@@ -6,7 +6,8 @@ import styles from "@/features/checkout/components/buyer-orders.module.css";
 import { getDb } from "@/shared/db";
 import { requireAccount } from "@/shared/session";
 import { ORDER_STATUS, type OrderStatus } from "@/shared/statuses";
-import { EmptyState } from "@/shared/ui/states";
+import { EmptyState, StateArtIcon } from "@/shared/ui/states";
+import { PageReveal } from "@/shared/ui/transitions";
 
 export const metadata: Metadata = { title: "คำสั่งซื้อ" };
 
@@ -25,38 +26,44 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
   // ยังไม่เคยสั่งซื้อ ตัวกรองไม่มีอะไรให้กรอง หัวเรื่องบอกคำตอบแล้วพาไปเลือกซื้อ
   if (!status && page.orders.length === 0) {
     return (
-      <>
-        <h1>ยังไม่มีคำสั่งซื้อ</h1>
-        <Link href="/" className="button">
-          ไปเลือกซื้อสินค้า
-        </Link>
-      </>
+      <PageReveal>
+        <section className={`card ${styles.empty}`}>
+          <StateArtIcon art="box" />
+          <h1>ยังไม่มีคำสั่งซื้อ</h1>
+          <p>สั่งของแล้ว ตามพัสดุทุกชิ้นได้จากหน้านี้</p>
+          <Link href="/" className="button">
+            ไปเลือกซื้อสินค้า
+          </Link>
+        </section>
+      </PageReveal>
     );
   }
 
   return (
-    <>
-      <h1>คำสั่งซื้อ</h1>
-      <nav aria-label="กรองตามสถานะ">
-        <ul className={`chips ${styles.filters}`}>
-          {FILTERS.map((filter) => (
-            <li key={filter.label}>
-              <Link
-                href={filterHref(filter.status)}
-                className={`chip ${styles.chipLink}`}
-                aria-current={filter.status === status ? "page" : undefined}
-              >
-                {filter.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      {page.orders.length === 0 ? (
-        <EmptyState title="ไม่มีคำสั่งซื้อในสถานะนี้" />
-      ) : (
-        <OrderList key={status ?? ""} initial={{ ...page, failed: false }} status={status} />
-      )}
-    </>
+    <PageReveal>
+      <div>
+        <h1>คำสั่งซื้อ</h1>
+        <nav aria-label="กรองตามสถานะ">
+          <ul className={`chips ${styles.filters}`}>
+            {FILTERS.map((filter) => (
+              <li key={filter.label}>
+                <Link
+                  href={filterHref(filter.status)}
+                  className={`chip ${styles.chipLink}`}
+                  aria-current={filter.status === status ? "page" : undefined}
+                >
+                  {filter.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        {page.orders.length === 0 ? (
+          <EmptyState title="ไม่มีคำสั่งซื้อในสถานะนี้" />
+        ) : (
+          <OrderList key={status ?? ""} initial={{ ...page, failed: false }} status={status} />
+        )}
+      </div>
+    </PageReveal>
   );
 }

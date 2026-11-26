@@ -91,7 +91,7 @@ describe("การขยับ", () => {
   });
 
   test("ของที่ขยับเองไม่มีจบมีแค่โครงสีระหว่างโหลด", () => {
-    expect(rulesWith(/infinite/)).toEqual(["app/globals.css .skeleton::after", "features/cart/components/cart.module.css .skeleton"]);
+    expect(rulesWith(/infinite/)).toEqual(["app/globals.css .skeleton::after"]);
   });
 
   test("เวลาของการขยับมาจาก --dur-* ยกเว้นโครงสีระหว่างโหลดและกฎลดการขยับ", () => {
@@ -99,7 +99,7 @@ describe("การขยับ", () => {
       .filter((rule) => /(?:transition|animation)[\w-]*:[^;]*\b\d*\.?\d+m?s\b/.test(rule.body))
       .filter((rule) => !/!important/.test(rule.body))
       .map((rule) => rule.name);
-    expect(literal).toEqual(["app/globals.css .skeleton::after", "features/cart/components/cart.module.css .skeleton"]);
+    expect(literal).toEqual(["app/globals.css .skeleton::after"]);
   });
 
   test("ผู้ใช้ขอลดการขยับ: ทุก animation และ transition จบทันที ของที่ผูกกับการเลื่อนเลิกผูก และการเปลี่ยนหน้าไม่ขยับ", () => {

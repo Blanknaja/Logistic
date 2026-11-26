@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useActionState, useEffect, useRef } from "react";
+import { addTransitionType, startTransition, useActionState, useEffect, useRef } from "react";
 import type { Checkout, CheckoutAddress, PlaceOrderFailure } from "@/features/checkout/server/checkout";
 import { formatBaht, formatNumber } from "@/shared/format";
 import { withTimeout, type Failed } from "@/shared/ui/timeout";
@@ -52,7 +52,10 @@ export function CheckoutForm({
         if (busy.current || !checkout.canOrder) return;
         busy.current = true;
         const formData = new FormData(event.currentTarget);
-        startTransition(() => dispatch(formData));
+        startTransition(() => {
+          addTransitionType("nav-forward");
+          dispatch(formData);
+        });
       }}
     >
       <input type="hidden" name="orderKey" value={checkout.orderKey} />
@@ -65,7 +68,7 @@ export function CheckoutForm({
       />
 
       <div>
-        <section className={styles.section}>
+        <section className={`card card-pad ${styles.section}`}>
           <h2>ที่อยู่จัดส่ง</h2>
           {checkout.addresses.length === 0 ? (
             <>
@@ -89,7 +92,7 @@ export function CheckoutForm({
                     />
                     <span>
                       {address.recipientName} {address.phone}
-                      {address.isDefault && <span className={styles.badge}>ที่อยู่หลัก</span>}
+                      {address.isDefault && <span className={`badge ${styles.badge}`}>ที่อยู่หลัก</span>}
                     </span>
                     <span className={styles.muted}>{fullAddress(address)}</span>
                   </label>
@@ -108,9 +111,9 @@ export function CheckoutForm({
         </section>
 
         <section className={styles.section}>
-          <h2>สินค้า</h2>
+          <h2 className="visually-hidden">สินค้า</h2>
           {checkout.shops.map((shop) => (
-            <div key={shop.shopId} className={styles.shop}>
+            <div key={shop.shopId} className={`card card-pad ${styles.shop}`}>
               <h3 className={styles.shopName}>{shop.shopName}</h3>
               <ul className={styles.lines}>
                 {shop.lines.map((line) => {
@@ -160,7 +163,7 @@ export function CheckoutForm({
         </section>
       </div>
 
-      <section className={styles.summary} aria-label="ยอดรวมที่ต้องจ่าย">
+      <section className={`card ${styles.summary}`} aria-label="ยอดรวมที่ต้องจ่าย">
         <dl className={styles.totals}>
           <div className={styles.part}>
             <dt>ค่าสินค้า {formatNumber(pieces)} ชิ้น</dt>

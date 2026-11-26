@@ -179,7 +179,7 @@ describe("CHK-009 หน้ารายการคำสั่งซื้อ�
     expect(count(html, payButton(first.groupId)) - 1).toBe(2);
     expect(count(html, PAY_BUTTON) - 1).toBe(2);
     expect(html).toContain("ผ้าดี");
-    expect(html).toContain("เสื้อยืด · รวม 2 ชิ้น");
+    expect(html).toMatch(/เสื้อยืด<\/span><span[^>]*>ผ้าดี · รวม 2 ชิ้น/);
     expect(html).toContain("฿440");
   });
 
@@ -221,7 +221,7 @@ describe("CHK-009 หน้ารายการคำสั่งซื้อ�
     const { html = "" } = await ordersPage();
 
     const row = html.split('<li class="_order_').find((part) => part.includes("ผ้าดี")) ?? "";
-    expect(row).toMatch(/<img src="\/sample-images\/shirt.svg"[^>]*>(<span[^>]*>){2}กำลังจัดส่ง<\/span>/);
+    expect(row).toMatch(/<img src="\/sample-images\/shirt.svg"[^>]*>(<span[^>]*>){3}กำลังจัดส่ง<\/span>/);
     expect(html).toContain(`<a class="link-action" href="/track/${shipping.trackingNo}">ติดตามพัสดุ</a>`);
     expect(html).not.toContain(`/track/${paid.trackingNo}`);
   });

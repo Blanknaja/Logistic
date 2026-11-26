@@ -4,6 +4,7 @@ import { OrderDetail } from "@/features/checkout/components/order-detail";
 import { getBuyerOrder } from "@/features/checkout/server/buyer-orders";
 import { getDb } from "@/shared/db";
 import { requireAccount } from "@/shared/session";
+import { PageReveal } from "@/shared/ui/transitions";
 
 export const metadata: Metadata = { title: "รายละเอียดคำสั่งซื้อ" };
 
@@ -14,5 +15,9 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/or
   const order = getBuyerOrder(getDb(), viewer.id, orderNo);
   if (!order) notFound();
 
-  return <OrderDetail order={order} confirmingCancel={cancel === "1"} notice={notice} />;
+  return (
+    <PageReveal>
+      <OrderDetail order={order} confirmingCancel={cancel === "1"} notice={notice} />
+    </PageReveal>
+  );
 }

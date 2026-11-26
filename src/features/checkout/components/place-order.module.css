@@ -1,7 +1,7 @@
 /* หน้าสั่งซื้อ จอกว้างเนื้อหาซ้าย 7 สรุปยอดขวา 5 จอแคบยอดรวมกับปุ่มสั่งซื้อติดขอบล่างจอ */
 
 .section + .section {
-  margin-top: var(--space-6);
+  margin-top: var(--space-4);
 }
 
 .section h2 {
@@ -20,22 +20,58 @@
   border: 0;
 }
 
-/* การ์ดตัวเลือก ที่เลือกอยู่ได้ขอบสีเน้น radio ถูกซ่อนไว้ให้โปรแกรมอ่านจอ */
+/* การ์ดตัวเลือก ที่เลือกอยู่ได้พื้นเขียวอ่อนกับเครื่องหมายถูก radio ถูกซ่อนไว้ให้โปรแกรมอ่านจอ */
 .address {
   position: relative;
   display: grid;
   gap: var(--space-1);
   min-height: var(--tap);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-s);
+  padding: var(--space-3) var(--space-7) var(--space-3) var(--space-4);
+  border-radius: var(--radius-m);
   box-shadow: inset 0 0 0 1px var(--color-border-strong);
   line-height: 1.4;
   cursor: pointer;
-  transition: box-shadow var(--dur-fast) var(--ease-out);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    transform var(--dur-base) var(--ease-spring);
+}
+
+.address:active {
+  transform: scale(0.99);
+  transition-duration: var(--dur-press);
+}
+
+.address::after {
+  content: "✓" / "";
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: var(--text-label);
+  font-weight: 600;
+  line-height: 1;
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-base) var(--ease-spring);
 }
 
 .address:has(input:checked) {
+  background: var(--color-primary-soft);
   box-shadow: var(--selected-ring);
+}
+
+.address:has(input:checked)::after {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .address:has(input:focus-visible) {
@@ -45,8 +81,7 @@
 
 .badge {
   margin-left: var(--space-2);
-  color: var(--color-muted);
-  font-size: var(--text-label);
+  background: var(--color-accent-soft);
 }
 
 .muted {
@@ -55,16 +90,15 @@
 }
 
 .shop + .shop {
-  margin-top: var(--space-5);
+  margin-top: var(--space-4);
 }
 
 .shopName {
-  margin: 0;
-  padding-block: var(--space-2);
-  border-top: 1px solid var(--color-border);
-  color: var(--color-muted);
-  font-size: var(--text-label);
-  font-weight: 400;
+  margin: 0 0 var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-body);
+  font-weight: 600;
 }
 
 .lines {
@@ -88,6 +122,10 @@
   min-width: 0;
 }
 
+.line > span:last-child {
+  font-weight: 600;
+}
+
 .line p {
   margin: 0;
 }
@@ -95,6 +133,7 @@
 .image {
   width: 64px;
   height: 64px;
+  border-radius: var(--radius-m);
   object-fit: cover;
 }
 
@@ -106,6 +145,8 @@ span.image {
   display: grid;
   gap: var(--space-1);
   margin: var(--space-2) 0 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
   font-size: var(--text-label);
 }
 
@@ -130,7 +171,7 @@ span.image {
 .summary {
   position: sticky;
   bottom: 0;
-  z-index: 1;
+  z-index: 5;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
@@ -139,10 +180,10 @@ span.image {
     "items ship";
   align-items: center;
   gap: var(--space-1) var(--space-3);
-  margin: var(--space-6) calc(-1 * var(--gutter)) 0;
+  margin: var(--space-5) calc(-1 * var(--gutter)) 0;
   padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--color-border);
-  background: var(--color-bg);
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
+  box-shadow: var(--shadow-2);
 }
 
 .totals {
@@ -175,8 +216,9 @@ span.image {
 }
 
 .grand dd {
-  font-size: var(--text-heading);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: var(--text-price);
+  font-weight: 700;
 }
 
 .notes {
@@ -194,13 +236,13 @@ span.image {
 .summary > :global(.button) {
   grid-area: action;
   min-height: var(--control-main);
-  padding-inline: var(--space-5);
+  padding-inline: var(--space-6);
   font-size: var(--text-body);
 }
 
 @media (hover: hover) {
   .address:hover:not(:has(input:checked)) {
-    box-shadow: inset 0 0 0 1px var(--color-text);
+    box-shadow: inset 0 0 0 2px var(--color-primary);
   }
 }
 
@@ -213,7 +255,7 @@ span.image {
   }
 
   .summary {
-    top: var(--space-5);
+    top: calc(var(--header-height) + var(--space-4));
     bottom: auto;
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
@@ -225,8 +267,8 @@ span.image {
     gap: var(--space-2);
     margin: 0;
     padding: var(--space-5);
-    border-top: 0;
-    background: var(--color-surface-sunken);
+    border-radius: var(--radius-l);
+    box-shadow: var(--shadow-1);
   }
 
   .part {

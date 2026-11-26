@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { CSSProperties } from "react";
 import { ORDER_STATUS, PARCEL_STATUS } from "@/shared/statuses";
 
@@ -15,7 +16,7 @@ export const PARCEL_JOURNEY: string[] = [
 
 /**
  * เส้นทางเป็นจุด current คือลำดับของขั้นล่าสุด (เริ่มที่ 0) ขั้นก่อนหน้าเป็นสีเขียว
- * compact ซ่อนชื่อขั้น ทั้งแถบเป็นรูปเดียวที่มี label stopped คือเส้นทางที่หยุดกลางทาง เช่นส่งไม่สำเร็จ
+ * compact ซ่อนชื่อขั้น ทั้งแถบเป็นรูปเดียวที่มี label และวางในลิงก์ได้ stopped คือเส้นทางที่หยุดกลางทาง เช่นส่งไม่สำเร็จ
  */
 export function Journey({
   steps,
@@ -32,15 +33,17 @@ export function Journey({
 }) {
   // ขั้นสุดท้ายที่ถึงแล้วคือจบเส้นทาง จึงเป็นสีเขียวเหมือนขั้นที่ผ่าน
   const finished = !stopped && current === steps.length - 1;
+  const List = compact ? "span" : "ol";
+  const Step = compact ? "span" : "li";
   return (
-    <ol
+    <List
       className={compact ? "journey journey-compact" : "journey"}
       aria-label={label}
       data-stopped={stopped ? "" : undefined}
       role={compact ? "img" : undefined}
     >
       {steps.map((step, index) => (
-        <li
+        <Step
           key={step}
           data-done={index < current || (finished && index === current) ? "" : undefined}
           aria-current={index === current && !finished ? "step" : undefined}
@@ -48,9 +51,9 @@ export function Journey({
         >
           <span className="journey-dot" aria-hidden="true" />
           {!compact && <span>{step}</span>}
-        </li>
+        </Step>
       ))}
-    </ol>
+    </List>
   );
 }
 
@@ -66,7 +69,14 @@ export function PurchaseSteps({ current }: { current: 0 | 1 | 2 | 3 }) {
             {index < current ? "✓" : index + 1}
           </span>
           <span className="steps-label">
-            {step}
+            {/* ย้อนไปตะกร้าได้จนกว่าจะสั่งซื้อ หลังจากนั้นตะกร้าไม่ใช่ของคำสั่งซื้อนี้แล้ว */}
+            {index === 0 && current === 1 ? (
+              <Link href="/cart" transitionTypes={["nav-back"]}>
+                {step}
+              </Link>
+            ) : (
+              step
+            )}
             {index < current && <span className="visually-hidden"> (ผ่านแล้ว)</span>}
           </span>
         </li>

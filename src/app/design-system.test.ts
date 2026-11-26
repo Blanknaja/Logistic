@@ -34,3 +34,18 @@ describe("ช่องกรอก", () => {
     for (const rule of hover) expect(rule).toContain('[aria-invalid="true"]');
   });
 });
+
+describe("สีเน้น", () => {
+  test("ไฟล์ CSS ของ feature ไม่ใช้ --color-primary ตรงๆ ตัวเลือกที่เลือกอยู่ใช้ --selected-ring", () => {
+    expect(rulesWith(/var\(--color-primary\)/).filter((rule) => !rule.startsWith("app/globals.css "))).toEqual([]);
+    expect(rulesWith(/var\(--selected-ring\)/).some((rule) => rule.endsWith('.thumb[aria-pressed="true"]::after'))).toBe(true);
+  });
+});
+
+describe("breakpoint", () => {
+  test("max-width ใช้ได้แค่ 599px กับ 899px คือกฎที่มีเฉพาะจอเล็กกว่า breakpoint", () => {
+    const widths = cssFiles.flatMap((file) => [...readFileSync(file, "utf8").matchAll(/@media[^{]*max-width:\s*([^)]+)\)/g)].map((match) => match[1]));
+    expect(widths.length).toBeGreaterThan(0);
+    expect(widths.filter((width) => width !== "599px" && width !== "899px")).toEqual([]);
+  });
+});

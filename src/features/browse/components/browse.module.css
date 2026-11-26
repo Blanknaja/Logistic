@@ -330,6 +330,7 @@
 }
 
 .thumb {
+  position: relative;
   display: block;
   width: 56px;
   height: 56px;
@@ -345,9 +346,12 @@
   transition: outline-color var(--duration) var(--ease);
 }
 
-.thumb[aria-pressed="true"] > * {
-  outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
+/* วงของรูปย่อที่เลือกอยู่วาดบนชั้นเหนือรูป เพราะ box-shadow แบบ inset ของ img ถูกรูปบัง */
+.thumb[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: var(--selected-ring);
 }
 
 .view3d {

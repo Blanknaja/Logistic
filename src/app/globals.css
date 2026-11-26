@@ -1,22 +1,38 @@
 /* สไตล์กลางของทั้งแอป สไตล์เฉพาะ feature ให้เขียนเป็น *.module.css ในโฟลเดอร์ของ feature
-   ค่าทุกตัวและกฎการใช้อยู่ใน docs/design-system.md */
+   ค่าทุกตัวและกฎการใช้อยู่ใน docs/design-system.md สีและเงาพิมพ์เป็นตัวเลขได้เฉพาะใน :root นี้ */
 
 :root {
-  /* สี: พื้นขาว สีกระดาษใช้กับแผ่นใหญ่เท่านั้น สีเน้นเขียวเข้มใช้กับปุ่มหลักปุ่มเดียวของหน้าและขอบของตัวเลือกที่เลือกอยู่ */
-  --color-bg: #ffffff;
-  --color-surface: #f6f2ea;
+  /* พื้นสามชั้น: พื้นหน้า ของที่ลอย ของที่จม และแถบพื้นเข้ม */
+  --color-bg: #fffaf2;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f3ebdd;
+  --color-ink: #0f3d2e;
+  --color-on-ink: #fffaf2;
   --color-text: #1d1b18;
   --color-muted: #4d4943;
   --color-border: #d4cdc2;
-  --color-border-strong: #857d71;
-  --color-primary: #24543f;
-  --color-primary-hover: #1c4433;
-  --color-primary-press: #143326;
+  --color-border-strong: #6f685d;
+
+  /* สีเขียวคือการกระทำและความสำเร็จ สีดอกดาวเรืองคือของใหม่และของฉลอง */
+  --color-primary: #0b7a4b;
+  --color-primary-hover: #0a6b42;
+  --color-primary-press: #08593a;
+  --color-primary-soft: #dff3e6;
   --color-on-primary: #ffffff;
+  --color-accent: #ffb92e;
+  --color-accent-soft: #fde9c8;
+  --color-sale: #c2410c;
   --color-disabled: #cfc7b9;
   --color-danger: #b42318;
   --color-warning: #b54708;
+  --tint-1: #dff3e6;
+  --tint-2: #fde9c8;
+  --tint-3: #ffe1d6;
+  --tint-4: #dcecfb;
   --selected-ring: inset 0 0 0 2px var(--color-primary);
+
+  --shadow-1: 0 1px 2px rgb(29 27 24 / 0.06), 0 4px 12px rgb(29 27 24 / 0.06);
+  --shadow-2: 0 2px 4px rgb(29 27 24 / 0.08), 0 12px 28px rgb(29 27 24 / 0.12);
 
   /* ระยะห่าง ฐาน 4 จุด */
   --space-1: 4px;
@@ -30,25 +46,42 @@
   --section-gap: var(--space-7);
 
   /* ขนาดตัวอักษรตามบทบาท ไม่มีขนาดที่เล็กกว่า --text-label */
-  --text-title: 28px;
-  --text-heading: 20px;
+  --text-display: clamp(34px, 4.6vw, 64px);
+  --text-title: 30px;
+  --text-heading: 22px;
+  --text-price: 24px;
   --text-body: 16px;
   --text-label: 14px;
   --line-height: 1.5;
+  --line-height-display: 1.25;
   --font: var(--font-sans), sans-serif;
+  --font-display: var(--font-show), var(--font-sans), sans-serif;
   --font-logo: var(--font-serif), Georgia, serif;
 
   /* รูปทรงและขนาดของปุ่ม */
-  --radius: 8px;
+  --radius-s: 8px;
+  --radius-m: 14px;
+  --radius-l: 20px;
+  --radius-pill: 999px;
   --tap: 44px;
   --control-main: 56px;
   --header-height: 56px;
   --focus-ring: 2px solid var(--color-text);
   --focus-offset: 3px;
 
-  /* การเคลื่อนไหว */
-  --duration: 0.2s;
-  --ease: cubic-bezier(0.4, 0, 0.4, 1);
+  /* การขยับ */
+  --dur-press: 100ms;
+  --dur-fast: 160ms;
+  --dur-base: 240ms;
+  --dur-move: 400ms;
+  --dur-scene: 700ms;
+  --dur-travel: 2400ms;
+  --dur-exit: 150ms;
+  --stagger: 80ms;
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-in: cubic-bezier(0.32, 0, 0.67, 0);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* ความกว้างหน้า */
   --content-width: 1200px;
@@ -65,8 +98,10 @@
 @media (min-width: 900px) {
   :root {
     --gutter: 48px;
-    --text-title: 40px;
-    --text-heading: 24px;
+    --text-title: 48px;
+    --text-heading: 28px;
+    --text-price: 32px;
+    --header-height: 64px;
     --section-gap: var(--space-8);
   }
 }
@@ -79,6 +114,8 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* แถบด้านบนติดขอบจอ ของที่เบราว์เซอร์เลื่อนมาให้ดูจึงต้องหยุดใต้แถบ */
+  scroll-padding-top: calc(var(--header-height) + var(--space-4));
 }
 
 body {
@@ -117,13 +154,15 @@ a {
 
 h1 {
   margin: 0 0 var(--space-5);
+  font-family: var(--font-display);
   font-size: var(--text-title);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.3;
 }
 
 h2 {
   margin: var(--space-5) 0 var(--space-2);
+  font-family: var(--font-display);
   font-size: var(--text-heading);
   font-weight: 600;
   line-height: 1.3;
@@ -161,12 +200,83 @@ h3 {
   border: 0;
 }
 
-/* แถบด้านบน: จอเล็กเป็นแถวเดียว โลโก้ ค้นหา ตะกร้า เมนู ลิงก์อื่นอยู่ในเมนู จอ 900 ขึ้นไปลิงก์เรียงในแถวเดียวกัน */
+/* ประโยคเดียวตัวใหญ่ หน้าละไม่เกินหนึ่งตัว */
+.display {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: 700;
+  line-height: var(--line-height-display);
+}
+
+/* ของที่ลอยอยู่บนพื้นหน้า ไม่มีเส้นขอบ ห้ามซ้อนกัน */
+.card {
+  border-radius: var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+}
+
+/* ป้ายสถานะ สีเป็นตัวช่วย ข้อความในป้ายต้องบอกสถานะครบเอง */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-sunken);
+  color: var(--color-text);
+  font-size: var(--text-label);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.badge-success {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-press);
+}
+
+.badge-done {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.badge-wait {
+  background: var(--color-accent-soft);
+}
+
+.badge-new {
+  background: var(--color-accent);
+}
+
+.badge-alert {
+  background: var(--tint-3);
+  color: var(--color-danger);
+}
+
+/* แถบด้านบน: ติดขอบบนจอ จอเล็กเป็นแถวเดียว โลโก้ ค้นหา ตะกร้า เมนู ลิงก์อื่นอยู่ในเมนู จอ 900 ขึ้นไปลิงก์เรียงในแถวเดียวกัน */
 
 .site-header {
-  position: relative;
-  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 30;
   background: var(--color-bg);
+  box-shadow: 0 1px 0 var(--color-border);
+  view-transition-name: site-header;
+}
+
+@supports (animation-timeline: scroll()) {
+  .site-header {
+    animation: header-lift linear both;
+    animation-timeline: scroll();
+    animation-range: 0 var(--space-7);
+  }
+}
+
+@keyframes header-lift {
+  to {
+    box-shadow: var(--shadow-2);
+  }
 }
 
 .site-header-inner {
@@ -180,13 +290,20 @@ h3 {
   display: inline-flex;
   flex: none;
   align-items: center;
+  gap: var(--space-2);
   min-height: var(--tap);
   margin-inline-end: var(--space-2);
-  color: var(--color-text);
+  color: var(--color-ink);
   font-family: var(--font-logo);
   font-size: var(--text-body);
   font-weight: 600;
   text-decoration: none;
+}
+
+.brand-mark {
+  display: none;
+  flex: none;
+  color: var(--color-primary);
 }
 
 .header-search {
@@ -196,27 +313,76 @@ h3 {
 }
 
 .header-search .input {
-  padding-inline: var(--space-2) var(--tap);
+  padding-inline: var(--space-4) var(--tap);
+  border-radius: var(--radius-pill);
 }
 
 .header-search-button,
 .header-icon-button {
+  position: relative;
   display: inline-flex;
   flex: none;
   align-items: center;
   justify-content: center;
-  gap: 2px;
   min-width: var(--tap);
   min-height: var(--tap);
   padding: 0;
   border: 0;
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   background: none;
   color: var(--color-text);
   font: inherit;
   font-size: var(--text-label);
   text-decoration: none;
   cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-base) var(--ease-spring);
+}
+
+.header-search-button:active,
+.header-icon-button:active {
+  transform: scale(0.92);
+  transition-duration: var(--dur-press);
+}
+
+@media (hover: hover) {
+  .header-icon-button:hover {
+    background: var(--color-surface-sunken);
+  }
+
+  .header-search-button:hover {
+    color: var(--color-primary);
+  }
+}
+
+/* จำนวนรายการในตะกร้า เป็นจุดสีดอกดาวเรืองที่มุมไอคอน */
+.cart-count {
+  position: absolute;
+  top: 2px;
+  inset-inline-end: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-text);
+  font-size: var(--text-label);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.cart-count-bump {
+  animation: bump var(--dur-move) var(--ease-spring);
+}
+
+@keyframes bump {
+  40% {
+    transform: scale(1.5);
+  }
 }
 
 /* แถบใต้แถบด้านบน บอกว่าระบบจะทำอะไรกับข้อความในช่องค้นหา (SNT-011) */
@@ -225,8 +391,8 @@ h3 {
   z-index: 2;
   inset: 100% 0 auto;
   display: none;
-  border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
+  box-shadow: var(--shadow-2);
   font-size: var(--text-label);
 }
 
@@ -267,9 +433,10 @@ h3 {
   inset-inline: 0;
   top: 100%;
   z-index: 20;
-  padding: 0 var(--gutter) var(--space-2);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg);
+  padding: var(--space-2) var(--gutter) var(--space-4);
+  border-radius: 0 0 var(--radius-l) var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
 }
 
 .nav-list {
@@ -292,6 +459,10 @@ h3 {
   font-size: var(--text-body);
 }
 
+.header-menu-panel li:last-child > .nav-link {
+  border-bottom: 0;
+}
+
 .nav-link {
   display: inline-flex;
   align-items: center;
@@ -301,19 +472,27 @@ h3 {
   font-size: var(--text-label);
   text-decoration: underline;
   text-decoration-color: transparent;
+  text-decoration-thickness: 2px;
   text-underline-offset: 6px;
-  transition: text-decoration-color var(--duration) var(--ease);
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    text-decoration-color var(--dur-fast) var(--ease-out);
 }
 
 @media (hover: hover) {
   .nav-link:hover {
-    text-decoration-color: currentColor;
+    color: var(--color-primary-press);
+    text-decoration-color: var(--color-primary);
   }
 }
 
 @media (min-width: 600px) {
   .brand {
     font-size: var(--text-heading);
+  }
+
+  .brand-mark {
+    display: block;
   }
 }
 
@@ -329,8 +508,12 @@ h3 {
   }
 
   .header-search {
-    min-width: 120px;
-    max-width: 280px;
+    min-width: 160px;
+    max-width: 420px;
+  }
+
+  .header-menu {
+    margin-inline-start: auto;
   }
 
   .header-menu-button {
@@ -342,7 +525,9 @@ h3 {
     position: static;
     display: block;
     padding: 0;
-    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
   }
 
   .header-menu::details-content {
@@ -404,7 +589,7 @@ h3 {
   flex-shrink: 0;
   padding: 0 var(--space-5);
   border: 0;
-  border-radius: var(--radius);
+  border-radius: var(--radius-m);
   background: var(--color-primary);
   color: var(--color-on-primary);
   font: inherit;
@@ -415,14 +600,15 @@ h3 {
   text-decoration: none;
   cursor: pointer;
   transition:
-    background-color var(--duration) var(--ease),
-    box-shadow var(--duration) var(--ease),
-    transform var(--duration) var(--ease);
+    background-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    transform var(--dur-base) var(--ease-spring);
 }
 
 .button:active:not(:disabled) {
   background: var(--color-primary-press);
-  transform: scale(0.98);
+  transform: scale(0.97);
+  transition-duration: var(--dur-press);
 }
 
 .button:disabled {
@@ -432,40 +618,42 @@ h3 {
 }
 
 .button-secondary {
-  background: transparent;
-  box-shadow: inset 0 0 0 1px var(--color-text);
+  background: var(--color-surface);
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
   color: var(--color-text);
 }
 
 .button-secondary:active:not(:disabled) {
-  background: transparent;
+  background: var(--color-surface-sunken);
 }
 
 .button-secondary:disabled {
   background: transparent;
-  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+  box-shadow: inset 0 0 0 1px var(--color-border);
 }
 
 @media (hover: hover) {
   .button:hover:not(:disabled) {
     background: var(--color-primary-hover);
+    box-shadow: var(--shadow-1);
   }
 
   .button-secondary:hover:not(:disabled) {
-    background: transparent;
+    background: var(--color-surface);
     box-shadow: inset 0 0 0 2px var(--color-text);
   }
 }
 
-/* การกระทำรองในแถวรายการ เช่น "ลบ" "ดูการจัดส่ง" เป็นลิงก์ข้อความ ใช้ได้ทั้ง a และ button */
+/* การกระทำรองในแถวรายการ เช่น "ลบ" "ดูการจัดส่ง" เป็นลิงก์ข้อความสีเขียว ใช้ได้ทั้ง a และ button */
 .link-action {
   display: inline-flex;
   align-items: center;
+  gap: var(--space-1);
   min-height: var(--tap);
   padding: 0;
   border: 0;
   background: none;
-  color: var(--color-text);
+  color: var(--color-primary-press);
   font: inherit;
   font-size: var(--text-label);
   font-weight: 400;
@@ -505,13 +693,19 @@ label.field {
   width: 100%;
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius);
-  background: var(--color-bg);
+  border-radius: var(--radius-s);
+  background: var(--color-surface);
   color: var(--color-text);
   font: inherit;
   font-size: var(--text-body);
   font-weight: 400;
-  transition: border-color var(--duration) var(--ease);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.input:focus-visible {
+  border-color: var(--color-primary);
 }
 
 .input[aria-invalid="true"] {
@@ -542,21 +736,40 @@ label.field {
 .chip {
   display: inline-flex;
   align-items: center;
+  gap: var(--space-1);
   min-height: var(--tap);
   padding: 0 var(--space-4);
   border: 0;
-  border-radius: var(--radius);
-  background: transparent;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
   box-shadow: inset 0 0 0 1px var(--color-border-strong);
   color: var(--color-text);
   font-size: var(--text-label);
-  transition: box-shadow var(--duration) var(--ease);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    transform var(--dur-base) var(--ease-spring);
+}
+
+.chip:active {
+  transform: scale(0.97);
+  transition-duration: var(--dur-press);
 }
 
 .chip[aria-current],
 .chip[aria-pressed="true"],
 .chip:has(input:checked) {
+  background: var(--color-primary-soft);
   box-shadow: var(--selected-ring);
+  color: var(--color-primary-press);
+}
+
+.chip[aria-current]::before,
+.chip[aria-pressed="true"]::before,
+.chip:has(input:checked)::before {
+  /* ข้อความแทนที่ว่างเปล่า เครื่องหมายถูกจึงไม่ปนเข้าไปในชื่อที่โปรแกรมอ่านจออ่าน */
+  content: "✓" / "";
+  font-weight: 600;
 }
 
 /* หน้าว่าง กำลังโหลด ผิดพลาด และไม่พบ */
@@ -564,8 +777,9 @@ label.field {
 .state {
   margin: var(--space-4) 0;
   padding: var(--space-7) var(--space-4);
-  border-top: 1px solid var(--color-text);
-  border-bottom: 1px solid var(--color-border);
+  border-radius: var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
   text-align: center;
 }
 
@@ -587,12 +801,225 @@ label.field {
   margin-top: var(--space-5);
 }
 
+/* ภาษาของการขยับ: class ที่ใช้ซ้ำได้ทุกหน้า ขยับแค่ transform กับ opacity (และเงาตอนชี้) */
+
+/* ของที่กดได้: ย่อตอนกด แล้วเด้งกลับตอนปล่อย */
+.pressable {
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+
+.pressable:active {
+  transform: scale(0.97);
+  transition-duration: var(--dur-press);
+}
+
+/* การ์ดที่กดได้: ยกขึ้นและเงาเข้มขึ้นตอนชี้ */
+.lift {
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.lift:active {
+  transform: scale(0.98);
+  transition-duration: var(--dur-press);
+}
+
+@media (hover: hover) {
+  .lift:hover {
+    box-shadow: var(--shadow-2);
+    transform: translateY(-4px);
+  }
+
+  .lift:hover:active {
+    transform: translateY(-2px) scale(0.98);
+  }
+}
+
+/* ของในส่วนต้อนรับที่เข้ามาทีละบรรทัดตอนเปิดหน้า ใส่ลำดับด้วย style="--i: 1" */
+.rise {
+  animation: rise var(--dur-scene) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+/* ของที่โผล่เมื่อเลื่อนมาถึง เบราว์เซอร์ที่ไม่รองรับเห็นของนิ่งครบ */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 45%;
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+/* เครื่องหมายถูกที่วาดตัวเอง ใช้กับ path ที่มี pathLength="1" */
+.draw {
+  stroke-dasharray: 1;
+  animation: draw var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+/* โครงสีระหว่างโหลด มีแสงวิ่งผ่าน */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-s);
+  background: var(--color-surface-sunken);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, var(--color-bg) 50%, transparent 70%);
+  opacity: 0.7;
+  transform: translateX(-100%);
+  animation: shimmer 1.4s var(--ease-in-out) infinite;
+}
+
+@keyframes shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* รูปย่อที่ลอยจากปุ่มใส่ตะกร้าไปไอคอนตะกร้า สร้างโดย src/shared/ui/fly-to-cart.ts */
+.fly-thumb {
+  position: fixed;
+  z-index: 40;
+  top: 0;
+  left: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-m);
+  background: var(--color-accent);
+  box-shadow: var(--shadow-2);
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* การเปลี่ยนหน้าและการโผล่ของข้อมูล (React ViewTransition) ชื่อ class ตรงกับ src/shared/ui/transitions.tsx */
+
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-group(site-header) {
+  z-index: 100;
+  animation: none;
+}
+
+::view-transition-old(site-header) {
+  display: none;
+}
+
+::view-transition-new(site-header) {
+  animation: none;
+}
+
+::view-transition-group(.morph) {
+  animation-duration: var(--dur-move);
+  animation-timing-function: var(--ease-in-out);
+}
+
+::view-transition-old(.morph),
+::view-transition-new(.morph) {
+  height: 100%;
+  object-fit: cover;
+}
+
+::view-transition-old(.slide-down) {
+  animation:
+    var(--dur-exit) var(--ease-in) both vt-fade reverse,
+    var(--dur-exit) var(--ease-in) both vt-slide-y reverse;
+}
+
+::view-transition-new(.slide-up) {
+  animation:
+    var(--dur-base) var(--ease-out) var(--dur-exit) both vt-fade,
+    var(--dur-move) var(--ease-out) both vt-slide-y;
+}
+
+::view-transition-old(.nav-forward),
+::view-transition-old(.nav-back) {
+  animation:
+    var(--dur-exit) var(--ease-in) both vt-fade reverse,
+    var(--dur-move) var(--ease-in-out) both vt-slide-x reverse;
+}
+
+::view-transition-new(.nav-forward),
+::view-transition-new(.nav-back) {
+  animation:
+    var(--dur-base) var(--ease-out) var(--dur-exit) both vt-fade,
+    var(--dur-move) var(--ease-in-out) both vt-slide-x;
+}
+
+::view-transition-old(.nav-forward),
+::view-transition-new(.nav-back) {
+  --slide-offset: -60px;
+}
+
+::view-transition-new(.nav-forward),
+::view-transition-old(.nav-back) {
+  --slide-offset: 60px;
+}
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-slide-y {
+  from {
+    transform: translateY(10px);
+  }
+}
+
+@keyframes vt-slide-x {
+  from {
+    transform: translateX(var(--slide-offset));
+  }
+}
+
+/* ผู้ใช้ขอลดการขยับ: ไม่มีของย้ายที่ ไม่มีของผูกกับการเลื่อน เหลือแค่การเปลี่ยนสีที่จบทันที */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition-duration: 1ms !important;
     animation-duration: 1ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
+    animation-timeline: auto !important;
+  }
+
+  .skeleton::after {
+    animation: none;
+  }
+
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
   }
 }

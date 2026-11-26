@@ -69,7 +69,8 @@ describe("REV-009 คะแนนบนการ์ดสินค้า", () =>
     hideReview(db, { adminAccountId: admin, reviewId: football.reviewIds[0], reason: "ไม่เหมาะสม" });
 
     const card = search().items[0];
-    expect(card).toEqual({ id: football.id, name: "ลูกฟุตบอล", price: 350, shopName: "มานะสปอร์ต", coverUrl: card.coverUrl, soldOut: false });
+    expect(card).toMatchObject({ id: football.id, name: "ลูกฟุตบอล", price: 350, shopName: "มานะสปอร์ต", soldOut: false });
+    expect(card).not.toHaveProperty("rating");
     expect(listStorefrontProducts(db, shopId).items[0]).not.toHaveProperty("rating");
   });
 

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition, type FormEvent } from "react";
+import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { ACTION_FAILED } from "@/shared/ui/action-form";
+import { flyToCart } from "@/shared/ui/fly-to-cart";
 import { settle } from "@/shared/ui/timeout";
 import type { AddToCart, AddToCartResult } from "@/features/browse/add-to-cart";
 import type { ProductDetail } from "@/features/browse/server/product-detail";
@@ -29,12 +30,24 @@ type Props = {
   addToCart: AddToCart;
 };
 
+/** ปุ่มบอกว่า "ใส่แล้ว" นานเท่านี้ แล้วกลับเป็น "ใส่ตะกร้า" ให้กดเพิ่มได้อีก */
+const ADDED_MS = 1600;
+
 /** ราคา ค่าส่ง ตัวเลือก สต็อก จำนวน และปุ่ม "ใส่ตะกร้า" ของหน้ารายละเอียดสินค้า (BRW-008 ถึง BRW-010) */
 export function AddToCartForm({ product, signedIn, isOwnShop, loginHref, shippingFee, addToCart }: Props) {
   const [selection, setSelection] = useState<Selection>(() => product.options.map(() => null));
   const [quantity, setQuantity] = useState("1");
   const [result, setResult] = useState<AddToCartResult | null>(null);
   const [pending, startTransition] = useTransition();
+  // ปุ่มตอบทันทีที่กด ไม่รอเซิร์ฟเวอร์ ถ้าเซิร์ฟเวอร์ตอบว่าไม่สำเร็จ ปุ่มกลับเป็นเดิมพร้อมข้อความ
+  const [added, setAdded] = useState(false);
+  const addButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!added || pending) return;
+    const timer = setTimeout(() => setAdded(false), ADDED_MS);
+    return () => clearTimeout(timer);
+  }, [added, pending]);
 
   const complete = missingOptionMessage(product.options, selection) === null;
   const variant = findVariant(product, selection);
@@ -53,9 +66,13 @@ export function AddToCartForm({ product, signedIn, isOwnShop, loginHref, shippin
       return;
     }
     if (!variant) return;
+    setAdded(true);
+    if (addButton.current) flyToCart(addButton.current, product.images[0] ?? null);
     startTransition(async () => {
       const result = await settle(addToCart({ variantId: variant.id, quantity }));
-      setResult("failed" in result ? { ok: false, message: ACTION_FAILED } : result);
+      const shown = "failed" in result ? { ok: false, message: ACTION_FAILED } : result;
+      setResult(shown);
+      if (!shown.ok) setAdded(false);
     });
   }
 
@@ -108,8 +125,17 @@ export function AddToCartForm({ product, signedIn, isOwnShop, loginHref, shippin
               />
             </label>
             {signedIn || blocked ? (
-              <button type="submit" className="button" disabled={blocked !== null || pending}>
-                ใส่ตะกร้า
+              <button ref={addButton} type="submit" className={added ? `button ${styles.added}` : "button"} disabled={blocked !== null || pending}>
+                {added ? (
+                  <>
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                      <path className="draw" pathLength="1" d="m5 12.5 4.5 4.5L19 7.5" />
+                    </svg>
+                    ใส่แล้ว
+                  </>
+                ) : (
+                  "ใส่ตะกร้า"
+                )}
               </button>
             ) : (
               <Link href={loginHref} className="button">
@@ -120,7 +146,7 @@ export function AddToCartForm({ product, signedIn, isOwnShop, loginHref, shippin
 
           {isOwnShop && <p className="field-error">{blocked}</p>}
           {result && (
-            <p role={result.ok ? "status" : "alert"} className={result.ok ? undefined : "field-error"}>
+            <p role={result.ok ? "status" : "alert"} className={result.ok ? `badge badge-success ${styles.notice}` : "field-error"}>
               {result.message}
             </p>
           )}

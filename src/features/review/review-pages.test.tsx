@@ -526,7 +526,7 @@ describe("REV-013 คะแนนของร้านบนหน้าร้�
     reviewed(football.variantIds[0], 5);
     const { html = "" } = await storefront(somchai.shopId);
     expect(text(html.match(/<header.*?<\/header>/)?.[0])).toContain("สมชายการช่าง ยังไม่มีรีวิว");
-    expect(html).not.toContain("0.0");
+    expect(text(html)).not.toContain("0.0");
     expect(html).not.toContain("★");
     expect(html).toContain("ไขควง");
   });

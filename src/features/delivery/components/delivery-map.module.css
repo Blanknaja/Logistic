@@ -4,13 +4,13 @@
 .map {
   position: relative;
   aspect-ratio: 4 / 3;
-  background: var(--color-surface);
+  background: var(--color-surface-sunken);
 }
 
 .map .canvas {
   position: absolute;
   inset: 0;
-  background: var(--color-surface);
+  background: var(--color-surface-sunken);
   font-family: inherit;
   font-size: var(--text-label);
 }
@@ -28,7 +28,7 @@
 /* ปุ่มซูมสูงเท่าสิ่งที่กดได้ทั้งแอป มุมและขอบแบบปุ่มรอง ไม่มีเงา */
 .map :global(.leaflet-bar) {
   border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius);
+  border-radius: var(--radius-s);
   box-shadow: none;
   overflow: hidden;
 }
@@ -40,7 +40,7 @@
   background: var(--color-bg);
   color: var(--color-text);
   font: 400 var(--text-heading) / var(--tap) var(--font);
-  transition: background-color var(--duration) var(--ease);
+  transition: background-color var(--dur-fast) var(--ease-out);
 }
 
 .map :global(.leaflet-bar a:first-child),
@@ -50,7 +50,7 @@
 
 @media (hover: hover) {
   .map :global(.leaflet-bar a:hover) {
-    background: var(--color-surface);
+    background: var(--color-surface-sunken);
   }
 }
 
@@ -96,7 +96,7 @@
 .map .label {
   padding: 0 var(--space-2);
   border: 0;
-  border-radius: var(--radius);
+  border-radius: var(--radius-s);
   box-shadow: none;
   background: var(--color-bg);
   color: var(--color-text);

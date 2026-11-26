@@ -66,7 +66,7 @@ export function ShopRatingLine({ rating }: { rating: Rating | null }) {
 /** ป้าย "รอรีวิว 2 รายการ" ของคำสั่งซื้อในหน้ารายการคำสั่งซื้อ ไม่มีรายการรอรีวิวไม่แสดง (REV-005) */
 export function AwaitingReviewBadge({ count }: { count: number }) {
   if (count <= 0) return null;
-  return <span className={styles.orderBadge}>รอรีวิว {formatNumber(count)} รายการ</span>;
+  return <span className={`badge badge-wait ${styles.orderBadge}`}>รอรีวิว {formatNumber(count)} รายการ</span>;
 }
 
 /** ของรายการในคำสั่งซื้อที่ `สำเร็จ`: ปุ่ม "เขียนรีวิว" หรือคะแนนที่ให้กับลิงก์ "ดูรีวิวของฉัน" (REV-005) */

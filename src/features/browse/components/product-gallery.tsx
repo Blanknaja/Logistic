@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { Morph, productImageName } from "@/shared/ui/transitions";
 import { ProductImage } from "./product-image";
 import { ProductModel } from "./product-model";
 import styles from "./browse.module.css";
@@ -9,7 +10,9 @@ import styles from "./browse.module.css";
  * รูปใหญ่หนึ่งรูป กับรูปย่อที่กดสลับรูปใหญ่ได้ (BRW-008)
  * สินค้าที่มีไฟล์ 3 มิติมีทางเข้า "ดูแบบ 3 มิติ" ต่อท้ายรูปย่อ ไฟล์ถูกโหลดเมื่อกดเท่านั้น (P3D-003 P3D-Q01)
  */
-export function ProductGallery({ images, name, model }: { images: string[]; name: string; model: string | null }) {
+type Props = { images: string[]; name: string; model: string | null; productId?: number; categoryId?: number | null };
+
+export function ProductGallery({ images, name, model, productId, categoryId }: Props) {
   const [current, setCurrent] = useState(0);
   const showModel = model !== null && current === images.length;
   return (
@@ -18,7 +21,9 @@ export function ProductGallery({ images, name, model }: { images: string[]; name
         {showModel ? (
           <ProductModel src={model} cover={images[0] ?? null} alt={name} />
         ) : (
-          <ProductImage src={images[current] ?? null} alt={name} />
+          <PlateImage productId={productId}>
+            <ProductImage src={images[current] ?? null} alt={name} categoryId={categoryId} />
+          </PlateImage>
         )}
       </div>
       {(images.length > 1 || model !== null) && (
@@ -53,6 +58,11 @@ export function ProductGallery({ images, name, model }: { images: string[]; name
       )}
     </div>
   );
+}
+
+/** รูปใหญ่ใช้ชื่อเดียวกับรูปในการ์ด รูปจึงขยายจากการ์ดมาเป็นรูปนี้ตอนเปลี่ยนหน้า */
+function PlateImage({ productId, children }: { productId?: number; children: ReactNode }) {
+  return productId === undefined ? children : <Morph name={productImageName(productId)}>{children}</Morph>;
 }
 
 function CubeIcon() {

@@ -72,6 +72,8 @@ requirement `review.md` (REV) อยู่ในโฟลเดอร์ `review
 - component ที่หน้าอื่นใช้: `CardRating` (การ์ดสินค้า) `ProductRating` กับ `ProductReviews` (หน้ารายละเอียดสินค้า รับ `stars` และ `rpage` จากที่อยู่หน้าเว็บ) `ShopRatingLine` (หน้าร้าน) `AwaitingReviewBadge` กับ `OrderItemReview` (หน้าคำสั่งซื้อของผู้ซื้อ) สไตล์ทั้งหมดอยู่ใน `review/components/review.module.css`
 - test ที่ต้องมีรีวิวใช้ `writeReview()` จาก `review/server/fixtures.ts` กับคำสั่งซื้อจาก `addOrder`
 
+หน้าแรกที่ไม่มีคำค้นหรือตัวกรองมีส่วนต้อนรับ การ์ดหมวด และชั้นวางก่อนรายการสินค้า ข้อมูลมาจาก `getHomeSections()` ใน `browse/server/home.ts` component อยู่ใน `browse/components/home-sections.tsx` ฉาก 3 มิติของส่วนต้อนรับ (`parcel-scene.ts`) ใช้ `three` ตรงๆ และโหลดด้วย `import()` จาก `parcel-stage.tsx` ชนิดข้อมูลของ `three` ประกาศเฉพาะส่วนที่ใช้ใน `three.d.ts` ข้างกัน การขยับที่ใช้ซ้ำ (เปลี่ยนหน้า รูปขยาย ของลอยไปตะกร้า) อยู่ใน `src/shared/ui/transitions.tsx` กับ `fly-to-cart.ts` กฎอยู่ใน `docs/design-system.md` และ e2e ของราวกั้นอยู่ที่ `e2e/home-motion.spec.ts`
+
 requirement `delivery-map.md` (MAP) อยู่ในโฟลเดอร์ `delivery` เพราะเพิ่มแค่ช่องจังหวัดในฟอร์มเปลี่ยนสถานะกับแผนที่บนหน้าติดตามพัสดุ
 
 - จังหวัดของแต่ละรายการในประวัติการจัดส่งอยู่ที่คอลัมน์ `parcel_history.province` (migration `0005`) ว่างในรายการที่บันทึกก่อนมีช่องนี้ `changeParcelStatus` รับ `province` ทุกครั้ง และ `createParcelForPaidOrder` ใส่จังหวัดของที่อยู่ต้นทางให้รายการแรก

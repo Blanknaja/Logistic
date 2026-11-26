@@ -51,7 +51,7 @@
 }
 
 span.thumb {
-  background: var(--color-surface);
+  background: var(--color-surface-sunken);
 }
 
 .cardText {
@@ -196,7 +196,7 @@ span.thumb {
 }
 
 .item > span:first-child {
-  background: var(--color-surface);
+  background: var(--color-surface-sunken);
 }
 
 .totals {

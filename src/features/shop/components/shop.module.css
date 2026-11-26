@@ -42,7 +42,7 @@
   overflow: hidden;
   /* SHP-008 ให้โลโก้อยู่ในวงกลม จึงเป็นที่เดียวที่มุมไม่ใช่ --radius */
   border-radius: 50%;
-  background: var(--color-surface);
+  background: var(--color-surface-sunken);
   color: var(--color-text);
   font-size: var(--text-heading);
   line-height: 1;
@@ -278,7 +278,7 @@
   max-width: min(400px, calc(100vw - 2 * var(--gutter)));
   padding: var(--space-5);
   border: 1px solid var(--color-text);
-  border-radius: var(--radius);
+  border-radius: var(--radius-s);
   background: var(--color-bg);
   color: var(--color-text);
 }

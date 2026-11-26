@@ -16,6 +16,8 @@ export type ProductCard = {
   soldOut: boolean;
   /** คะแนนเฉลี่ยและจำนวนรีวิวที่ `แสดงอยู่` ไม่มีรีวิวไม่มีช่องนี้ (REV-009) */
   rating?: Rating;
+  /** หมวดของสินค้า ใช้เลือกไอคอนของรูปสำรอง */
+  categoryId?: number | null;
 };
 
 export type SearchResult = {
@@ -81,7 +83,7 @@ export function searchProducts(db: Db, params: BrowseParams): SearchResult {
   }
 
   const listed = `
-    SELECT p.id, p.name, p.published_at, s.name AS shop_name, min(v.price) AS price, sum(v.stock) AS stock,
+    SELECT p.id, p.name, p.category_id, p.published_at, s.name AS shop_name, min(v.price) AS price, sum(v.stock) AS stock,
       r.review_count, r.rating_tenths
     FROM products p
     JOIN shops s ON s.id = p.shop_id
@@ -105,6 +107,7 @@ export function searchProducts(db: Db, params: BrowseParams): SearchResult {
     .all(...args, PAGE_SIZE, (page - 1) * PAGE_SIZE) as {
     id: number;
     name: string;
+    category_id: number | null;
     shop_name: string;
     price: number;
     stock: number;
@@ -116,6 +119,7 @@ export function searchProducts(db: Db, params: BrowseParams): SearchResult {
   const items = rows.map((row) => ({
     id: row.id,
     name: row.name,
+    categoryId: row.category_id,
     price: row.price,
     shopName: row.shop_name,
     coverUrl: (cover.get(row.id)?.url as string | undefined) ?? null,

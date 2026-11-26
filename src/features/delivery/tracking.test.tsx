@@ -707,7 +707,7 @@ describe("MAP แผนที่การจัดส่งบนหน้าต
     for (const expected of ["ศูนย์คัดแยกลำปาง", ROUTE_TEXT]) expect(textOf(html)).toContain(expected);
     expect(MAP_TIMEOUT_MS).toBe(10_000);
     const css = readFileSync(join(process.cwd(), "src/features/delivery/components/delivery-map.module.css"), "utf8");
-    expect(css).toMatch(/\.map \{[^}]*background: var\(--color-surface\)/);
+    expect(css).toMatch(/\.map \{[^}]*background: var\(--color-surface-sunken\)/);
     expect(css).toMatch(/\.map \{[^}]*aspect-ratio/);
   });
 

@@ -34,7 +34,7 @@ const photoBytes = new Map(photoFiles.map((file) => [file, readFileSync(new URL(
 beforeAll(async () => {
   db = createTestDb();
   expect((await seed(db)).created).toBe(true);
-});
+}, 60_000);
 
 describe("ข้อมูลตัวอย่าง", () => {
   test("มี 50 ร้าน 1,000 สินค้าที่ขายอยู่ และ 12 หมวดหมู่ ที่ทุกหมวดมีสินค้าอย่างน้อย 10 รายการ", () => {

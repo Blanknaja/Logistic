@@ -59,9 +59,18 @@ e2e/                      test ที่เปิดหน้าเว็บจ�
 src/main-path.test.ts     test รอยต่อระหว่าง feature ของเส้นทางหลัก ใช้โมดูลจริงทั้งสองฝั่ง
 ```
 
-feature ทั้ง 10: `account` `shop` `product-listing` `stock` `browse` `cart` `checkout` `payment` `shop-orders` `delivery`
+feature ทั้ง 11: `account` `shop` `product-listing` `stock` `browse` `cart` `checkout` `payment` `shop-orders` `delivery` `review`
 
 requirement `sentence-search.md` (SNT) อยู่ในโฟลเดอร์ `browse` ตัวอ่านประโยคคือ `src/features/browse/sentence.ts` เป็นฟังก์ชันล้วนที่ใช้ทั้งในหน้าแรก (ค่าที่อ่านได้แทนที่คำค้นและตัวกรองก่อนค้นหา ลิงก์ในหน้าจึงใช้ค่าที่แยกแล้ว) และในช่องค้นหาของแถบด้านบน (บอกก่อนกดค้นหา) จะเพิ่มรูปแบบคำ ให้เพิ่มที่ไฟล์นี้พร้อมประโยคตัวอย่างใน `sentence.test.ts`
+
+requirement `review.md` (REV) อยู่ในโฟลเดอร์ `review` ส่วนที่ไปอยู่ในหน้าของ feature อื่นเป็น component จาก `review/components/` ที่วางด้วยบรรทัดเดียว
+
+- ตารางอยู่ใน migration `0006` คือ `reviews` (หนึ่งแถวต่อรายการในคำสั่งซื้อ มีคำตอบของร้านและการซ่อนในแถวเดียวกัน) `review_images` และ `review_image_files` (รูปที่ผู้ซื้อส่งขึ้นมา ผูกกับบัญชี)
+- คะแนนเฉลี่ยไม่เก็บแยก คิดจากรีวิวที่ `แสดงอยู่` ทุกครั้งที่อ่าน `review/server/ratings.ts` มี `productRating()` `shopRating()` และ `PRODUCT_RATINGS_SQL` ที่รายการสินค้าเอาไป `LEFT JOIN` เพื่อแสดง เรียง และกรองตามคะแนน (`browse/server/search.ts` กับ `shop/server/storefront.ts`) การปัดอยู่ที่ `averageTenths()` ใน `review/rules.ts` ซึ่ง SQL ใช้สูตรเดียวกัน แก้ที่หนึ่งต้องแก้อีกที่
+- การเขียน แก้ ตอบ ซ่อน และเลิกซ่อน อยู่ใน `review/server/reviews.ts` ข้อความและขีดจำกัดอยู่ใน `review/rules.ts` ที่ใช้ได้ทั้งสองฝั่ง
+- แจ้งเตือนที่เกิดจากรีวิวต่อที่ `review/server/events.ts` ซึ่งตอนนี้ยังไม่ทำอะไร มีสามฟังก์ชัน `onReviewPosted` `onReviewReplied` `onReviewHidden` แต่ละตัวถูกเรียกที่เดียวใน `reviews.ts` ภายในการบันทึกเดียวกับเหตุการณ์
+- component ที่หน้าอื่นใช้: `CardRating` (การ์ดสินค้า) `ProductRating` กับ `ProductReviews` (หน้ารายละเอียดสินค้า รับ `stars` และ `rpage` จากที่อยู่หน้าเว็บ) `ShopRatingLine` (หน้าร้าน) `AwaitingReviewBadge` กับ `OrderItemReview` (หน้าคำสั่งซื้อของผู้ซื้อ) สไตล์ทั้งหมดอยู่ใน `review/components/review.module.css`
+- test ที่ต้องมีรีวิวใช้ `writeReview()` จาก `review/server/fixtures.ts` กับคำสั่งซื้อจาก `addOrder`
 
 requirement `delivery-map.md` (MAP) อยู่ในโฟลเดอร์ `delivery` เพราะเพิ่มแค่ช่องจังหวัดในฟอร์มเปลี่ยนสถานะกับแผนที่บนหน้าติดตามพัสดุ
 
@@ -90,6 +99,7 @@ requirement `product-3d-view.md` (P3D) ไม่มีโฟลเดอร์�
 | payment | `/pay/[groupId]` |
 | shop-orders | `/seller/orders` `/seller/orders/[orderNo]` |
 | delivery | `/parcels/[trackingNo]` (ผู้ขายและผู้ดูแลแพลตฟอร์มเปลี่ยนสถานะ) `/track/[trackingNo]` (หน้าติดตามพัสดุ) |
+| review | `/orders/[orderNo]/review/[itemId]` (หน้าเขียนรีวิวและรีวิวของตัวเอง) `/seller/reviews` (หน้ารีวิวของร้าน) `/admin/reviews` (หน้าจัดการรีวิว เฉพาะผู้ดูแลแพลตฟอร์ม) `/review-images/[key]` (รูปในรีวิว หน้าเขียนรีวิวส่งรูปด้วย `POST /review-images`) |
 
 `src/app/seller/layout.tsx` ให้ ticket ของ shop สร้างที่เดียว และใช้ `<SellerMenu shopId={...} />` ในนั้น
 
@@ -110,8 +120,8 @@ layout ไม่วาดใหม่เมื่อกดลิงก์ไป�
 
 `visibleTo: (viewer) => viewer !== null` ใช้ซ่อนลิงก์ตามคนที่ดู `label` ใส่เป็นฟังก์ชัน `(viewer) => string` ได้เมื่อข้อความขึ้นกับคนที่ดู ในเมนูหลังบ้านใส่เป็น `(shopId) => string` ได้ เช่น "รอจัดของ 5" ลำดับที่จองไว้ (น้อยอยู่ซ้าย)
 
-- แถบด้านบน: browse 10, checkout 30, delivery 40, shop 50, account 90 ถึง 99 ไอคอนตะกร้าไม่อยู่ในรายการนี้ `SiteHeader` วาดเองนอกเมนูด้วย `cartCount` กับ `cartLabel` จาก `src/features/cart/nav.ts` เพราะต้องเห็นทุกขนาดจอ
-- เมนูหลังบ้าน: product-listing 10, stock 20, shop-orders 30, shop 40 (ตั้งค่าร้าน) และ 50 (หน้าร้าน)
+- แถบด้านบน: browse 10, checkout 30, delivery 40, shop 50, review 60 (จัดการรีวิว เฉพาะผู้ดูแลแพลตฟอร์ม), account 90 ถึง 99 ไอคอนตะกร้าไม่อยู่ในรายการนี้ `SiteHeader` วาดเองนอกเมนูด้วย `cartCount` กับ `cartLabel` จาก `src/features/cart/nav.ts` เพราะต้องเห็นทุกขนาดจอ
+- เมนูหลังบ้าน: product-listing 10, stock 20, shop-orders 30, review 35, shop 40 (ตั้งค่าร้าน) และ 50 (หน้าร้าน)
 
 ## เพิ่มหน้า
 
@@ -268,6 +278,6 @@ const buyer: CurrentAccount = await requireAccount(`/orders/${orderNo}`);
 
 ## ข้อมูลตัวอย่าง
 
-`pnpm seed` สร้าง 12 หมวดหมู่ 50 ร้าน 1,000 สินค้าที่ขายอยู่ พร้อมแบบย่อย สต็อก และประวัติสต็อก บัญชีผู้ดูแลแพลตฟอร์ม 1 บัญชี ผู้ขาย 50 บัญชี และผู้ซื้อ 3 บัญชี (อีเมลและรหัสผ่านอยู่ใน README) และคำสั่งซื้อตัวอย่าง 8 รายการของร้าน seller01 ครบทุกสถานะ ที่สร้างผ่านกฎจริง (`src/shared/seed/orders.ts`) ร้านอยู่กรุงเทพมหานคร ที่อยู่จัดส่งของ buyer1 buyer2 buyer3 อยู่เชียงใหม่ ขอนแก่น และกรุงเทพมหานคร และทุกรายการในประวัติการจัดส่งมีจังหวัด พัสดุของ buyer1 และ buyer2 จึงผ่าน 3 จังหวัด (MAP-010) รูปสินค้าเป็นรูปถ่ายจริงจาก `src/shared/seed/photos/` เลือกตามคำนามในชื่อสินค้า (`SAMPLE_PHOTOS` ใน `catalog.ts`) และเก็บแบบรูปที่ร้านนั้นส่งขึ้นมาเอง เปิดที่ `/product-images/<key>` ที่มาและสัญญาอนุญาตอยู่ใน `photos/SOURCES.txt` ใช้เฉพาะ CC0 หรือสาธารณสมบัติที่ไม่จำกัดประเทศ เพราะ repo นี้ public (ไม่ใช้ไฟล์ที่เป็นสาธารณสมบัติเฉพาะในสหรัฐอเมริกา test ใน `seed.test.ts` ตรวจป้าย) ชื่อที่ยังไม่มีรูปถ่ายและโลโก้ร้านเป็น SVG ที่สร้างจากชื่อไฟล์ที่ `/sample-images/<ชื่อ>.svg` สินค้า 2 ชิ้นของร้านแรกมีไฟล์ 3 มิติจาก `src/shared/seed/models/` (ที่มาและสัญญาอนุญาตอยู่ใน `SOURCES.txt` ข้างไฟล์ ใช้เฉพาะไฟล์ CC0)
+`pnpm seed` สร้าง 12 หมวดหมู่ 50 ร้าน 1,000 สินค้าที่ขายอยู่ พร้อมแบบย่อย สต็อก และประวัติสต็อก บัญชีผู้ดูแลแพลตฟอร์ม 1 บัญชี ผู้ขาย 50 บัญชี และผู้ซื้อ 24 บัญชี (อีเมลและรหัสผ่านอยู่ใน README) คำสั่งซื้อตัวอย่าง 8 รายการของร้าน seller01 ครบทุกสถานะ ที่สร้างผ่านกฎจริง (`src/shared/seed/orders.ts`) และรีวิวตัวอย่างราว 1,700 รีวิวของสินค้าราว 640 รายการ จากคำสั่งซื้อที่ `สำเร็จ` ราว 900 รายการของผู้ซื้อทั้ง 24 บัญชี ที่สร้างผ่านกฎจริงเช่นกัน (`src/shared/seed/reviews.ts` ตัวเลขที่ต้องได้อยู่ใน REV-019) คำสั่งซื้อชุดนี้ย้อนหลังราว 100 วัน สต็อกของสินค้าที่มีรีวิวจึงน้อยกว่าสต็อกตั้งต้นตามจำนวนที่ถูกซื้อ ร้านอยู่กรุงเทพมหานคร ที่อยู่จัดส่งของ buyer1 buyer2 buyer3 อยู่เชียงใหม่ ขอนแก่น และกรุงเทพมหานคร และทุกรายการในประวัติการจัดส่งมีจังหวัด พัสดุของ buyer1 และ buyer2 จึงผ่าน 3 จังหวัด (MAP-010) รูปสินค้าเป็นรูปถ่ายจริงจาก `src/shared/seed/photos/` เลือกตามคำนามในชื่อสินค้า (`SAMPLE_PHOTOS` ใน `catalog.ts`) และเก็บแบบรูปที่ร้านนั้นส่งขึ้นมาเอง เปิดที่ `/product-images/<key>` ที่มาและสัญญาอนุญาตอยู่ใน `photos/SOURCES.txt` ใช้เฉพาะ CC0 หรือสาธารณสมบัติที่ไม่จำกัดประเทศ เพราะ repo นี้ public (ไม่ใช้ไฟล์ที่เป็นสาธารณสมบัติเฉพาะในสหรัฐอเมริกา test ใน `seed.test.ts` ตรวจป้าย) ชื่อที่ยังไม่มีรูปถ่ายและโลโก้ร้านเป็น SVG ที่สร้างจากชื่อไฟล์ที่ `/sample-images/<ชื่อ>.svg` สินค้า 2 ชิ้นของร้านแรกมีไฟล์ 3 มิติจาก `src/shared/seed/models/` (ที่มาและสัญญาอนุญาตอยู่ใน `SOURCES.txt` ข้างไฟล์ ใช้เฉพาะไฟล์ CC0)
 
 ระบบรู้ว่าเคยสร้างแล้วจากบัญชี `admin@example.com` จึงรันซ้ำได้ ถ้าต้องเพิ่มข้อมูลตัวอย่าง ให้แก้ `src/shared/seed/index.ts` และ test ใน `seed.test.ts`

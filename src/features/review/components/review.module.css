@@ -95,6 +95,7 @@
 
 .average .stars {
   order: -1;
+  font-style: normal;
   font-size: var(--text-heading);
 }
 

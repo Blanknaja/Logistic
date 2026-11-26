@@ -83,8 +83,8 @@ test("NTF-014 NTF-002 NTF-004 ผู้ขายเปลี่ยนสถา�
   await expect(list.getByText(`ยังไม่อ่าน ${before} รายการ`)).toBeVisible();
   const listedBefore = await listed(list).count();
   await bell(list).click();
-  await expect(panel(list).locator("a").first()).toBeVisible();
-  await expect(panel(list).getByText(trackingNo)).toHaveCount(0);
+  await expect(panel(list).locator('a[href^="/notifications/"]').first()).toBeVisible();
+  await expect(panel(list).getByText(`พัสดุ ${trackingNo} จากร้าน ใจดีช็อป เป็น ส่งสำเร็จ`)).toHaveCount(0);
 
   await seller.goto(`/track/${trackingNo}`);
   await seller.getByRole("link", { name: "เปลี่ยนเป็น ส่งสำเร็จ" }).click();
@@ -106,10 +106,12 @@ test("NTF-014 NTF-002 NTF-004 ผู้ขายเปลี่ยนสถา�
   await expect(banner).toBeVisible({ timeout: LIVE_UPDATE_MS });
   expect(await listed(list).count()).toBe(listedBefore);
   // NTF-014 รายการใต้กระดิ่งที่กางอยู่ได้แจ้งเตือนใหม่เป็นรายการบนสุดเอง
-  await expect(panel(list).locator('a[href^="/notifications/"]').first()).toContainText(`พัสดุ ${trackingNo}`, { timeout: LIVE_UPDATE_MS });
+  await expect(panel(list).locator('a[href^="/notifications/"]').first()).toContainText(`พัสดุ ${trackingNo} จากร้าน ใจดีช็อป เป็น ส่งสำเร็จ`, {
+    timeout: LIVE_UPDATE_MS,
+  });
   await list.keyboard.press("Escape");
   await banner.click();
-  await expect(listed(list).first()).toContainText(`พัสดุ ${trackingNo}`);
+  await expect(listed(list).first()).toContainText(`พัสดุ ${trackingNo} จากร้าน ใจดีช็อป เป็น ส่งสำเร็จ`);
   await expect(banner).toBeHidden();
 
   // NTF-002 กดกระดิ่งเห็นรายการใหม่บนสุด และการกางรายการไม่ทำให้อ่านแล้ว

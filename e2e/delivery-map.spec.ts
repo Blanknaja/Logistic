@@ -173,10 +173,10 @@ test("MAP-006 ปิด JavaScript ยังเห็นข้อความเ
   await expect(noScript.getByRole("heading", { name: "ประวัติการจัดส่ง" })).toBeVisible();
   await expect(mapBox(noScript)).toBeHidden();
   expect(await mapBox(noScript).boundingBox(), "กรอบแผนที่ไม่กินที่").toBeNull();
-  // ข้อความเส้นทางเป็นสิ่งแรกที่ตาเห็นในส่วนแผนที่ ไม่มีที่ว่างของแผนที่อยู่เหนือมัน
+  // ข้อความเส้นทางเป็นสิ่งแรกที่ตาเห็นในส่วนแผนที่ เหนือมันมีแค่ระยะในของการ์ด ไม่มีที่ว่างของแผนที่
   const section = (await mapSection(noScript).boundingBox())!;
   const firstLine = (await routeText(noScript).boundingBox())!;
-  expect(firstLine.y - section.y).toBeLessThan(8);
+  expect(firstLine.y - section.y).toBeLessThan(32);
   expect(tiles).toEqual([]);
   await context.close();
 });

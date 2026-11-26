@@ -30,7 +30,6 @@ export function Celebrate({ onceKey }: { onceKey: string }) {
       return piece;
     });
     mark.current?.append(...pieces);
-    return () => pieces.forEach((piece) => piece.remove());
   }, [onceKey]);
 
   return (

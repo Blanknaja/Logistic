@@ -16,6 +16,7 @@
   overflow-y: auto;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg);
+  --inset: var(--gutter);
 }
 
 @media (min-width: 600px) {
@@ -29,6 +30,14 @@
     max-height: min(calc(var(--tap) * 12), calc(100dvh - var(--header-height)));
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
+    --inset: var(--space-4);
+  }
+}
+
+/* จอ 900 ขึ้นไปกระดิ่งอยู่กลางแถบ รายการจึงกางไปทางขวา */
+@media (min-width: 900px) {
+  .panel {
+    inset-inline: 0 auto;
   }
 }
 
@@ -38,7 +47,7 @@
   align-items: center;
   gap: var(--space-3);
   margin: 0;
-  padding: var(--space-4) var(--gutter);
+  padding: var(--space-4) var(--inset);
   color: var(--color-muted);
 }
 
@@ -52,8 +61,11 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: var(--space-2) var(--gutter);
+  position: sticky;
+  bottom: 0;
+  padding: var(--space-2) var(--inset);
   border-top: 1px solid var(--color-border);
+  background: var(--color-bg);
 }
 
 .list {
@@ -72,7 +84,7 @@
   column-gap: var(--space-3);
   align-items: start;
   min-height: var(--tap);
-  padding: var(--space-3) var(--gutter);
+  padding: var(--space-3) var(--inset, var(--space-2));
   color: var(--color-text);
   text-decoration: none;
 }

@@ -122,7 +122,7 @@ export function Bell({ start }: { start: Pulse | null }) {
         <BellIcon />
         {badge}
       </button>
-      <span role="status" className="visually-hidden">
+      <span aria-live="polite" aria-atomic="true" className="visually-hidden">
         {announcement}
       </span>
       <section id={panelId} className={styles.panel} hidden={!open} aria-label="แจ้งเตือนล่าสุด" onClick={closeOnLink}>

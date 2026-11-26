@@ -87,6 +87,7 @@ requirement `product-3d-view.md` (P3D) ไม่มีโฟลเดอร์�
 | browse | `/` (หน้าแรก) `/products/[productId]` ส่วนหน้าผลค้นหา BRW เลือกเอง |
 | cart | `/cart` |
 | checkout | `/addresses` `/checkout` `/orders` `/orders/[orderNo]` |
+| notification | `/notifications` (รับ `?page=`) `/notifications/[id]` (กดแจ้งเตือน: เป็นอ่านแล้ว แล้วพาไปหน้าที่เกี่ยวข้อง) |
 | payment | `/pay/[groupId]` |
 | shop-orders | `/seller/orders` `/seller/orders/[orderNo]` |
 | delivery | `/parcels/[trackingNo]` (ผู้ขายและผู้ดูแลแพลตฟอร์มเปลี่ยนสถานะ) `/track/[trackingNo]` (หน้าติดตามพัสดุ) |
@@ -199,6 +200,29 @@ export function cancelExpiredOrders(db: Db, now: Date = new Date()): number {
 | `reservedQuantity(db, variantId)` | `stock/server/reservation.ts` | จำนวนที่จองอยู่ของแบบย่อย |
 
 เหตุผลการยกเลิกใช้ `CANCEL_REASON` ใน `order-groups.ts` ("ผู้ซื้อยกเลิก" "หมดเวลาจ่ายเงิน" "ส่งไม่สำเร็จ")
+
+## แจ้งเตือน
+
+feature `notification` (requirement `notification.md` รหัส NTF) เก็บแจ้งเตือนในตาราง `notifications` (migration `0007`) หนึ่งแถวต่อหนึ่งผู้รับต่อหนึ่งเหตุการณ์ `read_at` ว่างคือ `ยังไม่อ่าน`
+
+- feature ต้นทางเรียกฟังก์ชัน `notify...` ใน `notification/server/events.ts` หนึ่งฟังก์ชันต่อหนึ่งเหตุการณ์ ใน transaction เดียวกับที่บันทึกเหตุการณ์ เหตุการณ์ที่ถูกปฏิเสธจึงไม่มีแจ้งเตือน ข้อความและหน้าที่เกี่ยวข้องถูกเก็บตอนเหตุการณ์เกิด จะเพิ่มชนิดใหม่ ให้เพิ่มฟังก์ชันในไฟล์นี้พร้อมชนิดใน `NOTIFICATION_TYPE`
+- เรียกซ้ำด้วยเหตุการณ์เดิมไม่ได้รายการเพิ่ม เพราะฐานข้อมูลมี `UNIQUE (account_id, event_key)` (NTF-016) ผู้เรียกจึงไม่ต้องตรวจเองว่าเคยแจ้งแล้ว
+- กระดิ่งอยู่ใน `SiteHeader` นอกเมนูแบบเดียวกับไอคอนตะกร้า (`NotificationBell` ใน `notification/components/`) ใช้ class `header-icon-button` ของแถบด้านบน สไตล์อื่นอยู่ใน `notification.module.css`
+- หน้าที่เปิดค้างถามเซิร์ฟเวอร์ทุก 5 วินาทีด้วย server action `notificationPulseAction` (`usePulse` ใน `notification/components/use-pulse.ts`) แบบเดียวกับ `LiveUpdates` ของ shop-orders ได้จำนวนที่ยังไม่อ่านที่นับใหม่ทั้งหมดทุกรอบ รอบที่ถามไม่ได้จึงไม่ทำให้นับซ้ำหรือนับขาด (NTF-014 NTF-015) แอปมีโปรเซสเดียวและฐานข้อมูลเดียว จึงไม่ใช้ SSE หรือ WebSocket
+- ลิงก์ของแจ้งเตือนคือ `/notifications/[id]` ซึ่งเปลี่ยนเป็นอ่านแล้วตอนเปิด ลิงก์ไปที่อยู่นี้ต้องใส่ `prefetch={false}` ใช้ `NotificationItems` ที่ใส่ให้แล้ว
+- แจ้งเตือนตัวอย่างเกิดจากคำสั่งซื้อตัวอย่างของ `seed/orders.ts` เอง และ `seed/notifications.ts` เพิ่มคำสั่งซื้ออีก 5 รายการผ่านกฎจริงเพื่อให้มีเรื่องจ่ายไม่สำเร็จ หมดเวลาจ่ายเงิน และสต็อกเหลือ 0 (NTF-018) ร้าน seller01 จึงมีคำสั่งซื้อตัวอย่างรวม 9 รายการ (`จ่ายแล้ว` 3) และร้าน seller02 มี 4 รายการ
+
+| ฟังก์ชัน | ใช้ตอนไหน |
+|---|---|
+| `notifyPaymentSucceeded(db, paymentId, now)` | `markGroupPaid` เรียกเมื่อการจ่ายเงินเป็น `สำเร็จ` แจ้งผู้ซื้อ และผู้ขายของแต่ละคำสั่งซื้อ (NTF-006 NTF-010) |
+| `notifyPaymentFailed(db, paymentId, now)` | การจ่ายเงินเป็น `ไม่สำเร็จ` (NTF-006) |
+| `notifyPaymentTimedOut(db, groupId, orderCount, now)` | `cancelAwaitingPaymentGroup` เรียกเมื่อเหตุผลคือหมดเวลาจ่ายเงิน (NTF-006) |
+| `notifyParcelStatusChanged(db, trackingNo, status, now)` | `changeParcelStatus` เรียกทุกครั้งที่เปลี่ยนสำเร็จ `ส่งไม่สำเร็จ` ได้แจ้งเตือนคำสั่งซื้อถูกยกเลิกแทน (NTF-007 NTF-008) |
+| `notifyOrderCompleted(db, orderId, by, now)` | คำสั่งซื้อเป็น `สำเร็จ` โดยผู้ซื้อหรือระบบ (NTF-011) |
+| `notifyStockEmpty(db, variantId, orderId, now)` | `reserveOrderStock` เรียกเมื่อการจองทำให้สต็อกเหลือ 0 (NTF-013) |
+| `notifyReviewReplied(db, { reviewId, buyerAccountId, shopName, productName, href }, now)` | ร้านส่งคำตอบของร้านให้รีวิว (NTF-009) |
+| `notifyReviewHidden(db, { reviewId, buyerAccountId, productName, reason, href }, now)` | ผู้ดูแลแพลตฟอร์มซ่อนรีวิว (NTF-009) |
+| `notifyNewReview(db, { reviewId, shopId, productName, rating, href }, now)` | ผู้ซื้อส่งรีวิวของสินค้าในร้าน (NTF-012) |
 
 ## เพิ่มหรือเปลี่ยนโครงข้อมูล
 

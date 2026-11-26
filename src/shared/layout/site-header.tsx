@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SearchBar } from "@/features/browse/components/search-bar";
 import { cartCount, cartLabel } from "@/features/cart/nav";
+import { NotificationBell } from "@/features/notification/components/notification-bell";
 import { listCategories } from "@/features/product-listing/server/categories";
 import { getDb } from "@/shared/db";
 import { HeaderMenu } from "@/shared/layout/header-menu";
@@ -21,6 +22,7 @@ export async function SiteHeader() {
           Blanksong
         </Link>
         <SearchBar categories={listCategories(getDb())} />
+        <NotificationBell viewer={viewer} />
         <Link href="/cart" className="header-icon-button" aria-label={cartLabel(count)}>
           <CartIcon />
           {count > 0 && count}

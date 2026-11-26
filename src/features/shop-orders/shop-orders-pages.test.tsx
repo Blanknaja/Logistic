@@ -4,7 +4,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import OrderNotFound from "@/app/seller/orders/[orderNo]/not-found";
 import SellerOrderPage from "@/app/seller/orders/[orderNo]/page";
 import OrdersError from "@/app/seller/orders/error";
@@ -22,7 +22,6 @@ import { createTestDb } from "@/shared/db/testing";
 import { SellerMenu } from "@/shared/layout/seller-menu";
 import { SESSION_COOKIE } from "@/shared/session";
 import { ORDER_STATUS, PARCEL_STATUS, PAYMENT_METHOD, PAYMENT_STATUS, type OrderStatus } from "@/shared/statuses";
-import { formatThaiDateTime } from "@/shared/format";
 
 const request = vi.hoisted(() => ({
   db: undefined as Db | undefined,
@@ -60,6 +59,9 @@ vi.mock("@/shared/db", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/shared/db")>()),
   getDb: () => request.db,
 }));
+
+// บาง test ตรึงวันที่ไว้ในปี 2026 เพราะวันที่ของปีนี้แสดงโดยไม่มีปี
+afterEach(() => void vi.useRealTimers());
 
 let db: Db;
 let buyerId: number;
@@ -156,6 +158,7 @@ const plain = (html = "") => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 
 describe("ORD-001 หน้ารายการคำสั่งซื้อ", () => {
   test("ORD-001 เห็น 20 รายการของร้านตัวเอง ข้อมูลครบ และรู้ว่ามี 3 หน้า", async () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-26T12:00:00+07:00") });
     const somchai = newShop("สมชายเสื้อผ้า");
     const wichai = newShop("วิชัยรองเท้า");
     const theirs = Array.from({ length: 12 }, () => order(wichai).orderNo);
@@ -167,7 +170,7 @@ describe("ORD-001 หน้ารายการคำสั่งซื้อ",
 
     expect(rowsIn(html)).toHaveLength(20);
     expect(rowsIn(html)[0]).toBe("2611240045");
-    expect(plain(html)).toContain(`สั่งซื้อเมื่อ ${formatThaiDateTime("2026-11-24T08:52+07:00")}`);
+    expect(plain(html)).toContain("สั่งซื้อเมื่อ 24 พ.ย. 08:52");
     expect(plain(html)).toContain("ผู้รับ สมหญิง ใจดี");
     expect(plain(html)).toContain("2 ชิ้น · ยอดรวม ฿540");
     expect(text(html)).toContain("หน้า 1 จาก 3");
@@ -367,6 +370,7 @@ describe("ORD-004 ตัวเลขรอจัดของในเมนู�
 
 describe("ORD-005 ถึง ORD-008 หน้ารายละเอียด", () => {
   test("ORD-005 ORD-006 ORD-007 เห็นสินค้า ยอดเงิน ผู้รับ และผลการจ่ายเงิน โดยไม่เห็นอีเมลของผู้ซื้อ", async () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-26T12:00:00+07:00") });
     const somchai = newShop("สมชายเสื้อผ้า");
     example045(somchai);
     signInAs(somchai.ownerId);
@@ -375,9 +379,9 @@ describe("ORD-005 ถึง ORD-008 หน้ารายละเอียด",
 
     expect(plain(html)).toContain("เสื้อยืดคอกลม สีดำ ขนาด L ฿250 × 2 ฿500");
     expect(html).toMatch(/ยอดรวมสินค้า<\/dt><dd>฿500.*ค่าส่ง<\/dt><dd>฿40.*ยอดรวมทั้งหมด<\/dt><dd[^>]*>฿540/);
-    expect(plain(html)).toContain(`สั่งซื้อเมื่อ ${formatThaiDateTime("2026-11-24T08:52+07:00")}`);
+    expect(plain(html)).toContain("สั่งซื้อเมื่อ 24 พ.ย. 08:52");
     expect(html).toContain("สมหญิง ใจดี<br/>081-234-5678<br/>99/1 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110");
-    expect(html).toContain(`จ่ายแล้ว PromptPay ${formatThaiDateTime("2026-11-24T08:55+07:00")}`);
+    expect(html).toContain("จ่ายแล้ว PromptPay 24 พ.ย. 08:55");
     expect(html).not.toContain("somying@example.com");
   });
 
@@ -410,6 +414,7 @@ describe("ORD-005 ถึง ORD-008 หน้ารายละเอียด",
   });
 
   test("ORD-008 เห็นเลขติดตามพัสดุ สถานะการจัดส่งล่าสุด และเวลาที่เปลี่ยน", async () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-26T12:00:00+07:00") });
     const somchai = newShop("สมชายเสื้อผ้า");
     const shipping = order(somchai, ORDER_STATUS.shipping);
     const parcel = addParcel(db, { orderId: shipping.id, trackingNo: "BS0000001234", status: PARCEL_STATUS.inTransit });
@@ -420,7 +425,7 @@ describe("ORD-005 ถึง ORD-008 หน้ารายละเอียด",
 
     expect(html).toContain("BS0000001234");
     expect(html).toContain("อยู่ระหว่างขนส่ง");
-    expect(html).toContain(formatThaiDateTime("2026-11-24T07:30+07:00"));
+    expect(html).toContain("24 พ.ย. 07:30");
     expect(html).toContain("กำลังจัดส่ง");
   });
 

@@ -1,7 +1,13 @@
 // ต่อ Omise โหมดทดลองตามคู่มือที่ docs.omise.co (Charges API, Tokens API, PromptPay) อ่านเมื่อ 2026-11-25
-// ลองกับ Omise จริงแล้วเมื่อ 2026-11-25 ลองซ้ำด้วย pnpm test:omise คำตอบจริงที่บันทึกไว้อยู่ใน omise-recorded.json
 
-import { ProviderRejected, ProviderUnavailable, type Charge, type PaymentProvider } from "./provider";
+import {
+  LATE_ANSWER_MARGIN_MS,
+  PROVIDER_TIMEOUT_MS,
+  ProviderRejected,
+  ProviderUnavailable,
+  type Charge,
+  type PaymentProvider,
+} from "./provider";
 
 export type OmiseProvider = PaymentProvider & { readonly kind: "omise" };
 
@@ -22,15 +28,19 @@ export function createOmiseProvider({
   publicKey,
   secretKey,
   fetch: send = fetch,
-  timeoutMs = 10_000,
 }: {
   publicKey: string;
   secretKey: string;
   fetch?: typeof fetch;
-  timeoutMs?: number;
 }): OmiseProvider {
   // กุญแจเป็นชื่อผู้ใช้ของ HTTP Basic รหัสผ่านว่าง
-  async function call<T>(base: string, key: string, path: string, form?: Record<string, string>): Promise<T> {
+  async function call<T>(
+    base: string,
+    key: string,
+    path: string,
+    form?: Record<string, string>,
+    timeoutMs = PROVIDER_TIMEOUT_MS,
+  ): Promise<T> {
     let response: Response;
     try {
       response = await send(`${base}${path}`, {
@@ -61,7 +71,8 @@ export function createOmiseProvider({
     qrImageUrl: charge.source?.scannable_code?.image?.download_uri ?? null,
   });
 
-  const createCharge = async (form: Record<string, string>) => toCharge(await call<OmiseCharge>(API, secretKey, "/charges", form));
+  const createCharge = async (form: Record<string, string>) =>
+    toCharge(await call<OmiseCharge>(API, secretKey, "/charges", form, PROVIDER_TIMEOUT_MS + LATE_ANSWER_MARGIN_MS));
 
   return {
     kind: "omise",

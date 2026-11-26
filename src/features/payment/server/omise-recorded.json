@@ -122,7 +122,7 @@
           "filename": "qrcode.svg",
           "location": "/charges/chrg_test_69soizsks25jzxvars7/documents/docu_test_69soiztvw8jmgie5o3v",
           "kind": "qr",
-          "download_uri": "https://api.omise.co/charges/chrg_test_69soizsks25jzxvars7/documents/docu_test_69soiztvw8jmgie5o3v/downloads/AE34B1D5640A3E34",
+          "download_uri": "https://api.omise.co/charges/chrg_test_example/documents/docu_test_example/downloads/EXAMPLE000000000",
           "created_at": "2026-11-25T10:38:28Z"
         }
       }
@@ -169,7 +169,7 @@
           "filename": "qrcode.svg",
           "location": "/charges/chrg_test_69soizsks25jzxvars7/documents/docu_test_69soiztvw8jmgie5o3v",
           "kind": "qr",
-          "download_uri": "https://api.omise.co/charges/chrg_test_69soizsks25jzxvars7/documents/docu_test_69soiztvw8jmgie5o3v/downloads/AE34B1D5640A3E34",
+          "download_uri": "https://api.omise.co/charges/chrg_test_example/documents/docu_test_example/downloads/EXAMPLE000000000",
           "created_at": "2026-11-25T10:38:28Z"
         }
       }
@@ -216,7 +216,7 @@
           "filename": "qrcode.svg",
           "location": "/charges/chrg_test_69soizwpe4jihpakwkr/documents/docu_test_69soizyd30ugwpl84nl",
           "kind": "qr",
-          "download_uri": "https://api.omise.co/charges/chrg_test_69soizwpe4jihpakwkr/documents/docu_test_69soizyd30ugwpl84nl/downloads/35C3A4F6522AAE75",
+          "download_uri": "https://api.omise.co/charges/chrg_test_example/documents/docu_test_example/downloads/EXAMPLE000000000",
           "created_at": "2026-11-25T10:38:29Z"
         }
       }
@@ -263,7 +263,7 @@
           "filename": "qrcode.svg",
           "location": "/charges/chrg_test_69sog59we73w27laf03/documents/docu_test_69sog5b5jiurvttuxre",
           "kind": "qr",
-          "download_uri": "https://api.omise.co/charges/chrg_test_69sog59we73w27laf03/documents/docu_test_69sog5b5jiurvttuxre/downloads/9DEE2922C1F932B7",
+          "download_uri": "https://api.omise.co/charges/chrg_test_example/documents/docu_test_example/downloads/EXAMPLE000000000",
           "created_at": "2026-11-25T10:30:23Z"
         }
       }
@@ -344,7 +344,7 @@
             "filename": "qrcode.svg",
             "location": "/charges/chrg_test_69soizsks25jzxvars7/documents/docu_test_69soiztvw8jmgie5o3v",
             "kind": "qr",
-            "download_uri": "https://api.omise.co/charges/chrg_test_69soizsks25jzxvars7/documents/docu_test_69soiztvw8jmgie5o3v/downloads/AE34B1D5640A3E34",
+            "download_uri": "https://api.omise.co/charges/chrg_test_example/documents/docu_test_example/downloads/EXAMPLE000000000",
             "created_at": "2026-11-25T10:38:28Z"
           }
         }

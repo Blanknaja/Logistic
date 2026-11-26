@@ -35,9 +35,9 @@ import {
   markGroupPaid,
   payByCard,
   payByPromptPay,
-  PROVIDER_TIMEOUT_MS,
   syncGroupPayments,
 } from "@/features/payment/server/payments";
+import { LATE_ANSWER_MARGIN_MS, PROVIDER_TIMEOUT_MS } from "@/features/payment/server/provider";
 import { createSimulator, type Simulator } from "@/features/payment/server/simulator";
 import { openDb, type Db } from "@/shared/db";
 import { addAccount, addOrder, addPayment, addProduct, addShop } from "@/shared/db/builders";
@@ -532,6 +532,108 @@ describe("PAY-007 Omise ล่มหรือตอบช้า", () => {
     });
     expect((await payCard(group.groupId, GOOD, "14:30")).redirect).toBe(`/pay/${group.groupId}`);
     expect(await payPage(group.groupId)).toContain("คำสั่งซื้อถูกยกเลิกแล้ว จ่ายเงินไม่ได้");
+  });
+});
+
+describe("PAY-007 คำตอบของ Omise ที่มาหลังระบบเลิกรอ ด้วยเวลารอและเวลาตัดคำขอที่ใช้จริง", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
+    // นาฬิกาปลอมของ Vitest ไม่ครอบ AbortSignal.timeout
+    vi.spyOn(AbortSignal, "timeout").mockImplementation((ms) => {
+      const cutOff = new AbortController();
+      setTimeout(() => cutOff.abort(new DOMException("หมดเวลา", "TimeoutError")), ms);
+      return cutOff.signal;
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /** Omise ที่ตอบคำขอตัดเงินหลังผ่านไป afterMs และเลิกทำเมื่อคำขอถูกตัด เหมือน fetch จริง */
+  function slowOmise(afterMs: number, answer: () => Response = () => new Response(null, { status: 599 })) {
+    const charging = Promise.withResolvers<AbortSignal>();
+    const send = (async (url: string, init: RequestInit) => {
+      if (url.endsWith("/tokens")) return Response.json(recorded.token);
+      const signal = init.signal!;
+      charging.resolve(signal);
+      return new Promise<Response>((resolve, reject) => {
+        signal.addEventListener("abort", () => reject(signal.reason));
+        setTimeout(() => resolve(answer()), afterMs);
+      });
+    }) as typeof fetch;
+    return { omise: createOmiseProvider({ publicKey: "pkey_test_a", secretKey: "skey_test_b", fetch: send }), charging: charging.promise };
+  }
+
+  /** กดจ่ายด้วยบัตรตอนเวลา time แล้วเดินนาฬิกาจนระบบเลิกรอ */
+  async function payAndGiveUp(slow: ReturnType<typeof slowOmise>, time: string) {
+    const group = addGroup("14:00");
+    const paying = payByCard(db, slow.omise, { buyerId: group.buyerId, groupId: group.groupId, card: GOOD }, setNow(time));
+    await slow.charging;
+    await vi.advanceTimersByTimeAsync(PROVIDER_TIMEOUT_MS);
+    expect((await paying).kind).toBe("unavailable");
+    expect(payments(group.groupId).map((p) => [p.status, p.omise_charge_id])).toEqual([["เลิกรอ", null]]);
+    return group;
+  }
+
+  const outcome = (groupId: number) =>
+    db.prepare("SELECT status, omise_charge_id, failure_reason, resolved_at FROM payments WHERE group_id = ?").all(groupId);
+
+  test("PAY-007 Omise ตัดบัตรสำเร็จแต่ตอบวินาทีที่ 12 ระบบเลิกรอที่วินาทีที่ 10 แล้วยังได้คำตอบนั้น การจ่ายเงินเป็นสำเร็จ", async () => {
+    const group = await payAndGiveUp(slowOmise(12_000, () => Response.json(recorded.cardSuccessful)), "14:06");
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    await vi.waitFor(() =>
+      expect(outcome(group.groupId)).toEqual([
+        { status: "สำเร็จ", omise_charge_id: recorded.cardSuccessful.id, failure_reason: null, resolved_at: at("14:06:12").toISOString() },
+      ]),
+    );
+    expect(orderStatuses(group.groupId)).toEqual(["จ่ายแล้ว", "จ่ายแล้ว"]);
+  });
+
+  test("PAY-007 คำตอบที่มาช้าบอกว่า Omise ไม่รับรายการ การจ่ายเงินเปลี่ยนจากเลิกรอเป็นไม่สำเร็จพร้อมเหตุผล", async () => {
+    const rejected = () => Response.json({ object: "error", code: "invalid_card", message: "number is invalid" }, { status: 400 });
+    const group = await payAndGiveUp(slowOmise(12_000, rejected), "14:06");
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    await vi.waitFor(() =>
+      expect(outcome(group.groupId)).toEqual([
+        {
+          status: "ไม่สำเร็จ",
+          omise_charge_id: null,
+          failure_reason: "บัตรถูกปฏิเสธ: ข้อมูลบัตรไม่ถูกต้อง หรือไม่ใช่บัตรทดลองของ Omise",
+          resolved_at: at("14:06:12").toISOString(),
+        },
+      ]),
+    );
+    expect(orderStatuses(group.groupId)).toEqual(["รอจ่ายเงิน", "รอจ่ายเงิน"]);
+  });
+
+  test("PAY-007 PAY-010 กดจ่าย 14:29:55 คำตอบว่าสำเร็จมาถึง 14:30:07 หลังหมดเขตจ่าย เงินนั้นเป็นสำเร็จแต่ไม่ถูกใช้ และมีเลขอ้างอิงไว้คืนเงิน", async () => {
+    const group = await payAndGiveUp(slowOmise(12_000, () => Response.json(recorded.cardSuccessful)), "14:29:55");
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    await vi.waitFor(() =>
+      expect(outcome(group.groupId)).toEqual([
+        { status: "สำเร็จแต่ไม่ถูกใช้", omise_charge_id: recorded.cardSuccessful.id, failure_reason: null, resolved_at: at("14:30:07").toISOString() },
+      ]),
+    );
+    expect(orderStatuses(group.groupId)).toEqual(["รอจ่ายเงิน", "รอจ่ายเงิน"]);
+  });
+
+  test("PAY-007 Omise ไม่ตอบเลย คำขอตัดเงินถูกตัดเมื่อครบเวลารอบวกเวลาเผื่อ การจ่ายเงินยังเป็นเลิกรอ และจ่ายใหม่ได้", async () => {
+    const slow = slowOmise(3_600_000);
+    const group = await payAndGiveUp(slow, "14:06");
+    const signal = await slow.charging;
+
+    await vi.advanceTimersByTimeAsync(LATE_ANSWER_MARGIN_MS - 1);
+    expect(signal.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(signal.aborted).toBe(true);
+
+    expect(payments(group.groupId).map((p) => [p.status, p.omise_charge_id])).toEqual([["เลิกรอ", null]]);
+    await payByCard(db, sim, { buyerId: group.buyerId, groupId: group.groupId, card: GOOD }, at("14:07"));
+    expect(orderStatuses(group.groupId)).toEqual(["จ่ายแล้ว", "จ่ายแล้ว"]);
   });
 });
 

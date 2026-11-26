@@ -9,10 +9,7 @@ import {
   type PaymentStatus,
 } from "@/shared/statuses";
 import { validateCard, type CardErrors, type CardFields } from "./card";
-import { ProviderRejected, ProviderUnavailable, type Charge, type PaymentProvider } from "./provider";
-
-/** รอผู้ให้บริการได้นานสุดเท่านี้ เกินแล้วถือว่าล่ม (PAY-007 PAY-008) */
-export const PROVIDER_TIMEOUT_MS = 10_000;
+import { PROVIDER_TIMEOUT_MS, ProviderRejected, ProviderUnavailable, type Charge, type PaymentProvider } from "./provider";
 
 export const UNAVAILABLE_MESSAGE = "จ่ายเงินไม่ได้ตอนนี้ กรุณาลองใหม่ภายหลัง คำสั่งซื้อของคุณยังอยู่";
 export const minutesLeftText = (minutes: number) => `เหลือเวลาจ่าย ${minutes} นาที`;
@@ -336,10 +333,15 @@ async function runCharge(db: Db, started: Started, request: () => Promise<Charge
       PAYMENT_STATUS.pending,
     );
     // Omise อาจทำรายการเสร็จหลังเราเลิกรอ ถ้าไม่เก็บเลขอ้างอิง เงินที่ตัดไปแล้วจะไม่มีวันถูกจับคู่ (PAY-007 สถานะ `เลิกรอ`)
+    const lateAt = () => new Date(now.getTime() + Date.now() - askedAt);
     charging
       .then(
-        (late) => recordCharge(db, started.paymentId, late, new Date(now.getTime() + Date.now() - askedAt)),
-        () => {},
+        (late) => void recordCharge(db, started.paymentId, late, lateAt()),
+        (lateError) => {
+          if (lateError instanceof ProviderRejected) {
+            markFailed(db, started.paymentId, failureReason(lateError.code, lateError.message), lateAt());
+          }
+        },
       )
       .catch(console.error);
     return { kind: "unavailable", minutesLeft: started.minutesLeft };

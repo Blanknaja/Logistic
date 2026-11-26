@@ -2,7 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import type { Map as LeafletMap } from "leaflet";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { DeliveryRoute, RoutePoint } from "@/features/delivery/server/route";
 import { ErrorState } from "@/shared/ui/states";
 import styles from "./delivery-map.module.css";
@@ -13,15 +13,25 @@ export const MAP_TIMEOUT_MS = 10_000;
 const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 const at = (point: RoutePoint): [number, number] => [point.lat, point.lng];
+const noSubscribe = () => () => {};
+
+/** Leaflet วางข้อความที่เป็น string ลงหน้าเป็น HTML จึงส่งชื่อจังหวัดเป็น element ที่ใส่ด้วย textContent */
+function textLabel(text: string): HTMLElement {
+  const label = document.createElement("span");
+  label.textContent = text;
+  return label;
+}
 
 /**
  * แผนที่การจัดส่ง (MAP-004) วาดหมุดและเส้นจาก route เดียวกับข้อความเส้นทาง
  * ภาพแผนที่โหลดไม่สำเร็จหรือเกิน 10 วินาที แสดงข้อความกับปุ่ม "ลองใหม่" ในที่ของแผนที่ (MAP-005)
+ * กรอบแผนที่ซ่อนอยู่จนกว่าสคริปต์ของหน้าทำงาน เบราว์เซอร์ที่ไม่มีสคริปต์จึงเห็นแค่ข้อความเส้นทาง ไม่มีกรอบเปล่า (MAP-006)
  */
 export function DeliveryMap({ route }: { route: DeliveryRoute }) {
   const canvas = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<"loading" | "ready" | "failed">("loading");
   const [attempt, setAttempt] = useState(0);
+  const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
 
   useEffect(() => {
     const element = canvas.current;
@@ -57,7 +67,7 @@ export function DeliveryMap({ route }: { route: DeliveryRoute }) {
         for (const pin of route.pins) {
           const latest = pin.province === route.latest.province;
           L.circleMarker(at(pin), { radius: latest ? 10 : 7, className: latest ? styles.latest : styles.pin, interactive: false })
-            .bindTooltip(pin.province, {
+            .bindTooltip(textLabel(pin.province), {
               permanent: true,
               direction: "right",
               offset: [12, 0],
@@ -94,7 +104,7 @@ export function DeliveryMap({ route }: { route: DeliveryRoute }) {
   };
 
   return (
-    <div className={styles.map} data-delivery-map={state}>
+    <div className={styles.map} data-delivery-map={state} hidden={!hydrated}>
       <div ref={canvas} className={styles.canvas} hidden={state === "failed"} />
       {state === "failed" && (
         <ErrorState

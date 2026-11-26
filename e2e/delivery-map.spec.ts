@@ -62,7 +62,15 @@ test("MAP-004 MAP-006 MAP-010 ผู้ซื้อตัวอย่างเ�
   await expect(dashedLines(page)).toHaveCount(1);
   await expect(routeText(page)).toHaveText("กรุงเทพมหานคร → นครราชสีมา (ล่าสุด) → ขอนแก่น (ปลายทาง)");
   await expect(mapSection(page).getByText("แผนที่แสดงจังหวัดที่พัสดุผ่านมาแล้ว ไม่ใช่ตำแหน่งปัจจุบัน")).toBeVisible();
-  await expect(page.getByRole("link", { name: "OpenStreetMap" })).toHaveAttribute("href", "https://www.openstreetmap.org/copyright");
+  // เครดิตของ OpenStreetMap อยู่บนแผนที่ที่โหลดแล้ว และตาเห็น (delivery-map.md ข้อจำกัด)
+  const credit = mapBox(page).locator(".leaflet-control-attribution");
+  await expect(credit).toBeVisible();
+  await expect(credit).toHaveText("© OpenStreetMap contributors");
+  await expect(credit.getByRole("link", { name: "OpenStreetMap" })).toHaveAttribute("href", "https://www.openstreetmap.org/copyright");
+  const creditBox = (await credit.boundingBox())!;
+  const frame = (await mapBox(page).boundingBox())!;
+  expect(creditBox.x + creditBox.width, "เครดิตอยู่ในกรอบแผนที่").toBeLessThanOrEqual(frame.x + frame.width + 1);
+  expect(creditBox.y + creditBox.height, "เครดิตอยู่ในกรอบแผนที่").toBeLessThanOrEqual(frame.y + frame.height + 1);
 
   // ระบบไม่ส่งเลขติดตามพัสดุให้ OpenStreetMap ทั้งในที่อยู่ของภาพและในหน้าที่ขอภาพ
   const trackingNo = path.split("/").pop()!;
@@ -136,7 +144,23 @@ test("MAP-005 MAP-009 OpenStreetMap ไม่ตอบ เห็นกรอบ�
   await expect(dashedLines(page)).toHaveCount(0);
 });
 
-test("MAP-006 ปิด JavaScript ยังเห็นข้อความเส้นทางครบ แม้ไม่มีแผนที่", async ({ page, browser }) => {
+test("MAP-004 ชื่อจังหวัดบนหมุดเป็นข้อความเสมอ แท็ก HTML ในชื่อไม่กลายเป็น element บนแผนที่", async ({ page }) => {
+  await stubTiles(page);
+  const path = await openShippingParcel(page, "buyer2@example.com");
+  const tag = "<i id=injected>x</i>";
+  // แก้ชื่อจังหวัดในหน้าที่เซิร์ฟเวอร์ส่งมา เพื่อให้แผนที่ได้ชื่อที่มีแท็ก HTML
+  await page.route(path, async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({ response, body: (await response.text()).replaceAll("นครราชสีมา", tag) });
+  });
+  await page.goto(path);
+
+  await expect(mapBox(page)).toHaveAttribute("data-delivery-map", "ready");
+  await expect(latestLabel(page)).toHaveText(tag);
+  await expect(page.locator(".leaflet-container #injected")).toHaveCount(0);
+});
+
+test("MAP-006 ปิด JavaScript ยังเห็นข้อความเส้นทางครบ แม้ไม่มีแผนที่ และไม่มีกรอบแผนที่เปล่ากินที่", async ({ page, browser }) => {
   await stubTiles(page);
   const path = await openShippingParcel(page, "buyer2@example.com");
   const context = await browser.newContext({ javaScriptEnabled: false, storageState: await page.context().storageState() });
@@ -147,6 +171,12 @@ test("MAP-006 ปิด JavaScript ยังเห็นข้อความเ
   await noScript.goto(path);
   await expect(routeText(noScript)).toHaveText("กรุงเทพมหานคร → นครราชสีมา (ล่าสุด) → ขอนแก่น (ปลายทาง)");
   await expect(noScript.getByRole("heading", { name: "ประวัติการจัดส่ง" })).toBeVisible();
+  await expect(mapBox(noScript)).toBeHidden();
+  expect(await mapBox(noScript).boundingBox(), "กรอบแผนที่ไม่กินที่").toBeNull();
+  // ข้อความเส้นทางเป็นสิ่งแรกที่ตาเห็นในส่วนแผนที่ ไม่มีที่ว่างของแผนที่อยู่เหนือมัน
+  const section = (await mapSection(noScript).boundingBox())!;
+  const firstLine = (await routeText(noScript).boundingBox())!;
+  expect(firstLine.y - section.y).toBeLessThan(8);
   expect(tiles).toEqual([]);
   await context.close();
 });

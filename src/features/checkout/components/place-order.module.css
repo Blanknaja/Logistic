@@ -27,11 +27,11 @@
   gap: var(--space-1);
   min-height: var(--tap);
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius);
+  border-radius: var(--radius-s);
   box-shadow: inset 0 0 0 1px var(--color-border-strong);
   line-height: 1.4;
   cursor: pointer;
-  transition: box-shadow var(--duration) var(--ease);
+  transition: box-shadow var(--dur-fast) var(--ease-out);
 }
 
 .address:has(input:checked) {
@@ -99,7 +99,7 @@
 }
 
 span.image {
-  background: var(--color-surface);
+  background: var(--color-surface-sunken);
 }
 
 .shopTotals {
@@ -226,7 +226,7 @@ span.image {
     margin: 0;
     padding: var(--space-5);
     border-top: 0;
-    background: var(--color-surface);
+    background: var(--color-surface-sunken);
   }
 
   .part {

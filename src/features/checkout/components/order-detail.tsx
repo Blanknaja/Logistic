@@ -95,12 +95,10 @@ export function OrderDetail({
                 <div>
                   <p>{item.productName}</p>
                   {item.variantLabel && <p className={styles.muted}>{item.variantLabel}</p>}
-                  {/* ชิ้นเดียว ราคาต่อชิ้นเท่ากับราคาของรายการ จึงบอกครั้งเดียว */}
-                  {item.quantity > 1 && (
-                    <p className={styles.muted}>
-                      {formatBaht(item.unitPrice)} × {formatNumber(item.quantity)}
-                    </p>
-                  )}
+                  {/* ชิ้นเดียว ราคาต่อชิ้นเท่ากับราคาของรายการ จึงบอกแค่จำนวน */}
+                  <p className={styles.muted}>
+                    {item.quantity === 1 ? "1 ชิ้น" : `${formatBaht(item.unitPrice)} × ${formatNumber(item.quantity)}`}
+                  </p>
                 </div>
                 <span>{formatBaht(item.unitPrice * item.quantity)}</span>
               </li>

@@ -39,7 +39,7 @@ export function startParcelScene(canvas: HTMLCanvasElement, colors: SceneColors)
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
-  const meshes: THREE.Mesh[] = [];
+  const meshes: THREE.Mesh<THREE.BufferGeometry, THREE.Material>[] = [];
 
   const solid = (geometry: THREE.BufferGeometry, color: string, at: [number, number, number], parent: THREE.Object3D = scene) => {
     const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color, roughness: 0.85, flatShading: true }));

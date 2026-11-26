@@ -33,6 +33,7 @@
     "@types/node": "^26.6.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "0.183.1",
     "eslint": "^10.15.0",
     "eslint-config-next": "16.4.6",
     "tsx": "4.23.15",

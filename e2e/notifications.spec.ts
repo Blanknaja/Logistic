@@ -15,6 +15,7 @@ const header = (page: Page) => page.getByRole("navigation", { name: "เมน�
 const bell = (page: Page) => header(page).getByRole("button", { name: /^แจ้งเตือน/ });
 const panel = (page: Page) => page.getByRole("region", { name: "แจ้งเตือนล่าสุด" });
 const items = (page: Page) => page.locator('a[href^="/notifications/"]');
+const listed = (page: Page) => page.getByRole("main").locator('a[href^="/notifications/"]');
 const overflow = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 const bellName = (unread: number) => (unread > 0 ? `แจ้งเตือน ยังไม่อ่าน ${unread} รายการ` : "แจ้งเตือน");
 
@@ -80,7 +81,10 @@ test("NTF-014 NTF-002 NTF-004 ผู้ขายเปลี่ยนสถา�
 
   await list.goto("/notifications");
   await expect(list.getByText(`ยังไม่อ่าน ${before} รายการ`)).toBeVisible();
-  const listedBefore = await items(list).count();
+  const listedBefore = await listed(list).count();
+  await bell(list).click();
+  await expect(panel(list).locator("a").first()).toBeVisible();
+  await expect(panel(list).getByText(trackingNo)).toHaveCount(0);
 
   await seller.goto(`/track/${trackingNo}`);
   await seller.getByRole("link", { name: "เปลี่ยนเป็น ส่งสำเร็จ" }).click();
@@ -100,9 +104,12 @@ test("NTF-014 NTF-002 NTF-004 ผู้ขายเปลี่ยนสถา�
   // NTF-014 หน้าแจ้งเตือนได้แถบให้กดแสดง รายการที่กำลังดูไม่ขยับ
   const banner = list.getByRole("button", { name: "มีแจ้งเตือนใหม่ 1 รายการ กดเพื่อแสดง" });
   await expect(banner).toBeVisible({ timeout: LIVE_UPDATE_MS });
-  expect(await items(list).count()).toBe(listedBefore);
+  expect(await listed(list).count()).toBe(listedBefore);
+  // NTF-014 รายการใต้กระดิ่งที่กางอยู่ได้แจ้งเตือนใหม่เป็นรายการบนสุดเอง
+  await expect(panel(list).locator('a[href^="/notifications/"]').first()).toContainText(`พัสดุ ${trackingNo}`, { timeout: LIVE_UPDATE_MS });
+  await list.keyboard.press("Escape");
   await banner.click();
-  await expect(items(list).first()).toContainText(`พัสดุ ${trackingNo}`);
+  await expect(listed(list).first()).toContainText(`พัสดุ ${trackingNo}`);
   await expect(banner).toBeHidden();
 
   // NTF-002 กดกระดิ่งเห็นรายการใหม่บนสุด และการกางรายการไม่ทำให้อ่านแล้ว
@@ -245,7 +252,6 @@ test.describe("จอกว้าง 360 จุด", () => {
   test("NTF-Q06 NTF-001 NTF-003 บัญชีที่กระดิ่งเป็น 99+ แถบด้านบน รายการใต้กระดิ่ง และหน้าแจ้งเตือนไม่ทำให้หน้าเลื่อนซ้ายขวา กระดิ่งและแต่ละรายการสูงและกว้างอย่างน้อย 44 จุด", async ({
     browser,
   }) => {
-    // seller03 ไม่มีแจ้งเตือนตัวอย่าง เขียน 120 รายการลงฐานข้อมูลของ e2e ตรงๆ เพื่อให้ได้ตัวเลข 99+
     const db = new DatabaseSync(E2E_DB);
     const account = db.prepare("SELECT id FROM accounts WHERE email = 'seller03@example.com'").get() as { id: number };
     db.prepare("DELETE FROM notifications WHERE account_id = ?").run(account.id);

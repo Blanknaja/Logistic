@@ -61,20 +61,22 @@ export async function addSampleNotifications(db: Db, now: number): Promise<void>
        WHERE p.shop_id = ? AND p.status = ? AND v.price IS NOT NULL AND v.stock >= 10 ORDER BY v.id LIMIT 1`,
     )
     .get(seller02.shopId, PRODUCT_STATUS.onSale) as { id: number };
-  const nearlyOut = db
+  // แบบย่อยที่จะถูกซื้อจนหมด สินค้านั้นยังมีแบบย่อยอื่นขายอยู่ จำนวนสินค้าที่หมดทั้งชิ้นในข้อมูลตัวอย่างจึงเท่าเดิม
+  const lastPieces = db
     .prepare(
       `SELECT v.id, v.stock FROM variants v JOIN products p ON p.id = v.product_id
-       WHERE p.shop_id = ? AND p.status = ? AND p.model_url IS NULL AND v.price IS NOT NULL AND v.stock BETWEEN 1 AND 5
-       ORDER BY v.stock, v.id LIMIT 2`,
+       WHERE p.shop_id = ? AND p.status = ? AND v.price IS NOT NULL AND v.stock > 0 AND v.option_value1_id IS NOT NULL
+         AND EXISTS (SELECT 1 FROM variants other WHERE other.product_id = p.id AND other.id <> v.id AND other.stock > 0)
+       ORDER BY v.stock, v.id LIMIT 1`,
     )
-    .all(seller01.shopId, PRODUCT_STATUS.onSale) as { id: number; stock: number }[];
-  if (nearlyOut.length < 2) throw new Error("ร้าน seller01 ต้องมีแบบย่อยที่สต็อก 1 ถึง 5 ชิ้นอย่างน้อย 2 แบบ");
+    .get(seller01.shopId, PRODUCT_STATUS.onSale) as { id: number; stock: number } | undefined;
+  if (!lastPieces) throw new Error("ร้าน seller01 ต้องมีสินค้าที่มีแบบย่อยขายอยู่อย่างน้อย 2 แบบ");
 
   const provider = createSimulator();
   const flows: Flow[] = [
     { buyer: 0, shop: seller02, lines: [[plain.id, 1]], hoursAgo: 12, end: "expired" },
     { buyer: 0, shop: seller02, lines: [[plain.id, 1]], hoursAgo: 10, declinedFirst: true, end: "received" },
-    { buyer: 1, shop: seller01, lines: nearlyOut.map((variant) => [variant.id, variant.stock]), hoursAgo: 8, declinedFirst: true, end: S.awaitingPacking },
+    { buyer: 1, shop: seller01, lines: [[lastPieces.id, lastPieces.stock]], hoursAgo: 8, declinedFirst: true, end: "received" },
     { buyer: 2, shop: seller02, lines: [[plain.id, 1]], hoursAgo: 6, declinedFirst: true, end: S.outForDelivery },
     { buyer: 0, shop: seller02, lines: [[plain.id, 2]], hoursAgo: 4, end: "received" },
   ];

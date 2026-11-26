@@ -41,12 +41,12 @@ src/
     format.ts             formatBaht formatNumber formatThaiDate formatThaiDateTime formatTime formatTimeOrDateTime
     session.ts            getCurrentAccount() requireAccount()
     rules.ts              กฎตรวจที่หลาย feature ใช้ร่วมกัน isPhone detectImageType
-    paging.ts             PAGE_SIZE (20) และ pageCount() ของทุกรายการที่แบ่งหน้า
+    paging.ts             PAGE_SIZE (20) pageCount() และ clampPage() ของทุกรายการที่แบ่งหน้า
     result.ts             Checked<ค่า, ข้อผิดพลาด> ผล { ok: true } หรือ { ok: false, errors } ของงานที่ตรวจข้อมูลที่กรอก
     read-body.ts          readBodyUpTo() route ที่รับไฟล์อ่านเนื้อคำขอด้วยตัวนี้ หยุดทันทีที่เกินขนาด ไม่เชื่อ content-length
     ui/states.tsx         EmptyState LoadingState ErrorState NotFoundState
     ui/action-form.tsx    ActionForm Field SubmitButton ACTION_FAILED ฟอร์มที่ส่งไป server action
-    ui/timeout.ts         settle() withTimeout() ACTION_TIMEOUT_MS รอผล server action ไม่เกิน 10 วินาที
+    ui/timeout.ts         settle() withTimeout() ACTION_TIMEOUT_MS SAVE_FAILED รอผล server action ไม่เกิน 10 วินาที
     ui/loading-timeout.tsx LoadingTimeout หน้ากำลังโหลดที่เกิน 10 วินาทีกลายเป็นหน้าผิดพลาด
     layout/               แถบนำทางด้านบน และ SellerMenu ของหลังบ้าน
     nav/                  ตัวรวมลิงก์จาก nav.ts ของทุก feature

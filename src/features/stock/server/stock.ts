@@ -1,5 +1,5 @@
 import { transaction, type Db } from "@/shared/db";
-import { PAGE_SIZE, pageCount } from "@/shared/paging";
+import { clampPage, PAGE_SIZE, pageCount } from "@/shared/paging";
 import { ORDER_STATUS, PRODUCT_STATUS, STOCK_CHANGE_REASON, type StockChangeReason } from "@/shared/statuses";
 import { LOW_STOCK_MAX, stockLabel, type StockLabel } from "./labels";
 
@@ -82,7 +82,7 @@ function toRow(row: RowRecord): StockRow {
 
 function pageOf(requested: number, total: number) {
   const pages = pageCount(total);
-  const page = Number.isSafeInteger(requested) ? Math.min(Math.max(requested, 1), pages) : 1;
+  const page = clampPage(requested, pages);
   return { page, pageCount: pages, offset: (page - 1) * PAGE_SIZE };
 }
 

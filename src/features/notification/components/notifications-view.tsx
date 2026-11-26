@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { NO_NOTIFICATIONS, type NotificationPage } from "@/features/notification/server/notifications";
+import { NO_NOTIFICATIONS } from "@/features/notification/rules";
+import type { NotificationPage } from "@/features/notification/server/notifications";
 import { EmptyState } from "@/shared/ui/states";
 import { MarkAllRead } from "./mark-all-read";
 import { NewNotificationsBanner } from "./new-notifications-banner";

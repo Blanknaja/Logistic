@@ -1,6 +1,6 @@
 import { EDIT_WINDOW_MS, LIMITS, maskName, MESSAGES, PRODUCT_REVIEWS_PAGE_SIZE, textLength } from "@/features/review/rules";
 import { transaction, type Db } from "@/shared/db";
-import { PAGE_SIZE } from "@/shared/paging";
+import { clampPage, PAGE_SIZE, pageCount } from "@/shared/paging";
 import type { Checked } from "@/shared/result";
 import { ORDER_STATUS, REVIEW_STATUS, type OrderStatus, type ReviewStatus } from "@/shared/statuses";
 import { onReviewHidden, onReviewPosted, onReviewReplied } from "./events";
@@ -298,8 +298,8 @@ const countWhere = (db: Db, where: string, ...args: (string | number)[]) =>
 
 /** total คือจำนวนรีวิวที่ตรงกับ where หน้าที่ขอเกินหน้าสุดท้าย ได้หน้าสุดท้ายที่มีอยู่จริง (REV-007) */
 function listReviews(db: Db, audience: Audience, where: string, args: (string | number)[], total: number, page: number, pageSize: number) {
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const shown = Math.min(Number.isSafeInteger(page) && page >= 1 ? page : 1, totalPages);
+  const totalPages = pageCount(total, pageSize);
+  const shown = clampPage(page, totalPages);
   const rows = db
     .prepare(
       `SELECT r.*, a.display_name, i.product_name, i.variant_label, o.order_no, s.name AS shop_name

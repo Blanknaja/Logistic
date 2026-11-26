@@ -1,9 +1,8 @@
 "use client";
 
 import { startTransition, useActionState, useEffect, useRef, type ReactNode } from "react";
-import { MESSAGES } from "@/features/review/rules";
 import { SubmitButton } from "@/shared/ui/action-form";
-import { withTimeout, type Failed } from "@/shared/ui/timeout";
+import { SAVE_FAILED, withTimeout, type Failed } from "@/shared/ui/timeout";
 import styles from "./review.module.css";
 
 /**
@@ -58,7 +57,7 @@ export function SaveForm<S extends object>({
       {children?.(state)}
       {"failed" in state && (
         <div role="alert" className={styles.failed}>
-          <p>{MESSAGES.saveFailed}</p>
+          <p>{SAVE_FAILED}</p>
           <button type="button" className="button button-secondary" disabled={pending} onClick={() => form.current?.requestSubmit()}>
             ลองใหม่
           </button>

@@ -26,7 +26,7 @@ import { hideReviewAction, replyAction, saveReviewAction, unhideReviewAction } f
 import { ProductRating, ProductReviews } from "@/features/review/components/product-reviews";
 import { ReviewsFailed } from "@/features/review/components/reviews-boundary";
 import { nav, reviewsMenuLabel } from "@/features/review/nav";
-import { MESSAGES, screenReviewFiles } from "@/features/review/rules";
+import { screenReviewFiles } from "@/features/review/rules";
 import { writeReview } from "@/features/review/server/fixtures";
 import { productRating } from "@/features/review/server/ratings";
 import type { Db } from "@/shared/db";
@@ -35,6 +35,7 @@ import { createTestDb } from "@/shared/db/testing";
 import { headerLinks, sellerMenuLinks } from "@/shared/nav/registry";
 import { SESSION_COOKIE } from "@/shared/session";
 import { ORDER_STATUS, type OrderStatus } from "@/shared/statuses";
+import { SAVE_FAILED } from "@/shared/ui/timeout";
 
 const request = vi.hoisted(() => ({
   db: undefined as Db | undefined,
@@ -804,7 +805,7 @@ describe("REV-018 หน้าว่าง หน้ากำลังโหล�
     expect(section).toContain("<h2");
     expect(section).toContain("โหลดรีวิวไม่สำเร็จ");
     expect(section).toContain(">ลองใหม่</button>");
-    expect(MESSAGES.saveFailed).toBe("บันทึกไม่สำเร็จ");
+    expect(SAVE_FAILED).toBe("บันทึกไม่สำเร็จ");
   });
 
   test("REV-018 เมนูหลังบ้านนับรีวิวที่ยังไม่ตอบไม่ได้ ลิงก์รีวิวยังอยู่โดยไม่มีตัวเลข", () => {

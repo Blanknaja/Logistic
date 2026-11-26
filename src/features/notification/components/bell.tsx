@@ -4,15 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore, type KeyboardEvent, type MouseEvent } from "react";
 import { latestNotificationsAction } from "@/features/notification/actions";
-import {
-  badgeText,
-  bellLabel,
-  NO_NOTIFICATIONS,
-  NOTIFICATIONS_LOAD_FAILED,
-  type BellList,
-  type NotificationItem,
-  type Pulse,
-} from "@/features/notification/server/notifications";
+import { badgeText, bellLabel, NO_NOTIFICATIONS, NOTIFICATIONS_LOAD_FAILED } from "@/features/notification/rules";
+import type { BellList, NotificationItem, Pulse } from "@/features/notification/server/notifications";
 import { settle } from "@/shared/ui/timeout";
 import { MarkAllRead } from "./mark-all-read";
 import { NotificationItems } from "./notification-items";

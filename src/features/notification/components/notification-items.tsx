@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { notificationHref, type NotificationItem } from "@/features/notification/server/notifications";
+import { notificationHref } from "@/features/notification/rules";
+import type { NotificationItem } from "@/features/notification/server/notifications";
 import { formatThaiDateTime } from "@/shared/format";
 import styles from "./notification.module.css";
 

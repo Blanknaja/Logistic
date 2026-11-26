@@ -2,10 +2,9 @@ import { beforeEach, describe, expect, test } from "vitest";
 import type { Db } from "@/shared/db";
 import { addAccount } from "@/shared/db/builders";
 import { createTestDb } from "@/shared/db/testing";
+import { badgeText, bellLabel } from "../rules";
 import {
   addNotification,
-  badgeText,
-  bellLabel,
   countUnread,
   latestNotifications,
   listNotifications,

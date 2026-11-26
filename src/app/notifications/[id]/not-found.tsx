@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { NOTIFICATION_NOT_FOUND } from "@/features/notification/server/notifications";
+import { NOTIFICATION_NOT_FOUND } from "@/features/notification/rules";
 import { NotFoundState } from "@/shared/ui/states";
 
 // แจ้งเตือนที่ไม่มีอยู่และของบัญชีอื่นแสดงหน้าเดียวกัน (NTF-004 NTF-016)

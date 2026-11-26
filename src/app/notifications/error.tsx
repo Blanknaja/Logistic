@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { NOTIFICATIONS_LOAD_FAILED } from "@/features/notification/server/notifications";
+import { NOTIFICATIONS_LOAD_FAILED } from "@/features/notification/rules";
 import { RetryButton } from "@/shared/ui/retry-button";
 import { ErrorState } from "@/shared/ui/states";
 

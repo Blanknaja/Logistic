@@ -1,4 +1,4 @@
-import { NOTIFICATIONS_LOAD_FAILED } from "@/features/notification/server/notifications";
+import { NOTIFICATIONS_LOAD_FAILED } from "@/features/notification/rules";
 import { LoadingTimeout } from "@/shared/ui/loading-timeout";
 import { LoadingState } from "@/shared/ui/states";
 import { SkeletonExit } from "@/shared/ui/transitions";

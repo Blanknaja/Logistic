@@ -2,11 +2,9 @@
 
 import { useState, useTransition, type FormEvent } from "react";
 import { markAllReadAction } from "@/features/notification/actions";
-import { MARK_ALL_READ } from "@/features/notification/server/notifications";
-import { settle } from "@/shared/ui/timeout";
+import { MARK_ALL_READ } from "@/features/notification/rules";
+import { SAVE_FAILED, settle } from "@/shared/ui/timeout";
 import styles from "./notification.module.css";
-
-export const SAVE_FAILED = "บันทึกไม่สำเร็จ";
 
 /** กดหนึ่งครั้ง ได้ true เมื่อบันทึกแล้ว false เมื่อเน็ตหลุด เซิร์ฟเวอร์ผิดพลาด หรือไม่ได้ผลภายใน 10 วินาที */
 export async function saveAllRead(save: () => Promise<void>): Promise<boolean> {

@@ -38,7 +38,6 @@ export const MESSAGES = {
   alreadyHidden: "รีวิวนี้ถูกซ่อนแล้ว",
   noReviews: "ยังไม่มีรีวิว",
   loadFailed: "โหลดรีวิวไม่สำเร็จ",
-  saveFailed: "บันทึกไม่สำเร็จ",
 } as const;
 
 /** จำนวนตัวอักษรตามที่ผู้ใช้เห็น ไม่นับช่องว่างหน้าหลัง */

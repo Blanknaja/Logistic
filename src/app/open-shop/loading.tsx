@@ -1,5 +1,10 @@
 import { ShopFormSkeleton } from "@/features/shop/components/skeletons";
+import { SkeletonExit } from "@/shared/ui/transitions";
 
 export default function Loading() {
-  return <ShopFormSkeleton submitLabel="เปิดร้าน" />;
+  return (
+    <SkeletonExit>
+      <ShopFormSkeleton submitLabel="เปิดร้าน" />
+    </SkeletonExit>
+  );
 }

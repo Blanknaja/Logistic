@@ -4,6 +4,7 @@ import { requireShop } from "@/features/shop/require-shop";
 import { countShopOrders, listShopOrders, shopOrdersVersion } from "@/features/shop-orders/server/orders";
 import { getDb } from "@/shared/db";
 import { ORDER_STATUS } from "@/shared/statuses";
+import { PageReveal } from "@/shared/ui/transitions";
 
 export default async function SellerOrdersPage({ searchParams }: PageProps<"/seller/orders">) {
   const { shopId } = await requireShop(ordersHref());
@@ -17,5 +18,9 @@ export default async function SellerOrdersPage({ searchParams }: PageProps<"/sel
     page: params.page,
     asOf: params.asOf,
   });
-  return <OrderListView params={params} counts={countShopOrders(db, shopId)} list={list} version={version} />;
+  return (
+    <PageReveal>
+      <OrderListView params={params} counts={countShopOrders(db, shopId)} list={list} version={version} />
+    </PageReveal>
+  );
 }

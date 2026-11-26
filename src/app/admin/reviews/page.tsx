@@ -10,6 +10,7 @@ import { getDb } from "@/shared/db";
 import { requireAccount } from "@/shared/session";
 import { REVIEW_STATUS, type ReviewStatus } from "@/shared/statuses";
 import { EmptyState } from "@/shared/ui/states";
+import { PageReveal } from "@/shared/ui/transitions";
 
 export const metadata: Metadata = { title: "จัดการรีวิว" };
 
@@ -32,34 +33,36 @@ export default async function AdminReviewsPage({ searchParams }: PageProps<"/adm
   const list = listAllReviews(getDb(), { status: param ? STATUS_BY_PARAM[param] : null, page: Number(query.page) });
 
   return (
-    <section className={styles.section}>
-      <h1>จัดการรีวิว</h1>
-      <ReviewFilters
-        label="กรองตามสถานะ"
-        filters={[
-          { label: "ทั้งหมด", count: list.counts.all, href: href(null), active: param === null },
-          { label: REVIEW_STATUS.visible, count: list.counts.visible, href: href("visible"), active: param === "visible" },
-          { label: REVIEW_STATUS.hidden, count: list.counts.hidden, href: href("hidden"), active: param === "hidden" },
-        ]}
-      />
-      {list.reviews.length === 0 ? (
-        <EmptyState title="ไม่มีรีวิวในสถานะนี้" />
-      ) : (
-        <>
-          <ul className={styles.list}>
-            {list.reviews.map((review) => (
-              <ReviewItem key={review.id} review={review} meta={`${review.productName} · ${review.shopName} · ${review.status}`}>
-                {review.status === REVIEW_STATUS.visible ? (
-                  <HideForm action={hideReviewAction} reviewId={review.id} />
-                ) : (
-                  <UnhideForm action={unhideReviewAction} reviewId={review.id} />
-                )}
-              </ReviewItem>
-            ))}
-          </ul>
-          <ReviewPager page={list.page} totalPages={list.totalPages} href={(page) => href(param, page)} />
-        </>
-      )}
-    </section>
+    <PageReveal>
+      <section className={styles.section}>
+        <h1>จัดการรีวิว</h1>
+        <ReviewFilters
+          label="กรองตามสถานะ"
+          filters={[
+            { label: "ทั้งหมด", count: list.counts.all, href: href(null), active: param === null },
+            { label: REVIEW_STATUS.visible, count: list.counts.visible, href: href("visible"), active: param === "visible" },
+            { label: REVIEW_STATUS.hidden, count: list.counts.hidden, href: href("hidden"), active: param === "hidden" },
+          ]}
+        />
+        {list.reviews.length === 0 ? (
+          <EmptyState title="ไม่มีรีวิวในสถานะนี้" />
+        ) : (
+          <>
+            <ul className={styles.list}>
+              {list.reviews.map((review) => (
+                <ReviewItem key={review.id} review={review} meta={`${review.productName} · ${review.shopName} · ${review.status}`}>
+                  {review.status === REVIEW_STATUS.visible ? (
+                    <HideForm action={hideReviewAction} reviewId={review.id} />
+                  ) : (
+                    <UnhideForm action={unhideReviewAction} reviewId={review.id} />
+                  )}
+                </ReviewItem>
+              ))}
+            </ul>
+            <ReviewPager page={list.page} totalPages={list.totalPages} href={(page) => href(param, page)} />
+          </>
+        )}
+      </section>
+    </PageReveal>
   );
 }

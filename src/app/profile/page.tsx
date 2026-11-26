@@ -8,6 +8,7 @@ import { ProfileForm } from "@/features/account/components/profile-form";
 import { getProfile } from "@/features/account/server/accounts";
 import { getDb } from "@/shared/db";
 import { requireAccount } from "@/shared/session";
+import { PageReveal } from "@/shared/ui/transitions";
 
 export const metadata: Metadata = { title: "โปรไฟล์" };
 
@@ -18,44 +19,46 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
   const { edit, saved } = await searchParams;
 
   return (
-    <div className={styles.page}>
-      <h1>โปรไฟล์</h1>
-      {edit ? (
-        <ProfileForm displayName={profile.displayName} phone={profile.phone ?? ""} />
-      ) : (
-        <>
-          {saved && (
-            <p role="status" className={styles.notice}>
-              บันทึกแล้ว
-            </p>
-          )}
-          <dl className={styles.profile}>
-            <dt>อีเมล</dt>
-            <dd>{profile.email}</dd>
-            <dt>ชื่อที่แสดง</dt>
-            <dd>{profile.displayName}</dd>
-            <dt>เบอร์โทร</dt>
-            <dd>
-              {profile.phone ?? (
-                <>
-                  ยังไม่ได้ใส่เบอร์โทร
-                  <Link href="/profile?edit=1" className="link-action">
-                    เพิ่มเบอร์โทร
-                  </Link>
-                </>
-              )}
-            </dd>
-          </dl>
-          <div className={styles.actions}>
-            <Link href="/profile?edit=1" className="button">
-              แก้ไข
-            </Link>
-            <form action={logOutAction}>
-              <LogoutButton />
-            </form>
-          </div>
-        </>
-      )}
-    </div>
+    <PageReveal>
+      <div className={styles.page}>
+        <h1>โปรไฟล์</h1>
+        {edit ? (
+          <ProfileForm displayName={profile.displayName} phone={profile.phone ?? ""} />
+        ) : (
+          <>
+            {saved && (
+              <p role="status" className={styles.notice}>
+                บันทึกแล้ว
+              </p>
+            )}
+            <dl className={styles.profile}>
+              <dt>อีเมล</dt>
+              <dd>{profile.email}</dd>
+              <dt>ชื่อที่แสดง</dt>
+              <dd>{profile.displayName}</dd>
+              <dt>เบอร์โทร</dt>
+              <dd>
+                {profile.phone ?? (
+                  <>
+                    ยังไม่ได้ใส่เบอร์โทร
+                    <Link href="/profile?edit=1" className="link-action">
+                      เพิ่มเบอร์โทร
+                    </Link>
+                  </>
+                )}
+              </dd>
+            </dl>
+            <div className={styles.actions}>
+              <Link href="/profile?edit=1" className="button">
+                แก้ไข
+              </Link>
+              <form action={logOutAction}>
+                <LogoutButton />
+              </form>
+            </div>
+          </>
+        )}
+      </div>
+    </PageReveal>
   );
 }

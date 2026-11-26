@@ -4,6 +4,7 @@ import { StockHistoryView } from "@/features/stock/components/stock-history";
 import { getStockHistory } from "@/features/stock/server/stock";
 import { getDb } from "@/shared/db";
 import { requireShop } from "@/features/shop/require-shop";
+import { PageReveal } from "@/shared/ui/transitions";
 
 export const metadata: Metadata = { title: "ประวัติสต็อก" };
 
@@ -13,5 +14,9 @@ export default async function StockHistoryPage({ params, searchParams }: PagePro
   const { page } = await searchParams;
   const history = getStockHistory(getDb(), viewer.shopId, Number(variantId), Number(page ?? 1));
   if (!history) notFound();
-  return <StockHistoryView history={history} />;
+  return (
+    <PageReveal>
+      <StockHistoryView history={history} />
+    </PageReveal>
+  );
 }

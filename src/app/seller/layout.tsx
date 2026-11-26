@@ -20,7 +20,7 @@ export default async function SellerLayout({ children }: LayoutProps<"/seller">)
   return (
     <>
       {shop?.status === SHOP_STATUS.suspended && (
-        <p role="alert" className={styles.banner}>
+        <p role="alert" className={`notice notice-alert ${styles.banner}`}>
           ร้านของคุณถูกระงับโดยผู้ดูแลแพลตฟอร์ม
         </p>
       )}

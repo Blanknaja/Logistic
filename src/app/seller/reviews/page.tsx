@@ -11,6 +11,7 @@ import { requireShop } from "@/features/shop/require-shop";
 import { getDb } from "@/shared/db";
 import { REVIEW_STATUS } from "@/shared/statuses";
 import { EmptyState } from "@/shared/ui/states";
+import { PageReveal } from "@/shared/ui/transitions";
 
 export const metadata: Metadata = { title: "รีวิวของร้าน" };
 
@@ -31,32 +32,34 @@ export default async function SellerReviewsPage({ searchParams }: PageProps<"/se
   const list = listShopReviews(db, viewer.shopId, { unanswered, page: Number(query.page) });
 
   return (
-    <section className={styles.section}>
-      <h1>รีวิวของร้าน</h1>
-      <ShopRatingLine rating={shopRating(db, viewer.shopId)} />
-      <ReviewFilters
-        label="กรองรีวิว"
-        filters={[
-          { label: "ทั้งหมด", count: list.counts.all, href: href(false), active: !unanswered },
-          { label: "ยังไม่ตอบ", count: list.counts.unanswered, href: href(true), active: unanswered },
-        ]}
-      />
-      {list.reviews.length === 0 ? (
-        <EmptyState title={list.counts.all === 0 ? "ร้านของคุณยังไม่มีรีวิว" : "ตอบครบทุกรีวิวแล้ว"} />
-      ) : (
-        <>
-          <ul className={styles.list}>
-            {list.reviews.map((review) => (
-              <ReviewItem key={review.id} review={review} meta={`${review.productName} · คำสั่งซื้อ ${review.orderNo}`}>
-                {review.status === REVIEW_STATUS.visible && (
-                  <ReplyForm action={replyAction} reviewId={review.id} reply={review.reply?.body ?? null} />
-                )}
-              </ReviewItem>
-            ))}
-          </ul>
-          <ReviewPager page={list.page} totalPages={list.totalPages} href={(page) => href(unanswered, page)} />
-        </>
-      )}
-    </section>
+    <PageReveal>
+      <section className={styles.section}>
+        <h1>รีวิวของร้าน</h1>
+        <ShopRatingLine rating={shopRating(db, viewer.shopId)} />
+        <ReviewFilters
+          label="กรองรีวิว"
+          filters={[
+            { label: "ทั้งหมด", count: list.counts.all, href: href(false), active: !unanswered },
+            { label: "ยังไม่ตอบ", count: list.counts.unanswered, href: href(true), active: unanswered },
+          ]}
+        />
+        {list.reviews.length === 0 ? (
+          <EmptyState title={list.counts.all === 0 ? "ร้านของคุณยังไม่มีรีวิว" : "ตอบครบทุกรีวิวแล้ว"} />
+        ) : (
+          <>
+            <ul className={styles.list}>
+              {list.reviews.map((review) => (
+                <ReviewItem key={review.id} review={review} meta={`${review.productName} · คำสั่งซื้อ ${review.orderNo}`}>
+                  {review.status === REVIEW_STATUS.visible && (
+                    <ReplyForm action={replyAction} reviewId={review.id} reply={review.reply?.body ?? null} />
+                  )}
+                </ReviewItem>
+              ))}
+            </ul>
+            <ReviewPager page={list.page} totalPages={list.totalPages} href={(page) => href(unanswered, page)} />
+          </>
+        )}
+      </section>
+    </PageReveal>
   );
 }

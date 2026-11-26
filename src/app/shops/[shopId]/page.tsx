@@ -12,6 +12,8 @@ import { formatThaiDate, formatNumber } from "@/shared/format";
 import { getCurrentAccount } from "@/shared/session";
 import { SHOP_STATUS } from "@/shared/statuses";
 import { EmptyState } from "@/shared/ui/states";
+import { StatusBadge } from "@/shared/ui/status-badge";
+import { PageReveal } from "@/shared/ui/transitions";
 
 /** หน้าร้านที่ทุกคนเปิดดูได้ ข้อมูลร้านสั้นๆ แล้วสินค้าเริ่มในจอแรก (SHP-011 SHP-012 SHP-014) */
 export default async function StorefrontPage({ params }: PageProps<"/shops/[shopId]">) {
@@ -29,54 +31,61 @@ export default async function StorefrontPage({ params }: PageProps<"/shops/[shop
 
   if (shop.status === SHOP_STATUS.suspended) {
     return (
-      <>
-        <header className={styles.identity}>
-          <ShopLogo name={shop.name} logoUrl={shop.logoUrl} />
-          <h1>{shop.name}</h1>
-        </header>
-        <EmptyState title="ร้านนี้ถูกระงับ ซื้อสินค้าจากร้านนี้ไม่ได้ในขณะนี้">{otherShops}</EmptyState>
-      </>
+      <PageReveal>
+        <>
+          <header className={`card ${styles.identity}`}>
+            <ShopLogo name={shop.name} logoUrl={shop.logoUrl} />
+            <div>
+              <h1>{shop.name}</h1>
+              <StatusBadge status={shop.status} />
+            </div>
+          </header>
+          <EmptyState art="shop" title="ร้านนี้ถูกระงับ ซื้อสินค้าจากร้านนี้ไม่ได้ในขณะนี้">{otherShops}</EmptyState>
+        </>
+      </PageReveal>
     );
   }
 
   const first = listStorefrontProducts(db, shop.id);
   return (
-    <>
-      <header className={styles.identity}>
-        <ShopLogo name={shop.name} logoUrl={shop.logoUrl} />
-        <div>
-          <h1>{shop.name}</h1>
-          <ShopRatingLine rating={shopRating(db, shop.id)} />
-          <p className={styles.meta}>
-            <span>{shop.province}</span>
-            <span>
-              เปิดร้านเมื่อ <time dateTime={shop.openedAt}>{formatThaiDate(shop.openedAt)}</time>
-            </span>
-            <span>สินค้า {formatNumber(shop.productCount)} ชิ้น</span>
-          </p>
-        </div>
-      </header>
-      <div className={styles.about}>
-        <p className={shop.description ? styles.description : styles.muted}>{shop.description || "ร้านนี้ยังไม่มีคำอธิบาย"}</p>
-        {isOwner && (
-          <Link href="/seller/settings" className="link-action">
-            แก้ไขร้าน
-          </Link>
+    <PageReveal>
+      <>
+        <header className={`card ${styles.identity} ${styles.storefront}`}>
+          <ShopLogo name={shop.name} logoUrl={shop.logoUrl} />
+          <div>
+            <h1>{shop.name}</h1>
+            <ShopRatingLine rating={shopRating(db, shop.id)} />
+            <p className={styles.meta}>
+              <span>{shop.province}</span>
+              <span>
+                เปิดร้านเมื่อ <time dateTime={shop.openedAt}>{formatThaiDate(shop.openedAt)}</time>
+              </span>
+              <span>สินค้า {formatNumber(shop.productCount)} ชิ้น</span>
+            </p>
+          </div>
+          <div className={styles.about}>
+            <p className={shop.description ? styles.description : styles.muted}>{shop.description || "ร้านนี้ยังไม่มีคำอธิบาย"}</p>
+            {isOwner && (
+              <Link href="/seller/settings" className="link-action">
+                แก้ไขร้าน
+              </Link>
+            )}
+          </div>
+        </header>
+        {first.items.length === 0 ? (
+          <EmptyState art="shop" title="ร้านนี้ยังไม่มีสินค้า">
+            {isOwner ? (
+              <Link href="/seller/products/new" className="button">
+                ลงสินค้าชิ้นแรก
+              </Link>
+            ) : (
+              otherShops
+            )}
+          </EmptyState>
+        ) : (
+          <StorefrontProducts first={first} loadMore={loadMoreShopProductsAction.bind(null, shop.id)} />
         )}
-      </div>
-      {first.items.length === 0 ? (
-        <EmptyState title="ร้านนี้ยังไม่มีสินค้า">
-          {isOwner ? (
-            <Link href="/seller/products/new" className="button">
-              ลงสินค้าชิ้นแรก
-            </Link>
-          ) : (
-            otherShops
-          )}
-        </EmptyState>
-      ) : (
-        <StorefrontProducts first={first} loadMore={loadMoreShopProductsAction.bind(null, shop.id)} />
-      )}
-    </>
+      </>
+    </PageReveal>
   );
 }

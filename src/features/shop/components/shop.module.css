@@ -1,21 +1,11 @@
 /* หน้าเปิดร้าน หลังบ้านของร้าน หน้าตั้งค่าร้าน และหน้าร้าน ใช้ได้ที่จอกว้าง 360 จุด (SHP-Q04) */
 
-/* แถบแจ้งเตือนและข้อความสำเร็จ ใช้เส้นซ้ายบอกระดับ ไม่ใช้กล่องสี */
-
-.banner,
-.notice {
-  margin: 0 0 var(--space-5);
-  padding: var(--space-2) var(--space-4);
-  border-inline-start: 2px solid var(--color-text);
-}
-
 .banner {
-  border-color: var(--color-warning);
-  color: var(--color-warning);
+  max-width: none;
 }
 
 .menu {
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-5);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -32,6 +22,24 @@
   margin: 0;
 }
 
+.identity > div {
+  min-width: 0;
+}
+
+/* หัวของหน้าร้านเป็นการ์ดใบเดียว: โลโก้ ชื่อ คะแนน ข้อมูลร้าน และคำอธิบาย */
+.identity:global(.card) {
+  flex-wrap: wrap;
+  padding: var(--space-4);
+}
+
+.storefront {
+  margin-bottom: var(--space-5);
+}
+
+.storefront h1 {
+  font-size: var(--text-heading);
+}
+
 .logo {
   flex: none;
   display: inline-flex;
@@ -42,9 +50,11 @@
   overflow: hidden;
   /* SHP-008 ให้โลโก้อยู่ในวงกลม จึงเป็นที่เดียวที่มุมไม่ใช่ --radius */
   border-radius: 50%;
-  background: var(--color-surface-sunken);
-  color: var(--color-text);
+  background: var(--tint-2);
+  color: var(--color-ink);
+  font-family: var(--font-display);
   font-size: var(--text-heading);
+  font-weight: 600;
   line-height: 1;
   object-fit: cover;
 }
@@ -59,7 +69,8 @@
 .meta {
   display: flex;
   flex-wrap: wrap;
-  column-gap: var(--space-4);
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
   font-size: var(--text-label);
 }
 
@@ -72,16 +83,22 @@
 .stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-5) var(--space-4);
+  gap: var(--space-3);
   margin: 0 0 var(--space-5);
 }
 
 .stat {
   position: relative;
   display: grid;
-  align-content: start;
-  padding-top: var(--space-2);
-  border-top: 1px solid var(--color-border);
+  align-content: space-between;
+  gap: var(--space-2);
+  min-height: 132px;
+  padding: var(--space-4);
+}
+
+/* มีคำสั่งซื้อรอจัดของ การ์ดนี้เป็นพื้นสีรอ ผู้ขายเห็นก่อนตัวอื่น */
+.stat[data-waiting] {
+  background: var(--color-accent-soft);
 }
 
 .stat dt {
@@ -93,43 +110,106 @@
   align-items: center;
   min-height: var(--tap);
   color: var(--color-text);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
+  text-decoration: none;
 }
 
 .statLink::after {
   content: "";
   position: absolute;
   inset: 0;
+  border-radius: var(--radius-l);
 }
 
-@media (hover: hover) {
-  .stat:hover .statLink {
-    text-decoration-thickness: 2px;
-  }
+.statLink:focus-visible {
+  outline: none;
+}
+
+.statLink:focus-visible::after {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
 .stat dd {
   display: grid;
   margin: 0;
+  font-family: var(--font-display);
   font-size: var(--text-title);
-  line-height: 1.3;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .statError {
   color: var(--color-danger);
+  font-family: var(--font);
   font-size: var(--text-label);
+  font-weight: 400;
+}
+
+/* งานที่ทำได้เลยจากหน้าแรกของหลังบ้าน */
+.todo {
+  margin-bottom: var(--space-5);
+}
+
+.todo h2 {
+  margin: 0 0 var(--space-3);
+}
+
+.todoColumns {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.todoList {
+  margin: 0;
+  padding: var(--space-1) var(--space-4);
+  list-style: none;
+}
+
+.todoList > li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+.todoLink {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  min-height: var(--tap);
+  padding-block: var(--space-3);
+  color: var(--color-text);
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.todoLink > span:first-child {
+  display: grid;
+  min-width: 0;
+}
+
+.todoLink .muted {
+  font-size: var(--text-label);
+}
+
+@media (hover: hover) {
+  .todoLink:hover > span:first-child {
+    color: var(--color-primary-press);
+  }
 }
 
 /* หน้าร้าน: คำอธิบายร้านแล้วสินค้าเลย */
 
 .about {
   display: grid;
+  flex: 1 1 100%;
   justify-items: start;
   gap: var(--space-1);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.about p {
   max-width: var(--measure);
-  margin-bottom: var(--section-gap);
 }
 
 .about p {
@@ -161,14 +241,8 @@
 
 .fieldset {
   min-width: 0;
-  margin: 0 0 var(--space-5);
-  padding: 0;
+  margin: 0 0 var(--space-4);
   border: 0;
-}
-
-.fieldset + .fieldset {
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--color-border);
 }
 
 /* legend ที่ลอยอยู่ไม่ทับเส้นขอบบนของ fieldset */
@@ -177,6 +251,7 @@
   width: 100%;
   margin-bottom: var(--space-3);
   padding: 0;
+  font-family: var(--font-display);
   font-size: var(--text-heading);
   font-weight: 600;
   line-height: 1.3;
@@ -237,9 +312,10 @@
   z-index: 10;
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-3) 0 calc(var(--space-3) + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--color-border);
-  background: var(--color-bg);
+  padding: var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom));
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
 }
 
 .submitBar .actions {
@@ -277,14 +353,15 @@
 .dialog {
   max-width: min(400px, calc(100vw - 2 * var(--gutter)));
   padding: var(--space-5);
-  border: 1px solid var(--color-text);
-  border-radius: var(--radius-s);
-  background: var(--color-bg);
+  border: 0;
+  border-radius: var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
   color: var(--color-text);
 }
 
 .dialog::backdrop {
-  background: color-mix(in srgb, var(--color-text) 40%, transparent);
+  background: color-mix(in srgb, var(--color-ink) 45%, transparent);
 }
 
 .dialog p {
@@ -317,6 +394,16 @@
 
   .stats {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+
+  .todoColumns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .identity:global(.card) {
+    padding: var(--space-5);
   }
 
   .formPage {

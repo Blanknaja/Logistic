@@ -33,7 +33,7 @@ export function StorefrontProducts({ first, loadMore }: { first: StorefrontPage;
     <>
       <ul className={browse.grid}>
         {shown.items.map((item) => (
-          <li key={item.id}>
+          <li key={item.id} className="reveal">
             <ProductCard item={item} />
           </li>
         ))}

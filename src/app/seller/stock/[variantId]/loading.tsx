@@ -1,5 +1,10 @@
 import { StockLoadingState } from "@/features/stock/components/stock-states";
+import { SkeletonExit } from "@/shared/ui/transitions";
 
 export default function Loading() {
-  return <StockLoadingState title="กำลังโหลดประวัติสต็อก" failedTitle="โหลดประวัติสต็อกไม่สำเร็จ" backToStock />;
+  return (
+    <SkeletonExit>
+      <StockLoadingState title="กำลังโหลดประวัติสต็อก" failedTitle="โหลดประวัติสต็อกไม่สำเร็จ" backToStock />
+    </SkeletonExit>
+  );
 }

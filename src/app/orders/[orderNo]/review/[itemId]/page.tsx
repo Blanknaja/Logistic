@@ -7,6 +7,7 @@ import { getReviewTarget } from "@/features/review/server/reviews";
 import { getDb } from "@/shared/db";
 import { requireAccount } from "@/shared/session";
 import { EmptyState } from "@/shared/ui/states";
+import { PageReveal } from "@/shared/ui/transitions";
 
 export const metadata: Metadata = { title: "รีวิวสินค้า" };
 
@@ -19,12 +20,18 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/o
   if (target.state === "notFound") notFound();
   if (target.state === "notCompleted") {
     return (
-      <EmptyState level={1} title={MESSAGES.notCompleted}>
-        <Link href={orderPath} className="button">
-          กลับไปคำสั่งซื้อ
-        </Link>
-      </EmptyState>
+      <PageReveal>
+        <EmptyState level={1} title={MESSAGES.notCompleted}>
+          <Link href={orderPath} className="button">
+            กลับไปคำสั่งซื้อ
+          </Link>
+        </EmptyState>
+      </PageReveal>
     );
   }
-  return <OwnReview target={target} editing={edit === "1"} notice={notice} />;
+  return (
+    <PageReveal>
+      <OwnReview target={target} editing={edit === "1"} notice={notice} />
+    </PageReveal>
+  );
 }

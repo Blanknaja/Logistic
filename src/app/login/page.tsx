@@ -5,6 +5,7 @@ import styles from "@/features/account/components/account.module.css";
 import { LoginForm } from "@/features/account/components/login-form";
 import { isLoginNotice, LOGIN_NOTICE, safeNextPath } from "@/features/account/server/login-path";
 import { getCurrentAccount, getSessionProblem } from "@/shared/session";
+import { PageReveal } from "@/shared/ui/transitions";
 
 export const metadata: Metadata = { title: "เข้าสู่ระบบ" };
 
@@ -18,22 +19,24 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const shown = problem === "suspended" ? problem : isLoginNotice(notice) ? notice : problem;
 
   return (
-    <div className={styles.page}>
-      <h1>เข้าสู่ระบบ</h1>
-      {shown && (
-        <p role="status" className={styles.notice}>
-          {LOGIN_NOTICE[shown]}
-        </p>
-      )}
-      <LoginForm next={nextPath} />
-      <div className={styles.more}>
-        <p>
-          <Link href="/forgot-password">ลืมรหัสผ่าน</Link>
-        </p>
-        <p>
-          ยังไม่มีบัญชี <Link href="/signup">สมัครบัญชี</Link>
-        </p>
+    <PageReveal>
+      <div className={styles.page}>
+        <h1>เข้าสู่ระบบ</h1>
+        {shown && (
+          <p role="status" className={styles.notice}>
+            {LOGIN_NOTICE[shown]}
+          </p>
+        )}
+        <LoginForm next={nextPath} />
+        <div className={styles.more}>
+          <p>
+            <Link href="/forgot-password">ลืมรหัสผ่าน</Link>
+          </p>
+          <p>
+            ยังไม่มีบัญชี <Link href="/signup">สมัครบัญชี</Link>
+          </p>
+        </div>
       </div>
-    </div>
+    </PageReveal>
   );
 }

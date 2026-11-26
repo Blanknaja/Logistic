@@ -95,7 +95,7 @@ export function ShopForm({ mode, action, shop, readOnly = false, cancelHref }: P
     >
       {shop && <input type="hidden" name="shopId" value={shop.id} />}
       <input type="hidden" name="removeLogo" value={removeLogo ? "1" : "0"} />
-      <fieldset disabled={readOnly} className={styles.fieldset}>
+      <fieldset disabled={readOnly} className={`card card-pad ${styles.fieldset}`}>
         <div className={styles.medium}>
           <Field label="ชื่อร้าน" name="name" defaultValue={shop?.name} autoComplete="organization" error={errors.name} />
         </div>
@@ -173,7 +173,7 @@ export function ShopForm({ mode, action, shop, readOnly = false, cancelHref }: P
         </div>
       </fieldset>
 
-      <fieldset disabled={readOnly} className={styles.fieldset}>
+      <fieldset disabled={readOnly} className={`card card-pad ${styles.fieldset}`}>
         <legend>ที่อยู่ต้นทาง</legend>
         <div className={styles.pair}>
           <Field label="ชื่อผู้ส่ง" name="senderName" defaultValue={shop?.senderName} autoComplete="name" error={errors.senderName} />

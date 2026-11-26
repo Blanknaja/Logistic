@@ -9,6 +9,7 @@ import { getDb } from "@/shared/db";
 import { formatThaiDateTime } from "@/shared/format";
 import { requireAccount } from "@/shared/session";
 import { ORDER_STATUS } from "@/shared/statuses";
+import { PageReveal } from "@/shared/ui/transitions";
 
 export const metadata: Metadata = { title: "เปลี่ยนสถานะการจัดส่ง" };
 
@@ -21,39 +22,41 @@ export default async function ParcelStatusPage({ params, searchParams }: PagePro
   const chosen = parcel.nextStatuses.find((status) => status === to);
 
   return (
-    <div className={styles.page}>
-      <h1 className={styles.title}>
-        <span className={styles.eyebrow}>เปลี่ยนสถานะการจัดส่ง {parcel.trackingNo}</span> {parcel.status}
-      </h1>
-      {saved && !chosen && <p role="status">บันทึกแล้ว</p>}
-      {parcel.orderStatus === ORDER_STATUS.cancelled && <p className={styles.cancelled}>คำสั่งซื้อถูกยกเลิก</p>}
-      <dl className={styles.facts}>
-        <div>
-          <dt>ร้าน</dt>
-          <dd>{parcel.shopName}</dd>
-        </div>
-        <div>
-          <dt>รายการล่าสุด</dt>
-          <dd>
-            <time dateTime={parcel.latest.at}>{formatThaiDateTime(parcel.latest.at)}</time> · {parcel.latest.location}
-          </dd>
-        </div>
-      </dl>
-      {chosen ? (
-        <StatusChangeForm
-          trackingNo={parcel.trackingNo}
-          from={parcel.status}
-          to={chosen}
-          defaultProvince={parcel.defaultProvince}
-        />
-      ) : (
-        <StatusChangeLinks trackingNo={parcel.trackingNo} nextStatuses={parcel.nextStatuses} />
-      )}
-      <p>
-        <Link href={`/track/${encodeURIComponent(parcel.trackingNo)}`} className="link-action">
-          ดูประวัติการจัดส่ง
-        </Link>
-      </p>
-    </div>
+    <PageReveal>
+      <div className={styles.page}>
+        <h1 className={styles.title}>
+          <span className={styles.eyebrow}>เปลี่ยนสถานะการจัดส่ง {parcel.trackingNo}</span> {parcel.status}
+        </h1>
+        {saved && !chosen && <p role="status">บันทึกแล้ว</p>}
+        {parcel.orderStatus === ORDER_STATUS.cancelled && <p className={styles.cancelled}>คำสั่งซื้อถูกยกเลิก</p>}
+        <dl className={styles.facts}>
+          <div>
+            <dt>ร้าน</dt>
+            <dd>{parcel.shopName}</dd>
+          </div>
+          <div>
+            <dt>รายการล่าสุด</dt>
+            <dd>
+              <time dateTime={parcel.latest.at}>{formatThaiDateTime(parcel.latest.at)}</time> · {parcel.latest.location}
+            </dd>
+          </div>
+        </dl>
+        {chosen ? (
+          <StatusChangeForm
+            trackingNo={parcel.trackingNo}
+            from={parcel.status}
+            to={chosen}
+            defaultProvince={parcel.defaultProvince}
+          />
+        ) : (
+          <StatusChangeLinks trackingNo={parcel.trackingNo} nextStatuses={parcel.nextStatuses} />
+        )}
+        <p>
+          <Link href={`/track/${encodeURIComponent(parcel.trackingNo)}`} className="link-action">
+            ดูประวัติการจัดส่ง
+          </Link>
+        </p>
+      </div>
+    </PageReveal>
   );
 }

@@ -1,3 +1,4 @@
+import { notifyStockEmpty } from "@/features/notification/server/events";
 import { transaction, type Db } from "@/shared/db";
 import { ORDER_STATUS, STOCK_CHANGE_REASON } from "@/shared/statuses";
 
@@ -20,6 +21,7 @@ export function reserveOrderStock(db: Db, orderId: number, lines: StockLine[], n
     const row = take.get(quantity, variantId, quantity);
     if (!row) throw new Error(`สต็อกของแบบย่อย ${variantId} ไม่พอ ต้องตรวจก่อนจอง`);
     addHistory(db, variantId, STOCK_CHANGE_REASON.reserved, -quantity, Number(row.stock), orderId, now);
+    if (Number(row.stock) === 0 && quantity > 0) notifyStockEmpty(db, variantId, orderId, now);
   }
 }
 

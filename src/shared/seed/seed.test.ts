@@ -93,9 +93,9 @@ describe("ข้อมูลตัวอย่าง", () => {
       )
       .all()
       .map((row) => [row.status, row.n]);
-    // คำสั่งซื้อที่สำเร็จเกิน 2 รายการคือคำสั่งซื้อของรีวิวตัวอย่าง (REV-019)
+    // คำสั่งซื้อที่สำเร็จเกิน 3 รายการคือคำสั่งซื้อของรีวิวตัวอย่าง (REV-019)
     expect(Object.fromEntries(statuses)).toMatchObject({ จ่ายแล้ว: 2, กำลังจัดส่ง: 2, ยกเลิก: 2 });
-    expect(Object.fromEntries(statuses)["สำเร็จ"]).toBeGreaterThanOrEqual(2);
+    expect(Object.fromEntries(statuses)["สำเร็จ"]).toBeGreaterThanOrEqual(3);
     expect(count("SELECT count(*) AS n FROM orders o WHERE o.status <> 'ยกเลิก' AND NOT EXISTS (SELECT 1 FROM parcels p WHERE p.order_id = o.id)")).toBe(0);
     expect(count("SELECT count(*) AS n FROM parcels WHERE status = 'ส่งสำเร็จ' AND receipt_confirmed_at IS NULL")).toBe(1);
   });

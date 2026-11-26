@@ -1,3 +1,4 @@
+import { notifyOrderCompleted } from "@/features/notification/server/events";
 import { transaction, type Db } from "@/shared/db";
 import { ORDER_STATUS, PARCEL_STATUS, RECEIPT_CONFIRMED_BY, type ReceiptConfirmedBy } from "@/shared/statuses";
 import { AUTO_CONFIRM_AFTER_MS, findViewableParcel, PARCEL_NOT_FOUND, type Viewer } from "./tracking";
@@ -22,6 +23,7 @@ function markReceived(db: Db, parcelId: number, orderId: number, by: ReceiptConf
     db.prepare(
       "UPDATE parcels SET receipt_confirmed_at = ?, receipt_confirmed_by = ?, updated_at = ? WHERE id = ? AND receipt_confirmed_at IS NULL",
     ).run(at, by, at, parcelId);
+    notifyOrderCompleted(db, orderId, by, now);
     return true;
   });
 }

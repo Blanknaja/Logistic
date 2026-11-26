@@ -66,6 +66,7 @@ test("REV ผู้ซื้อเขียนรีวิวพร้อมร�
   let productPath = "";
   let shopPath = "";
   let reviewPath = "";
+  let productName = "";
   let before = "";
   let afterReview = "";
 
@@ -82,7 +83,10 @@ test("REV ผู้ซื้อเขียนรีวิวพร้อมร�
   });
 
   await test.step("จดคะแนนของสินค้าก่อนเขียนรีวิว", async () => {
-    productPath = (await buyer.getByRole("main").locator('a[href^="/products/"]').first().getAttribute("href")) ?? "";
+    const productLink = buyer.getByRole("main").locator('a[href^="/products/"]').first();
+    productPath = (await productLink.getAttribute("href")) ?? "";
+    productName = ((await productLink.textContent()) ?? "").trim();
+    expect(productName).not.toBe("");
     expect(productPath).toMatch(/^\/products\/\d+$/);
     const product = await (await browser.newContext()).newPage();
     await product.goto(productPath);
@@ -155,9 +159,16 @@ test("REV ผู้ซื้อเขียนรีวิวพร้อมร�
   await test.step("REV-014 REV-015 ร้านเห็นรีวิวใหม่ในหน้ารีวิวของร้านแล้วตอบ", async () => {
     const shopNo = shopPath.split("/").pop()!.padStart(2, "0");
     const seller = await signIn(browser, `seller${shopNo}@example.com`);
-    await seller.getByRole("navigation", { name: "เมนูหลัก" }).getByRole("link", { name: "ร้านของฉัน" }).click();
-    await seller.getByRole("navigation", { name: "เมนูหลังบ้านของร้าน" }).getByRole("link", { name: /^รีวิว ยังไม่ตอบ \d+$/ }).click();
+    // NTF-012 กระดิ่งของผู้ขายมีแจ้งเตือนรีวิวใหม่เป็นรายการบนสุด กดแล้วไปหน้ารีวิวของร้านที่รีวิวนั้นอยู่บนสุด
+    await seller.getByRole("navigation", { name: "เมนูหลัก" }).getByRole("button", { name: /^แจ้งเตือน ยังไม่อ่าน \d+ รายการ$/ }).click();
+    const newest = seller.getByRole("region", { name: "แจ้งเตือนล่าสุด" }).locator('a[href^="/notifications/"]').first();
+    await expect(newest).toContainText(`ร้านของฉัน: รีวิวใหม่ 1 ดาว ของ ${productName}`);
+    await expect(newest).toContainText("ยังไม่อ่าน");
+    await newest.click();
+    await expect(seller).toHaveURL(/\/seller\/reviews$/);
     await expect(seller.getByRole("heading", { name: "รีวิวของร้าน" })).toBeVisible();
+    await expect(seller.getByRole("main").locator("li", { hasText: productName }).first()).toContainText(REVIEW_TEXT);
+    await expect(seller.getByRole("navigation", { name: "เมนูหลังบ้านของร้าน" }).getByRole("link", { name: /^รีวิว ยังไม่ตอบ \d+$/ })).toBeVisible();
     await seller.getByRole("link", { name: /^ยังไม่ตอบ \d+$/ }).click();
     const item = seller.getByRole("main").locator("li", { hasText: REVIEW_TEXT }).first();
     await expect(item).toContainText("ผ***");

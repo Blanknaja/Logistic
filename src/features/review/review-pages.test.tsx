@@ -797,3 +797,78 @@ describe("REV-Q04 ใช้บนมือถือได้", () => {
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(|hsl\(/i);
   });
 });
+
+describe("NTF-009 NTF-012 แจ้งเตือนที่เกิดจากรีวิว", () => {
+  const notes = (accountId: number) =>
+    db.prepare("SELECT message, href, created_at FROM notifications WHERE account_id = ? ORDER BY created_at, id").all(accountId) as {
+      message: string;
+      href: string;
+      created_at: string;
+    }[];
+  const reply = (reviewId: number, body: string, editing = "") => submit(replyAction(form({ reviewId: String(reviewId), body, editing })));
+  const hide = (reviewId: number, reason: string) => submit(hideReviewAction(form({ reviewId: String(reviewId), reason })));
+
+  test("NTF-012 ผู้ซื้อส่งรีวิว 4 ดาว ผู้ขายได้แจ้งเตือน 1 รายการที่พาไปหน้ารีวิวของร้านซึ่งรีวิวนั้นอยู่บนสุดพร้อมปุ่มตอบรีวิว แก้รีวิวหรือส่งไม่ผ่านไม่มีแจ้งเตือนใหม่", async () => {
+    vi.useFakeTimers({ now: at("2026-11-26T18:10"), toFake: ["Date"] });
+    reviewed(hammer.variantIds[0], 5, { createdAt: "2026-11-20T03:00:00.000Z" });
+    const mine = order(somying, [screwdriver.variantIds[0], hammer.variantIds[0]]);
+    signInAs(somying);
+    const base = { orderNo: mine.orderNo, itemId: String(mine.itemIds[0]) };
+    await save({ ...base, mode: "new", rating: "4", body: "ด้ามจับถนัดมือ" });
+
+    expect(notes(somchai.accountId)).toEqual([
+      { message: "ร้านของฉัน: รีวิวใหม่ 4 ดาว ของ ไขควง", href: "/seller/reviews", created_at: at("2026-11-26T18:10").toISOString() },
+    ]);
+    expect(notes(somying)).toEqual([]);
+
+    vi.setSystemTime(at("2026-11-28T09:00"));
+    await save({ ...base, mode: "edit", rating: "2", body: "หัวบิ่น" });
+    await save({ orderNo: mine.orderNo, itemId: String(mine.itemIds[1]), mode: "new", body: "ไม่เลือกดาว" });
+    expect(notes(somchai.accountId)).toHaveLength(1);
+
+    signInAs(somchai.accountId);
+    const { html = "" } = await open(SellerReviewsPage(props()));
+    expect(text(firstReview(html))).toContain("ไขควง");
+    expect(text(firstReview(html))).toContain("2 ดาว");
+    expect(firstReview(html)).toContain(">ตอบรีวิว</summary>");
+  });
+
+  test("NTF-009 ร้านตอบรีวิวและผู้ดูแลแพลตฟอร์มซ่อนรีวิว ผู้ซื้อได้แจ้งเตือน 2 รายการที่พาไปหน้าเขียนรีวิวของรายการนั้น แก้คำตอบ เลิกซ่อน และคำตอบว่างไม่มีแจ้งเตือนใหม่", async () => {
+    vi.useFakeTimers({ now: at("2026-11-26T19:10"), toFake: ["Date"] });
+    const first = reviewed(screwdriver.variantIds[0], 4, { buyer: somying, createdAt: at("2026-11-26T18:10").toISOString() });
+    const second = reviewed(hammer.variantIds[0], 1, { buyer: somying, createdAt: at("2026-11-26T18:20").toISOString() });
+    const third = reviewed(hammer.variantIds[0], 3, { buyer: somying, createdAt: at("2026-11-26T18:30").toISOString() });
+
+    signInAs(somchai.accountId);
+    await reply(first.id, "ขอบคุณที่อุดหนุนครับ");
+    vi.setSystemTime(at("2026-11-26T20:00"));
+    signInAs(wichai);
+    await hide(second.id, "ใช้คำหยาบ");
+
+    expect(notes(somying)).toEqual([
+      {
+        message: "ร้าน สมชายการช่าง ตอบรีวิว ไขควง ของคุณ",
+        href: `/orders/${first.orderNo}/review/${first.itemId}`,
+        created_at: at("2026-11-26T19:10").toISOString(),
+      },
+      {
+        message: "รีวิว ค้อน ของคุณถูกซ่อนโดยผู้ดูแลแพลตฟอร์ม เหตุผล: ใช้คำหยาบ",
+        href: `/orders/${second.orderNo}/review/${second.itemId}`,
+        created_at: at("2026-11-26T20:00").toISOString(),
+      },
+    ]);
+    signInAs(somying);
+    const hiddenPage = await reviewPage(second.orderNo, second.itemId);
+    expect(text(hiddenPage.html)).toContain("ถูกซ่อนโดยผู้ดูแลแพลตฟอร์ม เหตุผล: ใช้คำหยาบ");
+    expect((await reviewPage(first.orderNo, first.itemId)).html).toContain("คำตอบจากร้าน: ขอบคุณที่อุดหนุนครับ");
+
+    signInAs(somchai.accountId);
+    await reply(first.id, "ขอบคุณครับ มีปัญหาแจ้งได้", "1");
+    expect((await reply(third.id, "")).state).toEqual({ error: "กรอกคำตอบ 1 ถึง 500 ตัวอักษร" });
+    signInAs(wichai);
+    await submit(unhideReviewAction(form({ reviewId: String(second.id) })));
+    await hide(second.id, "ซ่อนอีกครั้ง");
+    expect(notes(somying)).toHaveLength(2);
+    expect(notes(somchai.accountId)).toEqual([]);
+  });
+});

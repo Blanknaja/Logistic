@@ -107,7 +107,7 @@ const itemCount = (html: string) => html.match(/href="\/notifications\/\d+"/g)?.
 
 /** กระดิ่งก่อนสคริปต์ทำงาน: ลิงก์ไปหน้าแจ้งเตือนที่มีชื่อ label และตัวเลข badge ต่อท้ายไอคอน */
 const bellLink = (label: string, badge: string) =>
-  new RegExp(`<a class="header-icon-button" aria-label="${label}" href="/notifications">(?:(?!</a>).)*</svg>${badge}</a>`);
+  new RegExp(`<a class="header-icon-button" aria-label="${label}" href="/notifications">(?:(?!</a>).)*</svg>${badge && `<span class="cart-count">${badge}</span>`}</a>`);
 
 describe("NTF-001 กระดิ่งและจำนวนที่ยังไม่อ่าน", () => {
   test("NTF-001 บัญชีที่เข้าสู่ระบบเห็นกระดิ่งพร้อมเลขที่ยังไม่อ่าน อยู่ก่อนไอคอนตะกร้า และกดแล้วไปหน้าแจ้งเตือนได้แม้สคริปต์ไม่ทำงาน", async () => {

@@ -80,7 +80,7 @@ export function Bell({ start }: { start: Pulse | null }) {
     return (
       <Link href="/notifications" className="header-icon-button" aria-label={bellLabel(unread)}>
         <BellIcon />
-        {badge}
+        {badge && <span className="cart-count">{badge}</span>}
       </Link>
     );
   }
@@ -120,7 +120,7 @@ export function Bell({ start }: { start: Pulse | null }) {
         onClick={toggle}
       >
         <BellIcon />
-        {badge}
+        {badge && <span className="cart-count">{badge}</span>}
       </button>
       <span aria-live="polite" aria-atomic="true" className="visually-hidden">
         {announcement}

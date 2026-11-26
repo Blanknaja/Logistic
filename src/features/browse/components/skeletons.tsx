@@ -3,7 +3,7 @@ import styles from "./browse.module.css";
 
 // โครงสีเทาในตำแหน่งที่ข้อมูลจะมาแสดง (BRW-012)
 
-const box = (...classes: string[]) => [styles.skeleton, ...classes].join(" ");
+const box = (...classes: string[]) => ["skeleton", ...classes].join(" ");
 
 /** การ์ดสินค้าระหว่างโหลด ขนาดเท่าการ์ดจริง หน้าจึงไม่กระโดดตอนข้อมูลมา */
 export function CardSkeleton() {

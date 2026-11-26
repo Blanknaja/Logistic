@@ -221,3 +221,35 @@ describe("BRW-012 หน้ากำลังโหลด", () => {
     expect(html.match(/data-skeleton-card/g)).toHaveLength(20);
   });
 });
+
+describe("หน้าแรกรอบ 3: ส่วนต้อนรับและชั้นวางก่อนรายการสินค้า", () => {
+  const home = {
+    categories: [{ id: 1, name: "เสื้อผ้าและแฟชั่น", coverUrl: null }],
+    budget: [card(1, { price: 99 }), card(30, { price: 120 })],
+    shops: [{ id: 5, name: "บ้านสวนผ้าไทย", logoUrl: null, productCount: 20, covers: ["/sample-images/p1-1.svg"] }],
+  };
+  const full: SearchResult = { items: [card(1), card(2)], total: 2, page: 1, totalPages: 1, category: null, categoryNotFound: false, priceError: null };
+  const html = renderToStaticMarkup(<BrowseResults params={parseBrowseParams({})} result={full} categories={categories} home={home} />);
+
+  test("สโลแกนเป็นหัวเรื่องเดียวของหน้า มีช่องค้นหาของส่วนต้อนรับ การ์ดหมวด ชั้นวาง แล้วรายการพร้อมจำนวน", () => {
+    expect(html.match(/<h1/g)).toHaveLength(1);
+    expect(html.replace(/<[^>]+>/g, "")).toContain("ซื้อของจากหลายร้านในที่เดียว");
+    expect(html).toMatch(/aria-label="พิมพ์สิ่งที่อยากได้"/);
+    expect(html).toContain('href="/?category=1"');
+    expect(html).toContain('href="/?max=300"');
+    expect(html).toContain('href="/shops/5"');
+    expect(html).toContain("มาใหม่ล่าสุด");
+    expect(html).toContain("พบ 2 รายการ");
+    expect(html.indexOf("ร้านเด่น")).toBeLessThan(html.indexOf("พบ 2 รายการ"));
+  });
+
+  test("ปุ่มสีเขียวเต็มมีปุ่มเดียว คือปุ่มค้นหาของส่วนต้อนรับ", () => {
+    expect(html.match(/class="button(?! button-secondary)[^"]*"/g)).toHaveLength(1);
+  });
+
+  test("หน้าผลการค้นหาไม่มีส่วนต้อนรับ", () => {
+    const search = render({ q: "เสื้อ" }, { items: [card(1)], total: 1, totalPages: 1 });
+    expect(search).not.toContain("พิมพ์สิ่งที่อยากได้");
+    expect(search).not.toContain("ร้านเด่น");
+  });
+});

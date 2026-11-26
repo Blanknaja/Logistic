@@ -20,3 +20,7 @@ next-env.d.ts
 # playwright output
 /test-results/
 /playwright-report/
+
+# design screenshots: only first-screen shots are kept in the repo
+/docs/screenshots/design-3/*
+!/docs/screenshots/design-3/*-first-screen.png

@@ -4,7 +4,7 @@ Blanksong ควรรู้สึกเหมือนตลาดเช้า�
 
 - ค่าทุกตัวอยู่ใน `:root` ของ `src/app/globals.css` ใช้ผ่าน `var()` เท่านั้น สีพิมพ์เป็นตัวเลขได้ที่นั่นที่เดียว (test ตรวจ)
 - ฟอนต์โหลดครั้งเดียวใน `src/app/layout.tsx` ด้วย `next/font` มีสามตัว ห้ามเพิ่ม
-- หน้าแบบอย่างคือหน้าแรก (`src/features/browse/components/home-sections.tsx` กับ `home.module.css`) และหน้าสินค้า (`src/app/products/[productId]/page.tsx` กับ `browse.module.css`) ภาพอยู่ที่ `docs/screenshots/design-3/`
+- หน้าแบบอย่างคือหน้าแรก (`src/features/browse/components/home-sections.tsx` กับ `home.module.css`) และหน้าสินค้า (`src/app/products/[productId]/page.tsx` กับ `browse.module.css`) ภาพจอแรกอยู่ที่ `docs/screenshots/design-3/`
 - กฎที่เครื่องตรวจได้อยู่ใน `src/app/design-system.test.ts` แก้กฎข้อไหน ให้แก้ test ข้อนั้นพร้อมกัน
 
 ## token
@@ -177,5 +177,5 @@ Blanksong ควรรู้สึกเหมือนตลาดเช้า�
 5. ปุ่มขอบดำที่ซ้ำทุกแถวเป็น `link-action` มุมใช้ `--radius-*` ตามบทบาท รูปได้มุม
 6. ใส่การขยับจากตาราง: `lift` กับการ์ดที่กดได้ `reveal` กับรายการยาว `SkeletonExit` กับ `PageReveal` หรือ `PageSlide` ใน `loading.tsx` กับ `page.tsx`
 7. ข้อความหรือพฤติกรรมที่ต้องเปลี่ยน ใช้คำตาม `GLOSSARY.md` เปลี่ยนน้อยที่สุด และเขียน "agent ตัดสินใจ: ... (วันที่)" ในส่วนที่ 8 ของไฟล์ใน `docs/requirements/`
-8. ถ่ายภาพจอแรกและทั้งหน้าที่ 1440x900 และ 390x844 ลง `docs/screenshots/design-3/` แล้วเปิดดูเองทุกภาพ ภาพทั้งหน้าให้ตั้งความสูงจอเท่าความสูงหน้า (ไม่ใช้ `fullPage`) ของที่โผล่ตามการเลื่อนและแถบที่ติดขอบจอจึงอยู่ในสภาพสุดท้าย รอ animation ตอนเข้าจบก่อนถ่าย
+8. ถ่ายภาพจอแรกและทั้งหน้าที่ 1440x900 และ 390x844 ลง `docs/screenshots/design-3/` แล้วเปิดดูเองทุกภาพ repo นี้ public จึงเก็บใน git เฉพาะภาพจอแรก (`*-first-screen.png`) ภาพทั้งหน้าใช้ดูในเครื่องเท่านั้น `.gitignore` กันไม่ให้ถูก commit ถ้าเอกสารต้องลิงก์ถึงภาพทั้งหน้าภาพใด ให้เพิ่มข้อยกเว้นของภาพนั้นใน `.gitignore` ภาพทั้งหน้าให้ตั้งความสูงจอเท่าความสูงหน้า (ไม่ใช้ `fullPage`) ของที่โผล่ตามการเลื่อนและแถบที่ติดขอบจอจึงอยู่ในสภาพสุดท้าย รอ animation ตอนเข้าจบก่อนถ่าย
 9. รัน e2e ด้วยพอร์ตของตัวเอง `E2E_PORT=<พอร์ตว่าง> pnpm e2e` แล้ว `pnpm check` กับ `pnpm e2e` ต้องผ่าน

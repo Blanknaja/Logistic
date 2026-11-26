@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useActionState, useEffect, useRef, useState } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { withTimeout } from "@/shared/ui/timeout";
 import { saveStockAction, saveStockFormAction } from "@/features/stock/actions";
 import { INVALID_STOCK_MESSAGE, stockLabel, STOCK_LABEL } from "@/features/stock/server/labels";
@@ -38,6 +38,7 @@ export function StockBadge({ stock }: { stock: number }) {
 }
 
 const timedSave = withTimeout(saveStockAction);
+const noSubscribe = () => () => {};
 
 async function submit(previous: RowState, formData: FormData): Promise<RowState> {
   const result = await timedSave({ failed: true }, formData);
@@ -46,6 +47,7 @@ async function submit(previous: RowState, formData: FormData): Promise<RowState>
 
 /**
  * หนึ่งแถวของหน้าสต็อก ตัวเลขสต็อกอยู่ในช่องกรอกที่เดียว ปุ่มบันทึกและยกเลิกขึ้นเมื่อแก้ตัวเลขแล้ว
+ * ปุ่มถูกซ่อนได้ก็ต่อเมื่อแถวมี data-hydrated คือสคริปต์ของแถวทำงานแล้ว ถ้าสคริปต์ไม่ทำงาน ปุ่มอยู่ตลอด และ "ยกเลิก" คืนค่าช่องด้วยการ reset ของฟอร์ม
  * ตัวเลขที่แสดงมาจากผลบันทึกล่าสุดของแถวนี้ จึงใช้เทียบได้ว่าสต็อกเปลี่ยนไปหรือยัง (INV-006)
  * back คือที่อยู่หน้าสต็อกที่เปิดอยู่ เบราว์เซอร์ที่ไม่มี JavaScript บันทึกแล้วกลับไปที่นั่น
  * outcome คือผลที่ได้กลับมาจากทางที่ไม่มี JavaScript
@@ -58,6 +60,7 @@ export function StockRowItem({ row, back = "/seller/stock", outcome: initialOutc
   // pending จะเป็น true หลัง React วาดใหม่ ส่วนนี้กันการกดซ้ำที่มาก่อนนั้น
   const busy = useRef(false);
   const refocus = useRef(false);
+  const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
 
   useEffect(() => {
     if (!pending) busy.current = false;
@@ -76,7 +79,7 @@ export function StockRowItem({ row, back = "/seller/stock", outcome: initialOutc
   const errorId = `${inputId}-error`;
 
   return (
-    <li className={styles.row} data-dirty={dirty || pending || undefined}>
+    <li className={styles.row} data-hydrated={hydrated || undefined} data-dirty={dirty || pending || undefined}>
       <p className={styles.name}>
         {row.productName}
         {row.variantLabel && <span className={styles.variant}> {row.variantLabel}</span>}
@@ -105,6 +108,12 @@ export function StockRowItem({ row, back = "/seller/stock", outcome: initialOutc
           const formData = new FormData(event.currentTarget);
           startTransition(() => dispatch(formData));
         }}
+        onReset={(event) => {
+          event.preventDefault();
+          setValue(String(state.stock));
+          setCancelled(true);
+          input.current?.focus();
+        }}
       >
         <input type="hidden" name="variantId" value={row.variantId} />
         <input type="hidden" name="expected" value={state.stock} />
@@ -130,16 +139,7 @@ export function StockRowItem({ row, back = "/seller/stock", outcome: initialOutc
           <button type="submit" className="button button-secondary" disabled={pending}>
             {pending ? "กำลังบันทึก..." : "บันทึก"}
           </button>
-          <button
-            type="button"
-            className="button button-secondary"
-            disabled={pending}
-            onClick={() => {
-              setValue(String(state.stock));
-              setCancelled(true);
-              input.current?.focus();
-            }}
-          >
+          <button type="reset" className="button button-secondary" disabled={pending}>
             ยกเลิก
           </button>
         </span>

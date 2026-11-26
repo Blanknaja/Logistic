@@ -100,11 +100,9 @@
   padding-top: var(--space-2);
 }
 
-/* มี JavaScript แล้ว ปุ่มขึ้นเมื่อแก้ตัวเลขเท่านั้น ไม่มี JavaScript ปุ่มอยู่ตลอดเพื่อให้บันทึกได้ */
-@media (scripting: enabled) {
-  .row:not([data-dirty]) .controls {
-    display: none;
-  }
+/* สคริปต์ของแถวทำงานแล้ว (data-hydrated) ปุ่มขึ้นเมื่อแก้ตัวเลขเท่านั้น สคริปต์ไม่ทำงาน ปุ่มอยู่ตลอดเพื่อให้บันทึกได้ */
+.row[data-hydrated]:not([data-dirty]) .controls {
+  display: none;
 }
 
 .messages {

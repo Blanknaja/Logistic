@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import StockHistoryError from "@/app/seller/stock/[variantId]/error";
 import StockHistoryLoading from "@/app/seller/stock/[variantId]/loading";
 import StockHistoryPage from "@/app/seller/stock/[variantId]/page";
@@ -21,7 +21,6 @@ import { createTestDb } from "@/shared/db/testing";
 import { sellerMenuLinks } from "@/shared/nav/registry";
 import { SESSION_COOKIE } from "@/shared/session";
 import { STOCK_CHANGE_REASON } from "@/shared/statuses";
-import { formatThaiDateTime } from "@/shared/format";
 
 const request = vi.hoisted(() => ({
   db: undefined as Db | undefined,
@@ -59,6 +58,9 @@ vi.mock("@/shared/db", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/shared/db")>()),
   getDb: () => request.db,
 }));
+
+// บาง test ตรึงวันที่ไว้ในปี 2026 เพราะวันที่ของปีนี้แสดงโดยไม่มีปี
+afterEach(() => void vi.useRealTimers());
 
 let db: Db;
 
@@ -257,23 +259,24 @@ describe("INV-004 ผู้ขายตั้งสต็อก", () => {
     expect(html(<SaveFeedback outcome="failed" />)).toContain("บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง");
   });
 
-  test("INV-004 แต่ละแถวมีช่องกรอกที่เริ่มจากสต็อกปัจจุบัน ปุ่มบันทึก และปุ่มยกเลิกที่ไม่ส่งข้อมูล", () => {
+  test("INV-004 แต่ละแถวมีช่องกรอกที่เริ่มจากสต็อกปัจจุบัน ปุ่มบันทึก และปุ่มยกเลิกที่คืนค่าฟอร์มโดยไม่ส่งข้อมูล", () => {
     const row = { variantId: 7, productName: "เสื้อยืดคอกลม", variantLabel: "แดง L", stock: 3, reserved: 0, label: "ใกล้หมด" as const };
     const page = html(<StockRowItem row={row} />);
     expect(page).toMatch(/<input[^>]*name="stock"[^>]*value="3"/);
     expect(page).toMatch(/<input type="hidden" name="expected" value="3"/);
     expect(page).toMatch(/<button type="submit"[^>]*>บันทึก</);
-    expect(page).toMatch(/<button type="button"[^>]*>ยกเลิก</);
+    expect(page).toMatch(/<button type="reset"[^>]*>ยกเลิก</);
   });
 
-  test("INV-004 ปุ่มบันทึกและยกเลิกซ่อนจนกว่าจะแก้ตัวเลข เฉพาะเมื่อเบราว์เซอร์มี JavaScript", () => {
+  test("INV-004 ปุ่มบันทึกและยกเลิกซ่อนจนกว่าจะแก้ตัวเลข เฉพาะเมื่อสคริปต์ของแถวทำงานแล้ว", () => {
     const row = { variantId: 7, productName: "เสื้อยืดคอกลม", variantLabel: "แดง L", stock: 3, reserved: 0, label: "ใกล้หมด" as const };
     const page = html(<StockRowItem row={row} />);
     const css = readFileSync(join(process.cwd(), "src/features/stock/components/stock.module.css"), "utf8");
 
-    // ยังไม่แก้ แถวไม่มี data-dirty ปุ่มจึงถูกซ่อนด้วยกฎที่ใช้เฉพาะตอนมี JavaScript
+    // หน้าที่เซิร์ฟเวอร์ส่งมาไม่มี data-hydrated ปุ่มจึงอยู่จนกว่าสคริปต์ของแถวทำงาน
     expect(page).toMatch(/<li class="_row_[^"]*">/);
-    expect(css).toMatch(/@media \(scripting: enabled\) \{\s*\.row:not\(\[data-dirty\]\) \.controls \{\s*display: none;/);
+    expect(css).toMatch(/\.row\[data-hydrated\]:not\(\[data-dirty\]\) \.controls \{\s*display: none;/);
+    expect(css).not.toContain("scripting");
   });
 
   test("INV-004 เบราว์เซอร์ที่ไม่มี JavaScript กดบันทึกแล้วกลับไปหน้าสต็อกเดิม เห็นจำนวนใหม่และข้อความบันทึกแล้ว", async () => {
@@ -354,6 +357,7 @@ describe("INV-007 ผู้ขายตั้งสต็อกต่ำกว�
   });
 
   test("INV-007 คำสั่งซื้อถูกยกเลิกทีหลัง ประวัติเห็นคืนจากคำสั่งซื้อ +3 เหลือ 3", async () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-26T12:00:00+07:00") });
     const shop = signInAsSomchai();
     const water = addProduct(db, { shopId: shop.id, name: "ขวดน้ำ 1 ลิตร", stock: 0 });
     const variantId = water.variantIds[0];
@@ -366,7 +370,7 @@ describe("INV-007 ผู้ขายตั้งสต็อกต่ำกว�
 
     expect(plain((await stockPage()).html)).toContain("จองอยู่ 0");
     const page = plain((await historyPage(variantId)).html);
-    for (const text of [formatThaiDateTime("2026-11-25T10:30:00.000Z"), "คืนจากคำสั่งซื้อ +3 เหลือ 3", `คำสั่งซื้อ ${order.orderNo}`]) {
+    for (const text of ["25 พ.ย. 17:30", "คืนจากคำสั่งซื้อ +3 เหลือ 3", `คำสั่งซื้อ ${order.orderNo}`]) {
       expect(page).toContain(text);
     }
   });
@@ -422,6 +426,7 @@ describe("INV-008 กันบัญชีอื่นดูและแก้�
 
 describe("INV-015 แสดงประวัติสต็อก", () => {
   test("INV-015 เห็นวันเวลา เหตุ จำนวน สต็อกหลังเปลี่ยน และเลขคำสั่งซื้อ ไม่มีปุ่มแก้หรือลบ", async () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-26T12:00:00+07:00") });
     const shop = signInAsSomchai();
     const ball = addProduct(db, { shopId: shop.id, name: "ลูกฟุตบอล", stock: 5 });
     const variantId = ball.variantIds[0];
@@ -433,7 +438,8 @@ describe("INV-015 แสดงประวัติสต็อก", () => {
     ).run(variantId, STOCK_CHANGE_REASON.reserved, order.id, "2026-11-25T02:10:00.000Z");
 
     const page = (await historyPage(variantId)).html ?? "";
-    expect(page.indexOf(formatThaiDateTime("2026-11-25T02:10:00.000Z"))).toBeLessThan(page.indexOf(formatThaiDateTime("2026-11-25T02:00:00.000Z")));
+    expect(page).toContain("25 พ.ย. 09:10");
+    expect(page.indexOf("25 พ.ย. 09:10")).toBeLessThan(page.indexOf("25 พ.ย. 09:00"));
     for (const text of ["จองจากคำสั่งซื้อ -2 เหลือ 8", "ผู้ขายแก้ +5 เหลือ 10", `คำสั่งซื้อ ${order.orderNo}`, "สต็อกปัจจุบัน"]) {
       expect(plain(page)).toContain(text);
     }

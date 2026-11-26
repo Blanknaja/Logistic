@@ -5,7 +5,6 @@ import { PRODUCT_STATUS, SHOP_STATUS } from "@/shared/statuses";
 
 /** ราคาสูงสุดของชั้น "ราคาเบาๆ" ในหน้าแรก ลิงก์ "ดูทั้งหมด" ใช้ตัวกรองราคาเดียวกัน */
 export const BUDGET_MAX = 300;
-const SHELF_SIZE = 10;
 const FEATURED_SHOPS = 6;
 
 export type CategoryCover = { id: number; name: string; coverUrl: string | null };
@@ -39,7 +38,7 @@ export function getHomeSections(db: Db): HomeSections {
     ({ id, name }) => ({ id, name, coverUrl: (cover.get(id, ...visible)?.url as string | undefined) ?? null }),
   );
 
-  const budget = searchProducts(db, { q: "", category: null, min: null, max: BUDGET_MAX, sort: "newest", page: 1 }).items.slice(0, SHELF_SIZE);
+  const budget = searchProducts(db, { q: "", category: null, min: null, max: BUDGET_MAX, sort: "newest", page: 1 }).items;
 
   const covers = db.prepare(
     `SELECT i.url FROM products p

@@ -767,7 +767,8 @@ label.field {
 .chip[aria-current]::before,
 .chip[aria-pressed="true"]::before,
 .chip:has(input:checked)::before {
-  content: "✓";
+  /* ข้อความแทนที่ว่างเปล่า เครื่องหมายถูกจึงไม่ปนเข้าไปในชื่อที่โปรแกรมอ่านจออ่าน */
+  content: "✓" / "";
   font-weight: 600;
 }
 

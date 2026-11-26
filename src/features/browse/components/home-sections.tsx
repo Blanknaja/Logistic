@@ -42,7 +42,7 @@ export function HomeHero() {
             placeholder="อยากได้อะไร พิมพ์เป็นประโยคได้"
           />
           <button type="submit" className={`button ${styles.heroButton}`}>
-            ค้นหา
+            หาเลย
           </button>
         </Form>
         <ul className={styles.examples} aria-label="ตัวอย่างประโยคค้นหา">
@@ -96,8 +96,8 @@ const Arrow = () => (
   </svg>
 );
 
-/** ชั้นสินค้าราคาไม่เกิน BUDGET_MAX เลื่อนซ้ายขวา named บอกว่าสินค้าไหนใช้ชื่อรูปสำหรับขยายเป็นรูปใหญ่ได้ */
-export function BudgetShelf({ items, morph }: { items: HomeSections["budget"]; morph: (id: number) => boolean }) {
+/** ชั้นสินค้าราคาไม่เกิน BUDGET_MAX เลื่อนซ้ายขวา */
+export function BudgetShelf({ items }: { items: HomeSections["budget"] }) {
   if (items.length === 0) return null;
   return (
     <section aria-labelledby="shelf-budget" className={styles.shelf}>
@@ -115,7 +115,7 @@ export function BudgetShelf({ items, morph }: { items: HomeSections["budget"]; m
         <ul className={styles.productRow}>
           {items.map((item) => (
             <li key={item.id}>
-              <ProductCard item={item} morph={morph(item.id)} />
+              <ProductCard item={item} />
             </li>
           ))}
         </ul>

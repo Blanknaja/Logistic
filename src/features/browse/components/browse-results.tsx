@@ -21,13 +21,13 @@ type Props = {
 /** หมวดหมู่ ตัวกรอง และรายการสินค้าของหน้าแรกกับหน้าผลการค้นหา */
 export function BrowseResults({ params, result, categories, home }: Props) {
   if (home) {
-    // สินค้าในชั้นวางที่อยู่ในรายการข้างล่างด้วย ให้การ์ดในรายการเป็นเจ้าของชื่อรูป
+    // สินค้าที่อยู่ในรายการข้างล่างแล้วไม่ขึ้นในชั้นวางซ้ำ การ์ดของสินค้าหนึ่งชิ้นจึงมีใบเดียวในหน้า
     const listed = new Set(result.items.map((item) => item.id));
     return (
       <>
         <HomeHero />
         <CategoryCards categories={home.categories} />
-        <BudgetShelf items={home.budget} morph={(id) => !listed.has(id)} />
+        <BudgetShelf items={home.budget.filter((item) => !listed.has(item.id))} />
         <ShopShelf shops={home.shops} />
         <TrackBand />
         <Results params={params} result={result} title="มาใหม่ล่าสุด" />

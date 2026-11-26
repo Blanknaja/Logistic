@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test, vi } from "vitest";
 import { getBuyerOrder, listBuyerOrders, parseOrderStatus } from "@/features/checkout/server/buyer-orders";
 import { getTrackingView } from "@/features/delivery/server/tracking";
 import { listNotifications, NOTIFICATION_TYPE as T, openNotification } from "@/features/notification/server/notifications";
@@ -8,6 +8,12 @@ import { listStock, parseStockFilter } from "@/features/stock/server/stock";
 import type { Db } from "@/shared/db";
 import { createTestDb } from "@/shared/db/testing";
 import { seed } from "@/shared/seed";
+
+// test ในไฟล์นี้ไม่เข้าสู่ระบบด้วยรหัสผ่าน จึงไม่ hash รหัสผ่านจริงของ 54 บัญชี ซึ่งกินเครื่องจน test จับเวลาของไฟล์อื่นช้า
+vi.mock("@/features/account/server/password", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/features/account/server/password")>()),
+  hashPassword: async () => "not-a-real-hash",
+}));
 
 let db: Db;
 
@@ -51,7 +57,7 @@ function opens(viewer: Account, note: Note): boolean {
   return false;
 }
 
-// สร้างข้อมูลตัวอย่างครั้งเดียวแล้วใช้ร่วมกันทั้งไฟล์ เพราะ hash รหัสผ่านใช้เวลา
+// สร้างข้อมูลตัวอย่างครั้งเดียวแล้วใช้ร่วมกันทั้งไฟล์
 beforeAll(async () => {
   db = createTestDb();
   expect((await seed(db)).created).toBe(true);

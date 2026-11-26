@@ -3,7 +3,7 @@
 
 .page {
   display: grid;
-  gap: var(--section-gap);
+  gap: var(--space-4);
 }
 
 .now,
@@ -12,6 +12,7 @@
   align-content: start;
   gap: var(--space-4);
   min-width: 0;
+  padding: var(--space-4);
 }
 
 .now p,
@@ -19,8 +20,25 @@
   margin: 0;
 }
 
+.now > :global(.badge) {
+  justify-self: start;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.head > :global(.state-art) {
+  flex: none;
+  margin: 0;
+}
+
 .title {
   margin: 0;
+  min-width: 0;
+  font-size: var(--text-heading);
 }
 
 /* เลขติดตามพัสดุเป็นข้อมูลรองเหนือสถานะ อยู่ใน h1 เพื่อให้โปรแกรมอ่านจอได้ยินว่าเป็นสถานะของพัสดุไหน */
@@ -28,6 +46,7 @@
   display: block;
   margin-bottom: var(--space-1);
   color: var(--color-muted);
+  font-family: var(--font);
   font-size: var(--text-label);
   font-weight: 400;
   line-height: var(--line-height);
@@ -37,10 +56,6 @@
   margin: 0;
   color: var(--color-muted);
   font-size: var(--text-label);
-}
-
-.cancelled {
-  color: var(--color-danger);
 }
 
 /* ปุ่มได้รับสินค้าแล้ว จอแคบกว้างเต็มแถว */
@@ -64,13 +79,22 @@
   width: min(440px, calc(100vw - 2 * var(--gutter)));
   padding: var(--space-5);
   border: 0;
-  border-radius: var(--radius-s);
-  background: var(--color-bg);
+  border-radius: var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
   color: var(--color-text);
+  animation: dialogIn var(--dur-base) var(--ease-out);
 }
 
 .dialog::backdrop {
-  background: color-mix(in srgb, var(--color-text) 40%, transparent);
+  background: color-mix(in srgb, var(--color-ink) 45%, transparent);
+}
+
+@keyframes dialogIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
 }
 
 .dialog h2 {
@@ -81,19 +105,26 @@
   margin: 0 0 var(--space-5);
 }
 
-/* แผนที่การจัดส่ง แล้วข้อความเส้นทางกับคำบอกว่าไม่ใช่ตำแหน่งปัจจุบันอยู่ใต้แผนที่ */
+/* แผนที่การจัดส่งอยู่ในการ์ด ข้อความเส้นทางกับคำบอกว่าไม่ใช่ตำแหน่งปัจจุบันอยู่ใต้แผนที่ */
 .mapBlock {
   display: grid;
   align-content: start;
-  gap: var(--space-3);
+  gap: var(--space-2);
   min-width: 0;
+  padding: var(--space-2) var(--space-2) var(--space-4);
 }
 
 .mapBlock > p {
   margin: 0;
+  padding-inline: var(--space-2);
 }
 
-/* เส้นเวลา: จุดของแต่ละรายการต่อกันด้วยเส้นตั้ง จุดทึบคือรายการล่าสุด */
+.mapBlock > p:first-of-type {
+  padding-top: var(--space-2);
+  font-weight: 600;
+}
+
+/* เส้นเวลา: จุดของแต่ละรายการต่อกันด้วยเส้นตั้ง จุดที่ผ่านแล้วเป็นสีเขียว รายการล่าสุดใหญ่กว่าและเป็นสีดอกดาวเรือง */
 .timeline {
   margin: 0;
   padding: 0;
@@ -102,9 +133,11 @@
 
 .timeline li {
   --dot: var(--space-3);
-  /* กลางบรรทัดแรก ซึ่งสูง 1.5 เท่าของตัวอักษร */
-  --dot-top: calc(0.75em - var(--dot) / 2);
+  /* กลางป้ายสถานะ ซึ่งสูง 28 จุด */
+  --dot-top: calc(14px - var(--dot) / 2);
   position: relative;
+  display: grid;
+  gap: var(--space-1);
   padding: 0 0 var(--space-5) var(--space-6);
 }
 
@@ -121,8 +154,8 @@
   position: absolute;
   top: var(--dot-top);
   bottom: calc(-1 * var(--dot-top));
-  inset-inline-start: calc(var(--dot) / 2 - 0.5px);
-  border-inline-start: 1px solid var(--color-border-strong);
+  inset-inline-start: calc(var(--dot) / 2 - 1px);
+  border-inline-start: 2px solid var(--color-primary);
 }
 
 .timeline li:last-child::before {
@@ -136,28 +169,32 @@
   inset-inline-start: 0;
   width: var(--dot);
   height: var(--dot);
-  border: 2px solid var(--color-text);
-  border-radius: var(--radius-s);
-  background: var(--color-bg);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
 }
 
 .timeline li:first-child::after {
-  background: var(--color-text);
+  background: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-ink);
+  transform: scale(1.3);
 }
 
-/* ร้านและที่อยู่ต้นทาง เป็นแถวคั่นเส้นบางแบบแถวร้านของหน้าสินค้า */
+/* ร้านและที่อยู่ต้นทาง เป็นแถวคั่นเส้นบางในการ์ด */
 .facts {
   display: grid;
   align-content: start;
   margin: 0;
-  max-width: var(--measure);
+  padding: var(--space-1) var(--space-4);
 }
 
 .facts > div {
   display: flex;
   gap: var(--space-3);
   padding-block: var(--space-3);
-  border-bottom: 1px solid var(--color-border);
+}
+
+.facts > div + div {
+  border-top: 1px solid var(--color-border);
 }
 
 .facts dt {
@@ -177,11 +214,18 @@
   font-style: normal;
 }
 
-/* หน้าค้นหาพัสดุ: ช่องกรอกกับปุ่มอยู่แถวเดียวกัน สูงเท่ากัน */
+/* หน้าค้นหาพัสดุ: การ์ดเดียวกลางหน้า ภาพพัสดุเดินทางอยู่บน ช่องกรอกกับปุ่มอยู่แถวเดียวกัน สูงเท่ากัน */
 .searchPage {
   display: grid;
   gap: var(--space-2);
   max-width: var(--measure);
+  margin-inline: auto;
+  padding: var(--space-5) var(--space-4);
+}
+
+.searchArt {
+  justify-self: center;
+  margin-bottom: var(--space-2);
 }
 
 .searchPage > h1 {
@@ -206,6 +250,7 @@
 }
 
 .search > :global(.button) {
+  padding-inline: var(--space-6);
   font-size: var(--text-body);
 }
 
@@ -217,7 +262,6 @@
 .skeleton {
   width: 40%;
   height: calc(var(--text-title) * 1.3);
-  background: var(--color-surface-sunken);
 }
 
 @media (min-width: 600px) {
@@ -226,9 +270,8 @@
     padding-inline: var(--space-7);
   }
 
-  /* เลขติดตามพัสดุยาว 12 ตัวอักษร ช่องจึงไม่ต้องเต็มแถว */
-  .searchField {
-    flex: 0 1 16em;
+  .searchPage {
+    padding: var(--space-6);
   }
 }
 
@@ -236,7 +279,12 @@
   .page {
     grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
     grid-template-rows: auto auto 1fr;
-    column-gap: var(--space-7);
+    column-gap: var(--space-6);
+  }
+
+  .now,
+  .history {
+    padding: var(--space-5);
   }
 
   .now,
@@ -246,7 +294,10 @@
   }
 
   .mapBlock {
+    position: sticky;
+    top: calc(var(--header-height) + var(--space-4));
     grid-column: 1;
     grid-row: 1 / span 3;
+    align-self: start;
   }
 }

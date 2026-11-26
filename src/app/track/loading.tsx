@@ -1,11 +1,14 @@
 import { LoadingTimeout } from "@/shared/ui/loading-timeout";
 import { LOAD_FAILED } from "@/features/delivery/components/tracking-skeleton";
 import { LoadingState } from "@/shared/ui/states";
+import { SkeletonExit } from "@/shared/ui/transitions";
 
 export default function Loading() {
   return (
-    <LoadingTimeout title={LOAD_FAILED}>
-      <LoadingState />
-    </LoadingTimeout>
+    <SkeletonExit>
+      <LoadingTimeout title={LOAD_FAILED}>
+        <LoadingState />
+      </LoadingTimeout>
+    </SkeletonExit>
   );
 }

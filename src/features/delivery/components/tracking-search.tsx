@@ -1,3 +1,4 @@
+import { RouteArt } from "@/features/browse/components/route-art";
 import styles from "./tracking.module.css";
 
 export const SEARCH_HINT = "พิมพ์เลขติดตามพัสดุ เช่น BS0000000123";
@@ -5,7 +6,8 @@ export const SEARCH_HINT = "พิมพ์เลขติดตามพัส�
 /** ช่องค้นหาพัสดุ (DLV-011) error เป็น null ก่อนค้นหาครั้งแรก */
 export function TrackingSearch({ value, error }: { value: string; error: string | null }) {
   return (
-    <div className={styles.searchPage}>
+    <div className={`card ${styles.searchPage}`}>
+      <RouteArt travel="once" className={styles.searchArt} />
       <h1>ติดตามพัสดุ</h1>
       <form action="/track" method="get" className={styles.search}>
         <div className={`field ${styles.searchField}`}>

@@ -985,7 +985,8 @@ label.field {
   display: none;
 }
 
-.journey > *[data-done]::before {
+.journey > *[data-done]::before,
+.journey > *[aria-current]::before {
   background: var(--color-primary);
   transform-origin: left;
   animation: journey-fill var(--dur-move) var(--ease-out) both;

@@ -49,3 +49,9 @@ describe("breakpoint", () => {
     expect(widths.filter((width) => width !== "599px" && width !== "899px")).toEqual([]);
   });
 });
+
+describe("หน้าที่สคริปต์ไม่ทำงาน", () => {
+  test("ไม่มี CSS ที่ถาม @media (scripting) เพราะเบราว์เซอร์ที่เปิด JavaScript แต่โหลดสคริปต์ของแอปไม่ได้ก็ตอบว่ามี", () => {
+    expect(cssFiles.filter((file) => /@media[^{]*scripting/.test(readFileSync(file, "utf8"))).map((file) => relative(root, file))).toEqual([]);
+  });
+});

@@ -20,7 +20,7 @@
 | `pnpm check` | ตรวจชนิดข้อมูล ตรวจรูปแบบโค้ด และรัน test ทั้งหมด ต้องผ่านก่อน commit ใช้เวลาราว 20 วินาที |
 | `pnpm test:full` | รัน test ทั้งหมดโดยให้ผู้ซื้อ 20 คนแย่งชิ้นสุดท้ายครบ 100 รอบตาม CHK-Q02 (`pnpm check` รัน 10 รอบ) ต้องผ่านก่อน merge งานที่แตะการสั่งซื้อหรือการจองสต็อก |
 | `pnpm test:omise` | ลองการจ่ายเงินกับ Omise โหมดทดลองจริง (`src/features/payment/payment.omise.test.ts`) ทั้งบัตร PromptPay การทำเครื่องหมายผล webhook และการรอไม่ทัน ต้องมี `OMISE_PUBLIC_KEY` และ `OMISE_SECRET_KEY` แบบ `_test_` ใน `.env.local` ไม่มีแล้วข้ามพร้อมบอกเหตุ ต้องต่ออินเทอร์เน็ต ราว 30 วินาที ไม่อยู่ใน `pnpm check` ให้รันเมื่อแก้ `src/features/payment/server/` |
-| `pnpm e2e` | เดินเส้นทางหลักผ่านหน้าเว็บจริงด้วย Playwright (`e2e/main-path.spec.ts`) ลองภาพ 3 มิติของสินค้าพร้อมวัด P3D-Q01 P3D-Q02 (`e2e/product-3d.spec.ts`) ลองแผนที่การจัดส่งพร้อมวัด MAP-Q01 ถึง MAP-Q04 (`e2e/delivery-map.spec.ts`) และลองค้นหาด้วยประโยคพร้อมวัด SNT-Q02 SNT-Q03 (`e2e/sentence-search.spec.ts`) build แอปแล้วเปิดที่พอร์ต 3300 กับฐานข้อมูล `data/e2e.db` ที่ล้างใหม่ทุกครั้ง ใช้ตัวจำลองการจ่ายเงินเสมอแม้มีกุญแจของ Omise ใน `.env.local` ใช้ Google Chrome ในเครื่อง ราว 3 นาที ไม่อยู่ใน `pnpm check` แต่ต้องผ่านก่อน merge งานที่แตะหน้าในเส้นทางหลัก วิธีใช้อื่นอยู่ใน README |
+| `pnpm e2e` | เดินเส้นทางหลักผ่านหน้าเว็บจริงด้วย Playwright (`e2e/main-path.spec.ts`) ลองภาพ 3 มิติของสินค้าพร้อมวัด P3D-Q01 P3D-Q02 (`e2e/product-3d.spec.ts`) ลองแผนที่การจัดส่งพร้อมวัด MAP-Q01 ถึง MAP-Q04 (`e2e/delivery-map.spec.ts`) และลองค้นหาด้วยประโยคพร้อมวัด SNT-Q02 SNT-Q03 (`e2e/sentence-search.spec.ts`) และเดินเส้นทางรีวิวกับข้อมูลตัวอย่างพร้อมวัด REV-Q04 (`e2e/reviews.spec.ts`: ผู้ซื้อเขียนรีวิวพร้อมรูป ร้านตอบ ผู้ดูแลแพลตฟอร์มซ่อนและเลิกซ่อน) build แอปแล้วเปิดที่พอร์ต 3300 กับฐานข้อมูล `data/e2e.db` ที่ล้างใหม่ทุกครั้ง ใช้ตัวจำลองการจ่ายเงินเสมอแม้มีกุญแจของ Omise ใน `.env.local` ใช้ Google Chrome ในเครื่อง ราว 3 นาที ไม่อยู่ใน `pnpm check` แต่ต้องผ่านก่อน merge งานที่แตะหน้าในเส้นทางหลัก วิธีใช้อื่นอยู่ใน README |
 
 ถ้าทำงานหลาย worktree พร้อมกัน ให้แต่ละ worktree ใช้พอร์ตของตัวเอง ฐานข้อมูลอยู่ที่ `data/blanksong.db` ของแต่ละ worktree จึงไม่ชนกัน
 
@@ -41,12 +41,12 @@ src/
     format.ts             formatBaht formatNumber formatThaiDate formatThaiDateTime formatTime formatTimeOrDateTime
     session.ts            getCurrentAccount() requireAccount()
     rules.ts              กฎตรวจที่หลาย feature ใช้ร่วมกัน isPhone detectImageType
-    paging.ts             PAGE_SIZE (20) และ pageCount() ของทุกรายการที่แบ่งหน้า
+    paging.ts             PAGE_SIZE (20) pageCount() และ clampPage() ของทุกรายการที่แบ่งหน้า
     result.ts             Checked<ค่า, ข้อผิดพลาด> ผล { ok: true } หรือ { ok: false, errors } ของงานที่ตรวจข้อมูลที่กรอก
     read-body.ts          readBodyUpTo() route ที่รับไฟล์อ่านเนื้อคำขอด้วยตัวนี้ หยุดทันทีที่เกินขนาด ไม่เชื่อ content-length
     ui/states.tsx         EmptyState LoadingState ErrorState NotFoundState
     ui/action-form.tsx    ActionForm Field SubmitButton ACTION_FAILED ฟอร์มที่ส่งไป server action
-    ui/timeout.ts         settle() withTimeout() ACTION_TIMEOUT_MS รอผล server action ไม่เกิน 10 วินาที
+    ui/timeout.ts         settle() withTimeout() ACTION_TIMEOUT_MS SAVE_FAILED รอผล server action ไม่เกิน 10 วินาที
     ui/loading-timeout.tsx LoadingTimeout หน้ากำลังโหลดที่เกิน 10 วินาทีกลายเป็นหน้าผิดพลาด
     layout/               แถบนำทางด้านบน และ SellerMenu ของหลังบ้าน
     nav/                  ตัวรวมลิงก์จาก nav.ts ของทุก feature
@@ -59,9 +59,22 @@ e2e/                      test ที่เปิดหน้าเว็บจ�
 src/main-path.test.ts     test รอยต่อระหว่าง feature ของเส้นทางหลัก ใช้โมดูลจริงทั้งสองฝั่ง
 ```
 
-feature ทั้ง 10: `account` `shop` `product-listing` `stock` `browse` `cart` `checkout` `payment` `shop-orders` `delivery`
+feature ทั้ง 11: `account` `shop` `product-listing` `stock` `browse` `cart` `checkout` `payment` `shop-orders` `delivery` `review`
 
 requirement `sentence-search.md` (SNT) อยู่ในโฟลเดอร์ `browse` ตัวอ่านประโยคคือ `src/features/browse/sentence.ts` เป็นฟังก์ชันล้วนที่ใช้ทั้งในหน้าแรก (ค่าที่อ่านได้แทนที่คำค้นและตัวกรองก่อนค้นหา ลิงก์ในหน้าจึงใช้ค่าที่แยกแล้ว) และในช่องค้นหาของแถบด้านบน (บอกก่อนกดค้นหา) จะเพิ่มรูปแบบคำ ให้เพิ่มที่ไฟล์นี้พร้อมประโยคตัวอย่างใน `sentence.test.ts`
+
+requirement `review.md` (REV) อยู่ในโฟลเดอร์ `review` ส่วนที่ไปอยู่ในหน้าของ feature อื่นเป็น component จาก `review/components/` ที่วางด้วยบรรทัดเดียว
+
+- ตารางอยู่ใน migration `0006` คือ `reviews` (หนึ่งแถวต่อรายการในคำสั่งซื้อ มีคำตอบของร้านและการซ่อนในแถวเดียวกัน) `review_images` และ `review_image_files` (รูปที่ผู้ซื้อส่งขึ้นมา ผูกกับบัญชี)
+- คะแนนเฉลี่ยไม่เก็บแยก คิดจากรีวิวที่ `แสดงอยู่` ทุกครั้งที่อ่าน `review/server/ratings.ts` มี `productRating()` `shopRating()` และ `PRODUCT_RATINGS_SQL` ที่รายการสินค้าเอาไป `LEFT JOIN` เพื่อแสดง เรียง และกรองตามคะแนน (`browse/server/search.ts` กับ `shop/server/storefront.ts`) การปัดอยู่ที่ `averageTenths()` ใน `review/rules.ts` ซึ่ง SQL ใช้สูตรเดียวกัน แก้ที่หนึ่งต้องแก้อีกที่
+- การเขียน แก้ ตอบ ซ่อน และเลิกซ่อน อยู่ใน `review/server/reviews.ts` ข้อความและขีดจำกัดอยู่ใน `review/rules.ts` ที่ใช้ได้ทั้งสองฝั่ง
+- ฟอร์มของรีวิวทุกฟอร์มใช้ `useSave()` กับ `SaveForm` ใน `review/components/save-form.tsx` action รับ `(ผลครั้งก่อน, formData)` ฟอร์มจึงส่งได้ทั้งตอน React ทำงาน (ช่องที่กรอกไม่ถูกล้าง รอผลไม่เกิน 10 วินาที) และตอนสคริปต์ของหน้าไม่ทำงาน (เบราว์เซอร์ส่งเอง) e2e ของทางหลังอยู่ท้าย `e2e/reviews.spec.ts`
+- รูปในรีวิวเปิดผ่าน `getReviewImage(db, key, viewer)` ที่ตรวจสิทธิ์ตามสถานะของรีวิว (REV-017) route ห้ามตอบด้วย cache แบบ `public` หรือ `immutable`
+- แจ้งเตือนที่เกิดจากรีวิว (NTF-009 NTF-012) ส่งจาก `review/server/events.ts` มีสามฟังก์ชัน `onReviewPosted` `onReviewReplied` `onReviewHidden` แต่ละตัวถูกเรียกที่เดียวใน `reviews.ts` ภายในการบันทึกเดียวกับเหตุการณ์ แล้วเรียก `notifyNewReview` `notifyReviewReplied` `notifyReviewHidden` ของ `notification/server/events.ts`
+- component ที่หน้าอื่นใช้: `CardRating` (การ์ดสินค้า) `ProductRating` กับ `ProductReviews` (หน้ารายละเอียดสินค้า รับ `stars` และ `rpage` จากที่อยู่หน้าเว็บ) `ShopRatingLine` (หน้าร้าน) `AwaitingReviewBadge` กับ `OrderItemReview` (หน้าคำสั่งซื้อของผู้ซื้อ) สไตล์ทั้งหมดอยู่ใน `review/components/review.module.css`
+- test ที่ต้องมีรีวิวใช้ `writeReview()` จาก `review/server/fixtures.ts` กับคำสั่งซื้อจาก `addOrder`
+
+หน้าแรกที่ไม่มีคำค้นหรือตัวกรองมีส่วนต้อนรับ การ์ดหมวด และชั้นวางก่อนรายการสินค้า ข้อมูลมาจาก `getHomeSections()` ใน `browse/server/home.ts` component อยู่ใน `browse/components/home-sections.tsx` ฉาก 3 มิติของส่วนต้อนรับ (`parcel-scene.ts`) ใช้ `three` ตรงๆ และโหลดด้วย `import()` จาก `parcel-stage.tsx` ชนิดข้อมูลของ `three` มาจาก `@types/three` รุ่นย่อยเดียวกับ `three` (0.183) อัปเดตสองแพ็กเกจนี้พร้อมกัน การขยับที่ใช้ซ้ำ (เปลี่ยนหน้า รูปขยาย ของลอยไปตะกร้า) อยู่ใน `src/shared/ui/transitions.tsx` กับ `fly-to-cart.ts` กฎอยู่ใน `docs/design-system.md` และ e2e ของราวกั้นอยู่ที่ `e2e/home-motion.spec.ts`
 
 requirement `delivery-map.md` (MAP) อยู่ในโฟลเดอร์ `delivery` เพราะเพิ่มแค่ช่องจังหวัดในฟอร์มเปลี่ยนสถานะกับแผนที่บนหน้าติดตามพัสดุ
 
@@ -87,9 +100,11 @@ requirement `product-3d-view.md` (P3D) ไม่มีโฟลเดอร์�
 | browse | `/` (หน้าแรก) `/products/[productId]` ส่วนหน้าผลค้นหา BRW เลือกเอง |
 | cart | `/cart` |
 | checkout | `/addresses` `/checkout` `/orders` `/orders/[orderNo]` |
+| notification | `/notifications` (รับ `?page=`) `/notifications/[id]` (กดแจ้งเตือน: เป็นอ่านแล้ว แล้วพาไปหน้าที่เกี่ยวข้อง) |
 | payment | `/pay/[groupId]` |
 | shop-orders | `/seller/orders` `/seller/orders/[orderNo]` |
 | delivery | `/parcels/[trackingNo]` (ผู้ขายและผู้ดูแลแพลตฟอร์มเปลี่ยนสถานะ) `/track/[trackingNo]` (หน้าติดตามพัสดุ) |
+| review | `/orders/[orderNo]/review/[itemId]` (หน้าเขียนรีวิวและรีวิวของตัวเอง) `/seller/reviews` (หน้ารีวิวของร้าน) `/admin/reviews` (หน้าจัดการรีวิว เฉพาะผู้ดูแลแพลตฟอร์ม) `/review-images/[key]` (รูปในรีวิว หน้าเขียนรีวิวส่งรูปด้วย `POST /review-images`) |
 
 `src/app/seller/layout.tsx` ให้ ticket ของ shop สร้างที่เดียว และใช้ `<SellerMenu shopId={...} />` ในนั้น
 
@@ -110,8 +125,8 @@ layout ไม่วาดใหม่เมื่อกดลิงก์ไป�
 
 `visibleTo: (viewer) => viewer !== null` ใช้ซ่อนลิงก์ตามคนที่ดู `label` ใส่เป็นฟังก์ชัน `(viewer) => string` ได้เมื่อข้อความขึ้นกับคนที่ดู ในเมนูหลังบ้านใส่เป็น `(shopId) => string` ได้ เช่น "รอจัดของ 5" ลำดับที่จองไว้ (น้อยอยู่ซ้าย)
 
-- แถบด้านบน: browse 10, checkout 30, delivery 40, shop 50, account 90 ถึง 99 ไอคอนตะกร้าไม่อยู่ในรายการนี้ `SiteHeader` วาดเองนอกเมนูด้วย `cartCount` กับ `cartLabel` จาก `src/features/cart/nav.ts` เพราะต้องเห็นทุกขนาดจอ
-- เมนูหลังบ้าน: product-listing 10, stock 20, shop-orders 30, shop 40 (ตั้งค่าร้าน) และ 50 (หน้าร้าน)
+- แถบด้านบน: browse 10, checkout 30, delivery 40, shop 50, review 60 (จัดการรีวิว เฉพาะผู้ดูแลแพลตฟอร์ม), account 90 ถึง 99 ไอคอนตะกร้าไม่อยู่ในรายการนี้ `SiteHeader` วาดเองนอกเมนูด้วย `cartCount` กับ `cartLabel` จาก `src/features/cart/nav.ts` เพราะต้องเห็นทุกขนาดจอ
+- เมนูหลังบ้าน: product-listing 10, stock 20, shop-orders 30, review 35, shop 40 (ตั้งค่าร้าน) และ 50 (หน้าร้าน)
 
 ## เพิ่มหน้า
 
@@ -200,6 +215,30 @@ export function cancelExpiredOrders(db: Db, now: Date = new Date()): number {
 
 เหตุผลการยกเลิกใช้ `CANCEL_REASON` ใน `order-groups.ts` ("ผู้ซื้อยกเลิก" "หมดเวลาจ่ายเงิน" "ส่งไม่สำเร็จ")
 
+## แจ้งเตือน
+
+feature `notification` (requirement `notification.md` รหัส NTF) เก็บแจ้งเตือนในตาราง `notifications` (migration `0007`) หนึ่งแถวต่อหนึ่งผู้รับต่อหนึ่งเหตุการณ์ `read_at` ว่างคือ `ยังไม่อ่าน`
+
+- feature ต้นทางเรียกฟังก์ชัน `notify...` ใน `notification/server/events.ts` หนึ่งฟังก์ชันต่อหนึ่งเหตุการณ์ ใน transaction เดียวกับที่บันทึกเหตุการณ์ เหตุการณ์ที่ถูกปฏิเสธจึงไม่มีแจ้งเตือน ข้อความและหน้าที่เกี่ยวข้องถูกเก็บตอนเหตุการณ์เกิด จะเพิ่มชนิดใหม่ ให้เพิ่มฟังก์ชันในไฟล์นี้พร้อมชนิดใน `NOTIFICATION_TYPE`
+- เรียกซ้ำด้วยเหตุการณ์เดิมไม่ได้รายการเพิ่ม เพราะฐานข้อมูลมี `UNIQUE (account_id, event_key)` (NTF-016) ผู้เรียกจึงไม่ต้องตรวจเองว่าเคยแจ้งแล้ว
+- ข้อความและตัวช่วยที่ component ในเบราว์เซอร์ใช้ (`badgeText` `bellLabel` `notificationHref` และข้อความของหน้า) อยู่ใน `notification/rules.ts` component ใน `notification/components/` import จาก `notification/server/` ได้แค่ชนิดข้อมูล มี test ใน `notification-pages.test.tsx` ตรวจ
+- กระดิ่งอยู่ใน `SiteHeader` นอกเมนูแบบเดียวกับไอคอนตะกร้า (`NotificationBell` ใน `notification/components/`) ใช้ class `header-icon-button` ของแถบด้านบน สไตล์อื่นอยู่ใน `notification.module.css`
+- หน้าที่เปิดค้างถามเซิร์ฟเวอร์ทุก 5 วินาทีด้วย server action `notificationPulseAction` (`usePulse` ใน `notification/components/use-pulse.ts`) ทุก component ที่เรียก `usePulse` บนหน้าเดียวกันใช้รอบถามเดียวกัน (`createPulsePoller`) คำขอเดียวตอบทุกตัว แท็บที่ถูกซ่อนไม่ถามและถามทันทีเมื่อกลับมาแสดง การถามนี้อ่านบัญชีด้วย `peekCurrentAccount()` จึงไม่เขียนแถว `sessions` และไม่ต่ออายุ 30 วัน ได้จำนวนที่ยังไม่อ่านที่นับใหม่ทั้งหมดทุกรอบ รอบที่ถามไม่ได้จึงไม่ทำให้นับซ้ำหรือนับขาด (NTF-014 NTF-015) แอปมีโปรเซสเดียวและฐานข้อมูลเดียว จึงไม่ใช้ SSE หรือ WebSocket
+- ลิงก์ของแจ้งเตือนคือ `/notifications/[id]` ซึ่งเปลี่ยนเป็นอ่านแล้วตอนเปิด ลิงก์ไปที่อยู่นี้ต้องใส่ `prefetch={false}` ใช้ `NotificationItems` ที่ใส่ให้แล้ว
+- แจ้งเตือนตัวอย่างเกิดจากคำสั่งซื้อตัวอย่างของ `seed/orders.ts` เอง และ `seed/notifications.ts` เพิ่มคำสั่งซื้ออีก 5 รายการผ่านกฎจริงเพื่อให้มีเรื่องจ่ายไม่สำเร็จ หมดเวลาจ่ายเงิน และสต็อกเหลือ 0 (NTF-018) คำสั่งซื้อและรีวิวตัวอย่างของ `seed/reviews.ts` ผ่านกฎจริงเช่นกัน ผู้ซื้อและผู้ขายตัวอย่างทุกบัญชีจึงมีแจ้งเตือน ร้าน seller01 จึงมีคำสั่งซื้อตัวอย่างรวม 9 รายการ (`สำเร็จ` 3) และร้าน seller02 มี 4 รายการ
+
+| ฟังก์ชัน | ใช้ตอนไหน |
+|---|---|
+| `notifyPaymentSucceeded(db, paymentId, now)` | `markGroupPaid` เรียกเมื่อการจ่ายเงินเป็น `สำเร็จ` แจ้งผู้ซื้อ และผู้ขายของแต่ละคำสั่งซื้อ (NTF-006 NTF-010) |
+| `notifyPaymentFailed(db, paymentId, now)` | การจ่ายเงินเป็น `ไม่สำเร็จ` (NTF-006) |
+| `notifyPaymentTimedOut(db, groupId, orderCount, now)` | `cancelAwaitingPaymentGroup` เรียกเมื่อเหตุผลคือหมดเวลาจ่ายเงิน (NTF-006) |
+| `notifyParcelStatusChanged(db, trackingNo, status, now)` | `changeParcelStatus` เรียกทุกครั้งที่เปลี่ยนสำเร็จ `ส่งไม่สำเร็จ` ได้แจ้งเตือนคำสั่งซื้อถูกยกเลิกแทน (NTF-007 NTF-008) |
+| `notifyOrderCompleted(db, orderId, by, now)` | คำสั่งซื้อเป็น `สำเร็จ` โดยผู้ซื้อหรือระบบ (NTF-011) |
+| `notifyStockEmpty(db, variantId, orderId, now)` | `reserveOrderStock` เรียกเมื่อการจองทำให้สต็อกเหลือ 0 (NTF-013) |
+| `notifyReviewReplied(db, { reviewId, buyerAccountId, shopName, productName, href }, now)` | ร้านส่งคำตอบของร้านให้รีวิว (NTF-009) |
+| `notifyReviewHidden(db, { reviewId, buyerAccountId, productName, reason, href }, now)` | ผู้ดูแลแพลตฟอร์มซ่อนรีวิว (NTF-009) |
+| `notifyNewReview(db, { reviewId, shopId, productName, rating, href }, now)` | ผู้ซื้อส่งรีวิวของสินค้าในร้าน (NTF-012) |
+
 ## เพิ่มหรือเปลี่ยนโครงข้อมูล
 
 ห้ามแก้ไฟล์ migration ที่มีอยู่แล้ว ให้เพิ่มไฟล์ใหม่หนึ่งไฟล์ต่อหนึ่งการเปลี่ยน ใน `src/shared/db/migrations/`
@@ -251,7 +290,7 @@ const buyer: CurrentAccount = await requireAccount(`/orders/${orderNo}`);
 ```
 
 - ใช้ได้ใน server component, server action และ route handler เรียกกี่ครั้งในคำขอเดียวก็อ่านฐานข้อมูลครั้งเดียว
-- อ่าน token จาก cookie `bs_session` แล้วหาในตาราง `sessions` คืน null ถ้าหมดอายุ (ไม่ได้ใช้เกิน 30 วัน) หรือบัญชีถูกระงับ ทุกครั้งที่ใช้จะต่ออายุอีก 30 วัน
+- อ่าน token จาก cookie `bs_session` แล้วหาในตาราง `sessions` คืน null ถ้าหมดอายุ (ไม่ได้ใช้เกิน 30 วัน) หรือบัญชีถูกระงับ ทุกครั้งที่ใช้จะต่ออายุอีก 30 วัน คำขอที่หน้าเว็บส่งเองเป็นระยะโดยผู้ใช้ไม่ได้ทำอะไร ให้ใช้ `peekCurrentAccount()` ซึ่งอ่านอย่างเดียว ไม่ต่ออายุ
 - `requireAccount(next)` ใส่ที่อยู่ของหน้านั้นเองเป็น `next` ใส่ query ได้ เช่น `"/checkout?step=2"` เขียน `redirect("/login?next=/cart")` เองก็ได้ผลเหมือนกัน
 - หน้าเข้าสู่ระบบดู cookie เองว่าเครื่องนี้หมดอายุหรือบัญชีถูกระงับ แล้วขึ้นข้อความให้ ไม่ต้องส่งเหตุมาด้วย
 - อยากให้หน้าเข้าสู่ระบบขึ้นข้อความเพิ่ม ใช้ `loginPath(next, notice)` จาก `@/features/account/server/login-path` notice มี `"relogin"` (กรุณาเข้าสู่ระบบอีกครั้ง) และ `"password-reset"` (ตั้งรหัสผ่านใหม่แล้ว กรุณาเข้าสู่ระบบ) เช่นตั้งรหัสผ่านใหม่สำเร็จให้ `redirect(loginPath("/", "password-reset"))`
@@ -268,6 +307,6 @@ const buyer: CurrentAccount = await requireAccount(`/orders/${orderNo}`);
 
 ## ข้อมูลตัวอย่าง
 
-`pnpm seed` สร้าง 12 หมวดหมู่ 50 ร้าน 1,000 สินค้าที่ขายอยู่ พร้อมแบบย่อย สต็อก และประวัติสต็อก บัญชีผู้ดูแลแพลตฟอร์ม 1 บัญชี ผู้ขาย 50 บัญชี และผู้ซื้อ 3 บัญชี (อีเมลและรหัสผ่านอยู่ใน README) และคำสั่งซื้อตัวอย่าง 8 รายการของร้าน seller01 ครบทุกสถานะ ที่สร้างผ่านกฎจริง (`src/shared/seed/orders.ts`) ร้านอยู่กรุงเทพมหานคร ที่อยู่จัดส่งของ buyer1 buyer2 buyer3 อยู่เชียงใหม่ ขอนแก่น และกรุงเทพมหานคร และทุกรายการในประวัติการจัดส่งมีจังหวัด พัสดุของ buyer1 และ buyer2 จึงผ่าน 3 จังหวัด (MAP-010) รูปสินค้าเป็นรูปถ่ายจริงจาก `src/shared/seed/photos/` เลือกตามคำนามในชื่อสินค้า (`SAMPLE_PHOTOS` ใน `catalog.ts`) และเก็บแบบรูปที่ร้านนั้นส่งขึ้นมาเอง เปิดที่ `/product-images/<key>` ที่มาและสัญญาอนุญาตอยู่ใน `photos/SOURCES.txt` ใช้เฉพาะ CC0 หรือสาธารณสมบัติที่ไม่จำกัดประเทศ เพราะ repo นี้ public (ไม่ใช้ไฟล์ที่เป็นสาธารณสมบัติเฉพาะในสหรัฐอเมริกา test ใน `seed.test.ts` ตรวจป้าย) ชื่อที่ยังไม่มีรูปถ่ายและโลโก้ร้านเป็น SVG ที่สร้างจากชื่อไฟล์ที่ `/sample-images/<ชื่อ>.svg` สินค้า 2 ชิ้นของร้านแรกมีไฟล์ 3 มิติจาก `src/shared/seed/models/` (ที่มาและสัญญาอนุญาตอยู่ใน `SOURCES.txt` ข้างไฟล์ ใช้เฉพาะไฟล์ CC0)
+`pnpm seed` สร้าง 12 หมวดหมู่ 50 ร้าน 1,000 สินค้าที่ขายอยู่ พร้อมแบบย่อย สต็อก และประวัติสต็อก บัญชีผู้ดูแลแพลตฟอร์ม 1 บัญชี ผู้ขาย 50 บัญชี และผู้ซื้อ 24 บัญชี (อีเมลและรหัสผ่านอยู่ใน README) คำสั่งซื้อตัวอย่าง 8 รายการของร้าน seller01 ครบทุกสถานะ ที่สร้างผ่านกฎจริง (`src/shared/seed/orders.ts`) และรีวิวตัวอย่างราว 1,700 รีวิวของสินค้าราว 640 รายการ จากคำสั่งซื้อที่ `สำเร็จ` ราว 900 รายการของผู้ซื้อทั้ง 24 บัญชี ที่สร้างผ่านกฎจริงเช่นกัน (`src/shared/seed/reviews.ts` ตัวเลขที่ต้องได้อยู่ใน REV-019) คำสั่งซื้อชุดนี้ย้อนหลังราว 100 วัน บัญชี ร้าน และสินค้าตัวอย่างจึงมีวันที่เก่ากว่านั้น (131 130 และ 127 ถึง 101 วันก่อน ตั้งที่ต้นไฟล์ `seed/index.ts`) สต็อกของสินค้าที่มีรีวิวจึงน้อยกว่าสต็อกตั้งต้นตามจำนวนที่ถูกซื้อ ร้านอยู่กรุงเทพมหานคร ที่อยู่จัดส่งของ buyer1 buyer2 buyer3 อยู่เชียงใหม่ ขอนแก่น และกรุงเทพมหานคร และทุกรายการในประวัติการจัดส่งมีจังหวัด พัสดุของ buyer1 และ buyer2 จึงผ่าน 3 จังหวัด (MAP-010) รูปสินค้าเป็นรูปถ่ายจริงจาก `src/shared/seed/photos/` เลือกตามคำนามในชื่อสินค้า (`SAMPLE_PHOTOS` ใน `catalog.ts`) และเก็บแบบรูปที่ร้านนั้นส่งขึ้นมาเอง เปิดที่ `/product-images/<key>` ที่มาและสัญญาอนุญาตอยู่ใน `photos/SOURCES.txt` ใช้เฉพาะ CC0 หรือสาธารณสมบัติที่ไม่จำกัดประเทศ เพราะ repo นี้ public (ไม่ใช้ไฟล์ที่เป็นสาธารณสมบัติเฉพาะในสหรัฐอเมริกา test ใน `seed.test.ts` ตรวจป้าย) ชื่อที่ยังไม่มีรูปถ่ายและโลโก้ร้านเป็น SVG ที่สร้างจากชื่อไฟล์ที่ `/sample-images/<ชื่อ>.svg` สินค้า 2 ชิ้นของร้านแรกมีไฟล์ 3 มิติจาก `src/shared/seed/models/` (ที่มาและสัญญาอนุญาตอยู่ใน `SOURCES.txt` ข้างไฟล์ ใช้เฉพาะไฟล์ CC0)
 
 ระบบรู้ว่าเคยสร้างแล้วจากบัญชี `admin@example.com` จึงรันซ้ำได้ ถ้าต้องเพิ่มข้อมูลตัวอย่าง ให้แก้ `src/shared/seed/index.ts` และ test ใน `seed.test.ts`

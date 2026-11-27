@@ -1,17 +1,39 @@
 import Link from "next/link";
-import { browseHref, hasCriteria, priceLabel, sortLabel, type BrowseParams } from "@/features/browse/search-params";
+import { browseHref, hasCriteria, priceLabel, ratingLabel, sortLabel, type BrowseParams } from "@/features/browse/search-params";
+import type { HomeSections } from "@/features/browse/server/home";
 import type { SearchResult } from "@/features/browse/server/search";
 import type { Category } from "@/features/product-listing/server/categories";
 import { formatNumber } from "@/shared/format";
 import { EmptyState } from "@/shared/ui/states";
 import { FilterForm } from "./filter-form";
+import { BudgetShelf, CategoryCards, HomeHero, ShopShelf, TrackBand } from "./home-sections";
 import { ProductCard } from "./product-card";
 import styles from "./browse.module.css";
 
-type Props = { params: BrowseParams; result: SearchResult; categories: Category[] };
+type Props = {
+  params: BrowseParams;
+  result: SearchResult;
+  categories: Category[];
+  /** ส่วนต้อนรับและชั้นวางของหน้าแรก ส่งมาเฉพาะเมื่อไม่มีคำค้นหรือตัวกรอง ผลค้นหาจึงขึ้นก่อนเสมอ */
+  home?: HomeSections;
+};
 
-/** หมวดหมู่ ตัวกรอง และรายการสินค้าของหน้าแรกกับหน้าผลการค้นหา สินค้าเริ่มในจอแรก */
-export function BrowseResults({ params, result, categories }: Props) {
+/** หมวดหมู่ ตัวกรอง และรายการสินค้าของหน้าแรกกับหน้าผลการค้นหา */
+export function BrowseResults({ params, result, categories, home }: Props) {
+  if (home) {
+    // สินค้าที่อยู่ในรายการข้างล่างแล้วไม่ขึ้นในชั้นวางซ้ำ การ์ดของสินค้าหนึ่งชิ้นจึงมีใบเดียวในหน้า
+    const listed = new Set(result.items.map((item) => item.id));
+    return (
+      <>
+        <HomeHero />
+        <CategoryCards categories={home.categories} />
+        <BudgetShelf items={home.budget.filter((item) => !listed.has(item.id))} />
+        <ShopShelf shops={home.shops} />
+        <TrackBand />
+        <Results params={params} result={result} title="มาใหม่ล่าสุด" />
+      </>
+    );
+  }
   return (
     <>
       <h1 className="visually-hidden">ซื้อของจากหลายร้านในที่เดียว</h1>
@@ -35,7 +57,7 @@ export function BrowseResults({ params, result, categories }: Props) {
       </nav>
 
       {result.categoryNotFound ? (
-        <EmptyState title="ไม่พบหมวดหมู่นี้" message="เลือกหมวดหมู่ใหม่จากรายชื่อด้านบน" />
+        <EmptyState art="search" title="ไม่พบหมวดหมู่นี้" message="เลือกหมวดหมู่ใหม่จากรายชื่อด้านบน" />
       ) : (
         <Results params={params} result={result} />
       )}
@@ -52,20 +74,23 @@ function activeFilters(params: BrowseParams, result: SearchResult): ActiveFilter
   if (result.category) active.push({ label: result.category.name, removeHref: without({ category: null }) });
   const price = result.priceError ? null : priceLabel(params.min, params.max);
   if (price) active.push({ label: price, removeHref: without({ min: null, max: null }) });
+  const rating = ratingLabel(params.rating);
+  if (rating) active.push({ label: rating, removeHref: without({ rating: null }) });
   if (params.sort !== "newest") active.push({ label: sortLabel(params.sort), removeHref: without({ sort: "newest" }) });
   return active;
 }
 
-function Results({ params, result }: Omit<Props, "categories">) {
+function Results({ params, result, title }: Pick<Props, "params" | "result"> & { title?: string }) {
   if (result.total === 0 && !hasCriteria(params)) return <EmptyState title="ยังไม่มีสินค้าในตอนนี้" />;
 
   // ล้างตัวกรองคงคำค้นและการเรียงไว้
   const clearHref = browseHref({ q: params.q, sort: params.sort });
-  const filtered = params.category !== null || params.min !== null || params.max !== null;
+  const filtered = params.category !== null || params.min !== null || params.max !== null || params.rating !== null;
   const active = activeFilters(params, result);
 
   return (
-    <section aria-label="รายการสินค้า">
+    <section aria-label="รายการสินค้า" className={styles.results}>
+      {title && <h2 className={styles.resultsTitle}>{title}</h2>}
       <div className={styles.toolbar}>
         <p className={styles.count}>
           พบ {formatNumber(result.total)} รายการ{params.q && ` สำหรับ "${params.q}"`}
@@ -96,7 +121,7 @@ function Results({ params, result }: Omit<Props, "categories">) {
       </div>
 
       {result.total === 0 ? (
-        <EmptyState title="ไม่พบสินค้าที่ตรงกับที่ค้นหา" message={filtered ? undefined : "ลองคำที่สั้นลง หรือคำอื่น"}>
+        <EmptyState art="search" title="ไม่พบสินค้าที่ตรงกับที่ค้นหา" message={filtered ? undefined : "ลองคำที่สั้นลง หรือคำอื่น"}>
           {/* ถ้ามีแค่คำค้น ล้างตัวกรองได้ผลเดิม จึงพาไปดูสินค้าทั้งหมดแทน */}
           {filtered ? (
             <Link href={clearHref} className="button">
@@ -112,7 +137,7 @@ function Results({ params, result }: Omit<Props, "categories">) {
         <>
           <ul className={styles.grid}>
             {result.items.map((item) => (
-              <li key={item.id}>
+              <li key={item.id} className="reveal">
                 <ProductCard item={item} />
               </li>
             ))}

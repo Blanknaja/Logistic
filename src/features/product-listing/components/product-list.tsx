@@ -5,6 +5,7 @@ import { STOCK_LABEL, stockLabel } from "@/features/stock/server/labels";
 import { formatBaht, formatNumber, formatTimeOrDateTime } from "@/shared/format";
 import { PRODUCT_STATUS } from "@/shared/statuses";
 import { EmptyState } from "@/shared/ui/states";
+import { StatusBadge } from "@/shared/ui/status-badge";
 import styles from "./product-listing.module.css";
 
 const LIST_PATH = "/seller/products";
@@ -65,7 +66,7 @@ export function priceRange(min: number | null, max: number | null): string {
 
 export function Notice({ text }: { text?: string }) {
   return text ? (
-    <p role="status" className={styles.notice}>
+    <p role="status" className="notice">
       {text}
     </p>
   ) : null;
@@ -74,7 +75,7 @@ export function Notice({ text }: { text?: string }) {
 /** ร้านที่ยังไม่มีสินค้าเลย มีปุ่มเดียวคือเพิ่มสินค้า (PRD-001) */
 export function NoProducts() {
   return (
-    <EmptyState title="ร้านของคุณยังไม่มีสินค้า">
+    <EmptyState art="shop" title="ร้านของคุณยังไม่มีสินค้า">
       <Link href={NEW_PATH} className="button">
         เพิ่มสินค้า
       </Link>
@@ -127,7 +128,7 @@ export function ProductList({
 
       {result.items.length === 0 ? (
         q ? (
-          <EmptyState title={`ไม่พบสินค้าที่ชื่อมีคำว่า ${q}`}>
+          <EmptyState art="search" title={`ไม่พบสินค้าที่ชื่อมีคำว่า ${q}`}>
             <Link href={href({ status: statusKey })} className="button button-secondary">
               ล้างคำค้นหา
             </Link>
@@ -198,7 +199,9 @@ function ProductRow({ item }: { item: ShopProductRow }) {
         {formatNumber(item.totalStock)}
         {label && ` ${label}`}
       </span>
-      <span className={styles.cell}>{item.status}</span>
+      <span className={styles.cell}>
+        <StatusBadge status={item.status} />
+      </span>
       <span className={styles.updated}>
         <span className={styles.cellLabel}>แก้ล่าสุด </span>
         <time dateTime={item.updatedAt}>{formatTimeOrDateTime(item.updatedAt)}</time>

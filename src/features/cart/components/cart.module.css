@@ -5,39 +5,77 @@
   display: block;
 }
 
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-7) var(--space-4);
+  text-align: center;
+}
+
+.empty h1,
+.empty p {
+  margin: 0;
+}
+
+.empty p {
+  max-width: 32ch;
+  color: var(--color-muted);
+}
+
+.empty :global(.state-art) {
+  margin-bottom: 0;
+}
+
+.empty :global(.button) {
+  min-height: var(--control-main);
+  margin-top: var(--space-3);
+  padding-inline: var(--space-6);
+  font-size: var(--text-body);
+}
+
 .selectAll {
   padding-bottom: var(--space-2);
   font-size: var(--text-label);
 }
 
+/* สินค้าของร้านเดียวกันอยู่ในการ์ดใบเดียว หัวการ์ดคือโลโก้กับชื่อร้าน */
 .shop {
-  border-top: 1px solid var(--color-border);
+  padding: var(--space-2) var(--space-4);
 }
 
 .shop + .shop {
-  margin-top: var(--space-5);
+  margin-top: var(--space-4);
 }
 
 .shopHeader {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0 var(--space-3);
-  padding-top: var(--space-2);
+  gap: 0 var(--space-2);
+  padding-block: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
 }
 
-/* ชื่อร้านเล็กกว่าชื่อสินค้า ผู้ซื้อมาดูสินค้า ร้านเป็นแค่ที่มา */
+.shopHeader > [role="img"],
+.shopHeader > img {
+  width: 32px;
+  height: 32px;
+  font-size: var(--text-label);
+}
+
 .shopName {
   margin: 0;
-  font-size: var(--text-label);
-  font-weight: 400;
+  font-family: var(--font);
+  font-size: var(--text-body);
+  font-weight: 600;
 }
 
 .shopName a {
   display: inline-flex;
   align-items: center;
   min-height: var(--tap);
-  color: var(--color-muted);
+  text-decoration: none;
 }
 
 .shopTotal {
@@ -57,12 +95,19 @@
   grid-template-columns: var(--tap) 64px minmax(0, 1fr);
   gap: var(--space-2) var(--space-3);
   align-items: start;
-  padding-block: var(--space-3) var(--space-4);
+  padding-block: var(--space-4);
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
 }
 
 .item + .item {
   border-top: 1px solid var(--color-border);
-  padding-top: var(--space-4);
+}
+
+.leaving {
+  opacity: 0.35;
+  transform: scale(0.98);
 }
 
 .faded .thumb,
@@ -95,11 +140,15 @@
   display: grid;
   flex: none;
   place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: var(--radius);
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-s);
+  background: var(--color-surface);
   box-shadow: inset 0 0 0 1px var(--color-border-strong);
-  transition: box-shadow var(--duration) var(--ease);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    transform var(--dur-base) var(--ease-spring);
 }
 
 .box::after {
@@ -107,18 +156,28 @@
   width: 6px;
   height: 11px;
   margin-top: -3px;
-  border: solid var(--color-text);
+  border: solid var(--color-on-primary);
   border-width: 0 2px 2px 0;
   opacity: 0;
-  transform: rotate(45deg);
+  transform: rotate(45deg) scale(0.4);
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-base) var(--ease-spring);
 }
 
 .check input:checked + .box {
-  box-shadow: var(--selected-ring);
+  background: var(--color-primary);
+  box-shadow: none;
 }
 
 .check input:checked + .box::after {
   opacity: 1;
+  transform: rotate(45deg) scale(1);
+}
+
+.check:active .box {
+  transform: scale(0.9);
+  transition-duration: var(--dur-press);
 }
 
 .check input:disabled,
@@ -126,7 +185,7 @@
   cursor: not-allowed;
 }
 
-.check input:disabled + .box {
+.check input:disabled:not(:checked) + .box {
   box-shadow: inset 0 0 0 1px var(--color-border);
 }
 
@@ -140,6 +199,7 @@
   place-items: center;
   width: 64px;
   height: 64px;
+  border-radius: var(--radius-m);
   object-fit: cover;
   color: var(--color-muted);
   font-size: var(--text-label);
@@ -147,7 +207,7 @@
 }
 
 div.thumb {
-  background: var(--color-surface);
+  background: var(--color-surface-sunken);
 }
 
 .details {
@@ -200,8 +260,10 @@ div.thumb {
 .stepper {
   display: inline-flex;
   align-items: stretch;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
 }
 
 .stepper button {
@@ -214,23 +276,31 @@ div.thumb {
   font-size: var(--text-heading);
   line-height: 1;
   cursor: pointer;
-  transition: background-color var(--duration) var(--ease);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-base) var(--ease-spring);
+}
+
+.stepper button:active:not(:disabled) {
+  background: var(--color-primary-soft);
+  transform: scale(0.9);
+  transition-duration: var(--dur-press);
 }
 
 .stepper button:disabled {
-  color: var(--color-border-strong);
+  color: var(--color-disabled);
   cursor: not-allowed;
 }
 
 .stepper input {
-  width: 3em;
+  width: 2.5em;
   min-height: var(--tap);
   border: 0;
-  border-inline: 1px solid var(--color-border-strong);
   border-radius: 0;
   background: none;
   color: var(--color-text);
   font: inherit;
+  font-weight: 600;
   text-align: center;
 }
 
@@ -243,6 +313,8 @@ div.thumb {
 
 .lineTotal {
   margin-left: auto;
+  font-family: var(--font-display);
+  font-weight: 600;
 }
 
 .message {
@@ -252,11 +324,15 @@ div.thumb {
 
 @media (hover: hover) {
   .stepper button:hover:not(:disabled) {
-    background: var(--color-surface);
+    background: var(--color-surface-sunken);
   }
 
   .check:hover input:not(:checked, :disabled) + .box {
-    box-shadow: inset 0 0 0 1px var(--color-text);
+    box-shadow: inset 0 0 0 2px var(--color-primary);
+  }
+
+  .shopName a:hover {
+    text-decoration: underline;
   }
 }
 
@@ -264,7 +340,7 @@ div.thumb {
 .summary {
   position: sticky;
   bottom: 0;
-  z-index: 1;
+  z-index: 5;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
@@ -273,10 +349,10 @@ div.thumb {
     "items ship";
   align-items: center;
   gap: var(--space-1) var(--space-3);
-  margin: var(--space-6) calc(-1 * var(--gutter)) 0;
+  margin: var(--space-5) calc(-1 * var(--gutter)) 0;
   padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--color-border);
-  background: var(--color-bg);
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
+  box-shadow: var(--shadow-2);
 }
 
 .retry {
@@ -323,14 +399,16 @@ div.thumb {
 }
 
 .grand dd {
-  font-size: var(--text-heading);
-  font-weight: 600;
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: var(--text-price);
+  font-weight: 700;
 }
 
 .summary > :global(.button) {
   grid-area: action;
   min-height: var(--control-main);
-  padding-inline: var(--space-5);
+  padding-inline: var(--space-6);
   font-size: var(--text-body);
 }
 
@@ -338,17 +416,30 @@ div.thumb {
   width: min(100% - 2 * var(--gutter), 420px);
   padding: var(--space-5);
   border: 0;
-  border-radius: var(--radius);
-  background: var(--color-bg);
+  border-radius: var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
   color: var(--color-text);
+  animation: dialogIn var(--dur-base) var(--ease-out);
 }
 
 .dialog p {
   margin: 0 0 var(--space-5);
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .dialog::backdrop {
-  background: color-mix(in srgb, var(--color-text) 40%, transparent);
+  background: color-mix(in srgb, var(--color-ink) 45%, transparent);
+}
+
+@keyframes dialogIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
 }
 
 .dialogActions {
@@ -358,33 +449,31 @@ div.thumb {
   gap: var(--space-2);
 }
 
+/* ขนาดของโครงสีระหว่างโหลด สีและแสงมาจาก class กลาง skeleton */
 .skeleton {
-  background: var(--color-surface);
-  animation: pulse 1.2s ease-in-out infinite;
+  border-radius: var(--radius-l);
+}
+
+.skeletonTitle {
+  width: min(100%, 320px);
+  height: 44px;
+  margin-bottom: var(--space-5);
 }
 
 .skeletonShop {
   height: 180px;
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
 }
 
 .skeletonBar {
-  height: 60px;
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.55;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .skeleton {
-    animation: none;
-  }
+  height: 120px;
 }
 
 @media (min-width: 600px) {
+  .shop {
+    padding-inline: var(--space-5);
+  }
+
   .item {
     grid-template-columns: var(--tap) 96px minmax(0, 1fr);
   }
@@ -402,7 +491,7 @@ div.thumb {
   }
 }
 
-/* จอกว้าง: รายการซ้าย 7 สรุปยอดขวา 5 บนแผ่นสีกระดาษ */
+/* จอกว้าง: รายการซ้าย 7 สรุปยอดขวา 5 กล่องสรุปยอดเป็นการ์ดที่ค้างข้างจอ */
 @media (min-width: 900px) {
   .layout {
     display: grid;
@@ -412,7 +501,7 @@ div.thumb {
   }
 
   .summary {
-    top: var(--space-5);
+    top: calc(var(--header-height) + var(--space-4));
     bottom: auto;
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
@@ -424,8 +513,8 @@ div.thumb {
     gap: var(--space-2);
     margin: 0;
     padding: var(--space-5);
-    border-top: 0;
-    background: var(--color-surface);
+    border-radius: var(--radius-l);
+    box-shadow: var(--shadow-1);
   }
 
   .part {

@@ -5,6 +5,9 @@ export const ACTION_TIMEOUT_MS = 10_000;
 
 export type Failed = { failed: true };
 
+/** ข้อความเมื่อบันทึกไม่สำเร็จหรือไม่ได้ผลภายในเวลา แสดงคู่กับปุ่ม "ลองใหม่" */
+export const SAVE_FAILED = "บันทึกไม่สำเร็จ";
+
 /**
  * ผลของ server action หรือ { failed: true } เมื่อเน็ตหลุด เซิร์ฟเวอร์ผิดพลาด หรือไม่ได้ผลภายใน ms
  * แทนการโยน error ทั้งหน้า

@@ -5,7 +5,9 @@ import { saveModelFile } from "@/features/product-listing/server/model-files";
 import { transaction, type Db } from "@/shared/db";
 import { addAccount, addProduct, addShop } from "@/shared/db/builders";
 import { CATEGORIES, LOCATIONS, PERSON_FIRST, PERSON_LAST, SAMPLE_PHOTOS, SHOP_NAME_FIRST, SHOP_NAME_LAST } from "./catalog";
+import { addSampleNotifications } from "./notifications";
 import { addSampleOrders } from "./orders";
+import { addSampleReviews } from "./reviews";
 
 /** รหัสผ่านสาธิตของบัญชีตัวอย่าง ห้ามใช้กับระบบจริง (เขียนไว้ใน README) */
 export const ADMIN_PASSWORD = "admin1234";
@@ -16,6 +18,11 @@ const SHOP_COUNT = 50;
 const PRODUCTS_PER_SHOP = 20;
 const BUYER_COUNT = 3;
 const MINUTE = 60 * 1000;
+const DAY = 24 * 60 * MINUTE;
+// คำสั่งซื้อของรีวิวตัวอย่างย้อนหลัง 100 วัน (reviews.ts) บัญชี ร้าน และสินค้าจึงเก่ากว่านั้นตามลำดับ
+const ACCOUNTS_CREATED_AGO = 131 * DAY;
+const SHOPS_OPENED_AGO = 130 * DAY;
+const NEWEST_PRODUCT_AGO = 101 * DAY;
 
 /** สินค้าตัวอย่างที่มีไฟล์ 3 มิติ (P3D-006) index คือลำดับสินค้าในร้านแรก ไฟล์และที่มาอยู่ใน models/SOURCES.txt */
 const SAMPLE_MODELS = [
@@ -84,7 +91,7 @@ export async function seed(db: Db): Promise<{ created: boolean }> {
         description: `${shopName} ร้านตัวอย่างของ Blanksong คัดของดีราคาเป็นมิตร ส่งไว`,
         logoUrl: `/sample-images/shop${s + 1}.svg`,
         origin: { name: ownerName, phone: `01000000${number}`, address: `${s + 1}/9 ถนนตัวอย่าง`, ...LOCATIONS[s % LOCATIONS.length] },
-        openedAt: new Date(now - 30 * 24 * 60 * MINUTE).toISOString(),
+        openedAt: new Date(now - SHOPS_OPENED_AGO).toISOString(),
       });
 
       // รูปที่ส่งขึ้นมาเป็นของร้านที่ส่ง (PRD-012) จึงเก็บรูปถ่ายร้านละชุด
@@ -114,7 +121,7 @@ export async function seed(db: Db): Promise<{ created: boolean }> {
         const variantCount = options.reduce((total, option) => total * option.values.length, 1);
         const lastOptionSize = options.at(-1)?.values.length ?? 1;
         const step = Math.max(10, Math.round(basePrice / 100) * 10);
-        const createdAt = new Date(now - (SHOP_COUNT * PRODUCTS_PER_SHOP - index) * 37 * MINUTE).toISOString();
+        const createdAt = new Date(now - NEWEST_PRODUCT_AGO - (SHOP_COUNT * PRODUCTS_PER_SHOP - index) * 37 * MINUTE).toISOString();
         const imageCount = 1 + (index % 3);
 
         const product = addProduct(db, {
@@ -130,7 +137,7 @@ export async function seed(db: Db): Promise<{ created: boolean }> {
           })),
           images: photos
             ? photos.slice(0, imageCount).map((file) => photoUrl(file, new Date(createdAt)))
-            : Array.from({ length: imageCount }, (_, i) => `/sample-images/s${index + 1}-${i + 1}.svg`),
+            : Array.from({ length: imageCount }, (_, i) => `/sample-images/s${index + 1}-${i + 1}-c${category.categoryId}.svg`),
           recordStockHistory: true,
           createdAt,
           publishedAt: createdAt,
@@ -146,5 +153,8 @@ export async function seed(db: Db): Promise<{ created: boolean }> {
   });
 
   await addSampleOrders(db, now);
+  await addSampleReviews(db, now, DEMO_PASSWORD);
+  db.prepare("UPDATE accounts SET created_at = ?").run(new Date(now - ACCOUNTS_CREATED_AGO).toISOString());
+  await addSampleNotifications(db, now);
   return { created: true };
 }

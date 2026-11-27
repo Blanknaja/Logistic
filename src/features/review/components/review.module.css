@@ -1,0 +1,481 @@
+/* รีวิวและคะแนน (REV) ใช้เฉพาะค่าจาก token ใน globals.css */
+
+/* ดาวเป็นรูป ไม่ใช่ตัวหนังสือ: พื้นสีดอกดาวเรือง เส้นขอบสีเข้มทำให้เห็นชัดบนพื้นขาว */
+.starOn,
+.starOff,
+.cardRating::first-letter,
+.starOption {
+  -webkit-text-stroke: calc(var(--space-1) / 3) var(--color-ink);
+  paint-order: stroke fill;
+}
+
+.starOn,
+.cardRating::first-letter {
+  color: var(--color-accent);
+}
+
+.starOff {
+  color: var(--color-surface);
+  -webkit-text-stroke-color: var(--color-border-strong);
+}
+
+/* ::first-letter ใช้ได้กับกล่องที่ไม่ใช่ inline เท่านั้น */
+.cardRating {
+  display: inline-block;
+  color: var(--color-text);
+  font-size: var(--text-label);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.score {
+  font-weight: 600;
+}
+
+.author {
+  font-weight: 600;
+}
+
+.ratingLink {
+  display: flex;
+  flex-wrap: wrap;
+  width: fit-content;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+  color: inherit;
+  font-size: var(--text-body);
+  font-weight: 400;
+}
+
+.shopRating {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-1) 0 0;
+}
+
+.muted {
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+
+.section {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  scroll-margin-top: var(--header-height);
+}
+
+.section > h2 {
+  margin: 0;
+}
+
+.summary {
+  display: grid;
+  gap: var(--space-4);
+  max-width: var(--measure);
+  padding: var(--space-4);
+}
+
+.average {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.averageNumber {
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.average .stars {
+  order: -1;
+  font-style: normal;
+  font-size: var(--text-heading);
+}
+
+.averageNumber {
+  order: -2;
+}
+
+.breakdown {
+  display: grid;
+  gap: var(--space-1);
+  max-width: var(--measure);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.breakdown > li {
+  display: grid;
+  grid-template-columns: 4em minmax(0, 1fr) 3em;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-label);
+}
+
+.breakdown progress {
+  width: 100%;
+  height: var(--space-2);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-sunken);
+  appearance: none;
+}
+
+.breakdown progress::-webkit-progress-bar {
+  background: var(--color-surface-sunken);
+}
+
+.breakdown progress::-webkit-progress-value {
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+}
+
+.breakdown progress::-moz-progress-bar {
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+}
+
+.breakdown > li > :last-child {
+  text-align: end;
+}
+
+.filters {
+  margin: 0;
+}
+
+.chipLink {
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list:global(.card) {
+  padding-inline: var(--space-4);
+}
+
+.review {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-4) 0;
+  scroll-margin-top: calc(var(--header-height) + var(--space-4));
+}
+
+.review + .review {
+  border-top: 1px solid var(--color-border);
+}
+
+.review > p {
+  margin: 0;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+
+.stars {
+  letter-spacing: 0.08em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.body {
+  max-width: var(--measure);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.images img {
+  display: block;
+  width: calc(var(--tap) * 1.5);
+  height: calc(var(--tap) * 1.5);
+  border-radius: var(--radius-s);
+  object-fit: cover;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .images a:hover img {
+    transform: scale(1.04);
+  }
+}
+
+/* คำตอบของร้านอยู่ในกล่องที่จม แยกจากเสียงของผู้ซื้อ */
+.reply {
+  display: grid;
+  gap: var(--space-1);
+  max-width: var(--measure);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-m);
+  background: var(--color-surface-sunken);
+  overflow-wrap: anywhere;
+}
+
+.reply > p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.badge {
+  justify-self: start;
+  padding-block: var(--space-1);
+  white-space: normal;
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.actions > form {
+  display: contents;
+}
+
+.disclosure > summary {
+  display: inline-flex;
+  width: fit-content;
+  cursor: pointer;
+  list-style: none;
+}
+
+.disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure[open] > summary {
+  margin-bottom: var(--space-3);
+}
+
+/* ฟอร์ม */
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+  max-width: var(--measure);
+}
+
+/* ฟอร์มเขียนรีวิวเป็นการ์ดของตัวเอง ฟอร์มตอบและซ่อนที่อยู่ในรายการรีวิวอยู่ในการ์ดของรายการแล้ว */
+.section > .form {
+  padding: var(--space-4);
+  border-radius: var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+}
+
+.form textarea {
+  width: 100%;
+  min-height: calc(var(--tap) * 3);
+  padding: var(--space-3);
+  resize: vertical;
+}
+
+.counter {
+  color: var(--color-muted);
+  font-size: var(--text-label);
+  text-align: end;
+}
+
+.failed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-danger);
+}
+
+.failed > p {
+  margin: 0;
+}
+
+.starPicker {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.starPicker > legend {
+  padding: 0;
+  margin-bottom: var(--space-1);
+}
+
+.starOption {
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: var(--radius-pill);
+  color: var(--color-surface);
+  -webkit-text-stroke-color: var(--color-border-strong);
+  font-size: var(--text-title);
+  line-height: 1;
+  cursor: pointer;
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+
+.starOption[data-filled="true"] {
+  color: var(--color-accent);
+  -webkit-text-stroke-color: var(--color-ink);
+  transform: scale(1.12);
+}
+
+.starOption:active {
+  transform: scale(0.9);
+  transition-duration: var(--dur-press);
+}
+
+@media (hover: hover) {
+  .starOption:hover {
+    transform: scale(1.2);
+  }
+}
+
+.starOption:has(input:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: calc(-1 * var(--focus-offset));
+}
+
+.imagesField {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.imagesField > legend {
+  padding: 0;
+}
+
+.imagesField p {
+  margin: 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  max-width: var(--measure);
+  padding: var(--space-3);
+}
+
+.item img,
+.item > span:first-child {
+  flex: none;
+  width: calc(var(--tap) * 1.5);
+  height: calc(var(--tap) * 1.5);
+  border-radius: var(--radius-m);
+  background: var(--color-surface-sunken);
+  object-fit: cover;
+}
+
+.item p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.pickedImages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pickedImages > li {
+  display: grid;
+  gap: var(--space-1);
+  width: calc(var(--tap) * 2);
+}
+
+.pickedImages img {
+  width: calc(var(--tap) * 2);
+  height: calc(var(--tap) * 2);
+  border-radius: var(--radius-s);
+  object-fit: cover;
+}
+
+.pickedImages progress {
+  width: 100%;
+}
+
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.fileInput:focus-visible + span {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.fileInput:disabled + span {
+  background: var(--color-disabled);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.orderItemReview > span {
+  font-weight: 600;
+}
+
+.orderItemReview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.orderBadge {
+  width: fit-content;
+}

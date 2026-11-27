@@ -32,6 +32,13 @@ describe("readSentence", () => {
     expect(read("หูฟังตั้งแต่ 2 ล้าน")).toEqual({ q: "หูฟัง", min: 2000000 });
   });
 
+  test("SNT-002 REV-012 ตัวเลขที่มีคำว่าคะแนนนำหน้าหรือดาวตามหลัง ไม่ใช่ราคาต่ำสุด", () => {
+    expect(read("หูฟัง คะแนน 4 ขึ้นไป")).toEqual({ q: "หูฟัง", rating: 4 });
+    expect(read("หูฟังตั้งแต่ 4 ดาว")).toEqual({ q: "หูฟัง", rating: 4 });
+    expect(read("500 ขึ้นไป")).toEqual({ q: "", min: 500 });
+    expect(read("ตั้งแต่ 4")).toEqual({ q: "", min: 4 });
+  });
+
   test("SNT-003 ช่วงราคา", () => {
     expect(read("เสื้อ 100 ถึง 300 บาท")).toEqual({ q: "เสื้อ", min: 100, max: 300 });
     expect(read("เสื้อ ราคา 100-300")).toEqual({ q: "เสื้อ", min: 100, max: 300 });
@@ -115,6 +122,25 @@ describe("readSentence", () => {
     expect(read("ต่ำกว่า 99.50")).toEqual({ q: "", max: 99 });
     expect(read("มากกว่า 99.50")).toEqual({ q: "", min: 100 });
     expect(readSentence("หมวดอะไรก็ได้ ถูกสุด", [{ id: 9, name: "และของแถม" }])).toEqual({ q: "หมวดอะไรก็ได้", sort: "price-asc" });
+  });
+
+  test("SNT-003 REV-012 คำที่แค่ขึ้นต้นด้วย ดาว ไม่ทำให้ตัวเลขข้างหน้าเลิกเป็นราคา", () => {
+    expect(read("จาน ไม่เกิน 500 ดาวเทียม")).toEqual({ q: "จาน ดาวเทียม", max: 500 });
+    expect(read("ไม่เกิน 300 ดาวเรืองประดิษฐ์")).toEqual({ q: "ดาวเรืองประดิษฐ์", max: 300 });
+    expect(read("กล่อง ตั้งแต่ 4 ดาวเทียม")).toEqual({ q: "กล่อง ดาวเทียม", min: 4 });
+    expect(read("โคมไฟ 3 ดาวกระจายขึ้นไป")).toBeNull();
+    expect(read("โรงแรม 5 ดาว ไม่เกิน 500")).toEqual({ q: "โรงแรม 5 ดาว", max: 500 });
+    expect(read("หูฟัง 4 ดาวขึ้นไป")).toEqual({ q: "หูฟัง", rating: 4 });
+    expect(read("หูฟังตั้งแต่ 4 ดาว")).toEqual({ q: "หูฟัง", rating: 4 });
+    expect(read("หูฟัง ตั้งแต่ 4 ดาว, ไม่เกิน 900")).toEqual({ q: "หูฟัง ,", rating: 4, max: 900 });
+  });
+
+  test("SNT-005 คำเรียงหลายคำ ใช้คำแรกในประโยค และคำเรียงที่เหลือไม่ไปอยู่ในคำค้น", () => {
+    expect(read("หูฟัง ถูกสุด คะแนนสูงสุด")).toEqual({ q: "หูฟัง", sort: "price-asc" });
+    expect(read("หูฟัง คะแนนสูงสุด ถูกสุด")).toEqual({ q: "หูฟัง", sort: "rating" });
+    expect(read("หูฟัง ถูกสุด แพงสุด")).toEqual({ q: "หูฟัง", sort: "price-asc" });
+    expect(read("หูฟัง แพงที่สุด เรียงราคาถูกสุดก่อน ใหม่ล่าสุด")).toEqual({ q: "หูฟัง", sort: "price-desc" });
+    expect(read("ถูกสุด ถูกสุด เสื้อ")).toEqual({ q: "เสื้อ", sort: "price-asc" });
   });
 
   test("SNT-009 ไม่เข้าใจอะไรเลย ได้ null และคำค้นใช้ตามที่พิมพ์", () => {

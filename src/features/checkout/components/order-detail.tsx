@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { CANCEL_REFUSED, type BuyerOrderDetail, type CancelRefusal } from "@/features/checkout/server/buyer-orders";
+import { OrderItemReview } from "@/features/review/components/rating";
 import { formatBaht, formatThaiDateTime, formatNumber } from "@/shared/format";
 import { ORDER_STATUS } from "@/shared/statuses";
 import { CancelOrderForm } from "./cancel-order-form";
 import { PayButton } from "./pay-button";
+import { Journey, ORDER_JOURNEY } from "@/shared/ui/journey";
 import styles from "./buyer-orders.module.css";
 
 /** "จะยกเลิก 2 คำสั่งซื้อที่จ่ายรวมกัน: ผ้าดี และ บ้านแก้ว" */
@@ -37,14 +39,19 @@ export function OrderDetail({
         คำสั่งซื้อ {order.orderNo} · {order.shopName} · สั่งเมื่อ {formatThaiDateTime(order.orderedAt)}
       </p>
       {message && (
-        <p role="alert" className={styles.notice}>
+        <p role="alert" className="notice notice-alert">
           {message}
         </p>
+      )}
+      {order.status !== ORDER_STATUS.cancelled && (
+        <div className={`card ${styles.timeline}`}>
+          <Journey steps={ORDER_JOURNEY} current={ORDER_JOURNEY.indexOf(order.status)} label="ขั้นของคำสั่งซื้อ" />
+        </div>
       )}
 
       <section className={styles.now} aria-label="สถานะ">
         {order.status === ORDER_STATUS.awaitingPayment && (
-          <p className={styles.deadline}>จ่ายภายใน {formatThaiDateTime(order.paymentDeadline)}</p>
+          <p className={`badge badge-wait ${styles.deadline}`}>จ่ายภายใน {formatThaiDateTime(order.paymentDeadline)}</p>
         )}
         {order.status === ORDER_STATUS.cancelled && order.cancelledAt && (
           <p>
@@ -86,7 +93,7 @@ export function OrderDetail({
       </section>
 
       <div className={styles.columns}>
-        <section className={styles.section}>
+        <section className={`card card-pad ${styles.section}`}>
           <h2>สินค้า</h2>
           <ul className={styles.items}>
             {order.items.map((item) => (
@@ -99,6 +106,7 @@ export function OrderDetail({
                   <p className={styles.muted}>
                     {item.quantity === 1 ? "1 ชิ้น" : `${formatBaht(item.unitPrice)} × ${formatNumber(item.quantity)}`}
                   </p>
+                  {order.status === ORDER_STATUS.completed && <OrderItemReview orderNo={order.orderNo} itemId={item.id} rating={item.reviewRating} />}
                 </div>
                 <span>{formatBaht(item.unitPrice * item.quantity)}</span>
               </li>
@@ -122,7 +130,7 @@ export function OrderDetail({
           </dl>
         </section>
 
-        <section className={styles.section}>
+        <section className={`card card-pad ${styles.section}`}>
           <h2>ที่อยู่จัดส่ง</h2>
           <p>
             {order.shipTo.recipientName} {order.shipTo.phone}

@@ -1,5 +1,10 @@
 import { CartLoading } from "@/features/cart/components/cart-view";
+import { SkeletonExit } from "@/shared/ui/transitions";
 
 export default function Loading() {
-  return <CartLoading />;
+  return (
+    <SkeletonExit>
+      <CartLoading />
+    </SkeletonExit>
+  );
 }

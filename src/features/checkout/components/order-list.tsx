@@ -4,9 +4,12 @@ import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
 import { useState, useTransition } from "react";
 import { loadMoreOrdersAction } from "@/features/checkout/buyer-order-actions";
-import type { BuyerOrderPage, BuyerOrderSummary, OrderCursor } from "@/features/checkout/server/buyer-orders";
+import type { BuyerOrderPage, BuyerOrderSummary, OrderCursor, OrderFilter } from "@/features/checkout/server/buyer-orders";
+import { AwaitingReviewBadge } from "@/features/review/components/rating";
 import { formatBaht, formatThaiDateTime, formatNumber } from "@/shared/format";
-import { ORDER_STATUS, type OrderStatus } from "@/shared/statuses";
+import { ORDER_STATUS } from "@/shared/statuses";
+import { Journey, ORDER_JOURNEY } from "@/shared/ui/journey";
+import { StatusBadge } from "@/shared/ui/status-badge";
 import styles from "./buyer-orders.module.css";
 import { PayButton } from "./pay-button";
 
@@ -28,7 +31,7 @@ export async function loadMore(
   }
 }
 
-export function OrderList({ initial, status }: { initial: OrderListState; status: OrderStatus | null }) {
+export function OrderList({ initial, status }: { initial: OrderListState; status: OrderFilter | null }) {
   const [state, setState] = useState(initial);
   const [pending, startTransition] = useTransition();
   const more = () =>
@@ -73,9 +76,21 @@ function OrderCard({ order }: { order: BuyerOrderSummary }) {
           <span className={styles.thumb} />
         )}
         <span className={styles.cardText}>
-          <span className={styles.status}>{order.status}</span>
+          <span className={styles.status}>
+            <StatusBadge status={order.status} />
+            {order.status !== ORDER_STATUS.cancelled && (
+              <Journey
+                compact
+                steps={ORDER_JOURNEY}
+                current={ORDER_JOURNEY.indexOf(order.status)}
+                label={`ขั้นที่ ${ORDER_JOURNEY.indexOf(order.status) + 1} จาก ${ORDER_JOURNEY.length}`}
+              />
+            )}
+          </span>
+          <AwaitingReviewBadge count={order.awaitingReview} />
+          <span className={styles.itemName}>{order.firstItemName}</span>
           <span className={styles.muted}>
-            {order.shopName} · {order.firstItemName} · รวม {formatNumber(order.itemCount)} ชิ้น
+            {order.shopName} · รวม {formatNumber(order.itemCount)} ชิ้น
           </span>
           <span className={styles.muted}>สั่งเมื่อ {formatThaiDateTime(order.orderedAt)}</span>
         </span>

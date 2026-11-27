@@ -1,4 +1,5 @@
 import type { ProductCard } from "@/features/browse/server/search";
+import { PRODUCT_RATINGS_SQL, ratingField } from "@/features/review/server/ratings";
 import type { Db } from "@/shared/db";
 import { PAGE_SIZE } from "@/shared/paging";
 import { PRODUCT_STATUS, SHOP_STATUS, type ShopStatus } from "@/shared/statuses";
@@ -51,10 +52,12 @@ export function listStorefrontProducts(db: Db, shopId: number, after: Storefront
   const rows = db
     .prepare(
       `SELECT p.id, p.name, p.published_at, min(v.price) AS price, sum(v.stock) AS stock,
-         (SELECT url FROM product_images i WHERE i.product_id = p.id ORDER BY i.position LIMIT 1) AS cover_url
+         (SELECT url FROM product_images i WHERE i.product_id = p.id ORDER BY i.position LIMIT 1) AS cover_url,
+         r.review_count, r.rating_tenths
        FROM products p
        JOIN shops s ON s.id = p.shop_id
        JOIN variants v ON v.product_id = p.id AND v.removed_at IS NULL AND v.price IS NOT NULL
+       LEFT JOIN ${PRODUCT_RATINGS_SQL} r ON r.product_id = p.id
        WHERE p.shop_id = ? AND p.status = ? AND s.status = ?
          AND (? IS NULL OR (p.published_at, p.id) < (?, ?))
        GROUP BY p.id
@@ -69,7 +72,7 @@ export function listStorefrontProducts(db: Db, shopId: number, after: Storefront
       after?.publishedAt ?? null,
       after?.id ?? null,
       PAGE_SIZE + 1,
-    ) as { id: number; name: string; published_at: string; price: number; stock: number; cover_url: string | null }[];
+    ) as { id: number; name: string; published_at: string; price: number; stock: number; cover_url: string | null; review_count: number | null; rating_tenths: number | null }[];
 
   const items = rows.slice(0, PAGE_SIZE).map((row) => ({
     id: row.id,
@@ -77,6 +80,7 @@ export function listStorefrontProducts(db: Db, shopId: number, after: Storefront
     price: row.price,
     coverUrl: row.cover_url,
     soldOut: row.stock <= 0,
+    ...ratingField(row),
   }));
   const last = rows[PAGE_SIZE - 1];
   return { items, next: rows.length > PAGE_SIZE ? { publishedAt: last.published_at, id: last.id } : null };

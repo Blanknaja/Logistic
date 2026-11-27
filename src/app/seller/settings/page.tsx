@@ -7,6 +7,7 @@ import { requireShop } from "@/features/shop/require-shop";
 import { getShopSettings } from "@/features/shop/server/shops";
 import { getDb } from "@/shared/db";
 import { SHOP_STATUS } from "@/shared/statuses";
+import { PageReveal } from "@/shared/ui/transitions";
 
 export const metadata: Metadata = { title: "ตั้งค่าร้าน" };
 
@@ -19,24 +20,26 @@ export default async function ShopSettingsPage({ searchParams }: PageProps<"/sel
   const suspended = shop.status === SHOP_STATUS.suspended;
 
   return (
-    <div className={styles.formPage}>
-      <header className={styles.formIntro}>
-        <h1>ตั้งค่าร้าน</h1>
-        {saved && !suspended && (
-          <p role="status" className={styles.notice}>
-            บันทึกแล้ว
-          </p>
-        )}
-      </header>
-      {/* key เปลี่ยนเมื่อบันทึกแล้ว ฟอร์มจึงเริ่มใหม่จากค่าที่บันทึก */}
-      <ShopForm
-        key={shop.updatedAt}
-        mode="settings"
-        action={saveShopSettingsAction}
-        shop={shop}
-        readOnly={suspended}
-        cancelHref="/seller"
-      />
-    </div>
+    <PageReveal>
+      <div className={styles.formPage}>
+        <header className={styles.formIntro}>
+          <h1>ตั้งค่าร้าน</h1>
+          {saved && !suspended && (
+            <p role="status" className="notice">
+              บันทึกแล้ว
+            </p>
+          )}
+        </header>
+        {/* key เปลี่ยนเมื่อบันทึกแล้ว ฟอร์มจึงเริ่มใหม่จากค่าที่บันทึก */}
+        <ShopForm
+          key={shop.updatedAt}
+          mode="settings"
+          action={saveShopSettingsAction}
+          shop={shop}
+          readOnly={suspended}
+          cancelHref="/seller"
+        />
+      </div>
+    </PageReveal>
   );
 }

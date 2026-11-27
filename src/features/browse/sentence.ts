@@ -1,4 +1,4 @@
-import { priceLabel, sortLabel, type Sort } from "@/features/browse/search-params";
+import { priceLabel, ratingLabel, sortLabel, type Sort } from "@/features/browse/search-params";
 import type { Category } from "@/features/product-listing/server/categories";
 
 // อ่านประโยคในช่องค้นหาเป็นคำค้นกับตัวกรอง (SNT) ไฟล์นี้ใช้ทั้งฝั่งเซิร์ฟเวอร์และในเบราว์เซอร์
@@ -15,6 +15,8 @@ export type Sentence = {
   category?: string;
   min?: number;
   max?: number;
+  /** คะแนนเฉลี่ยขั้นต่ำ 1 ถึง 5 ดาว (REV-012) */
+  rating?: number;
   sort?: Sort;
 };
 
@@ -38,10 +40,23 @@ const MIN_AFTER = new RegExp(String.raw`${NOT_SIZE}${AMOUNT}(?:${BAHT})?\s*ข�
 const BELOW = new Set(["ไม่ถึง", "ต่ำกว่า", "ถูกกว่า", "น้อยกว่า"]);
 const ABOVE = new Set(["มากกว่า", "แพงกว่า", "เกิน"]);
 
+// คะแนนขั้นต่ำ (REV-012) อ่านก่อนราคา เพราะ "คะแนน 4 ขึ้นไป" กับ "ตั้งแต่ 4 ดาว" ตรงกับรูปแบบราคาต่ำสุดด้วย
+const STARS = String.raw`(?<![\d.,])(\d+(?:\.\d+)?)(?![\d.,])`;
+// "ดาว" เป็นหน่วยของคะแนนเมื่อจบคำตรงนั้นหรือตามด้วย "ขึ้นไป" คำอื่นที่ขึ้นต้นด้วยดาว เช่น ดาวเทียม ดาวน์ ไม่ใช่
+const STAR_WORD = String.raw`ดาว(?=\s*ขึ้นไป|[^ก-๛]|$)`;
+const RATINGS = [
+  new RegExp(String.raw`คะแนน\s*(?:ตั้งแต่\s*)?${STARS}\s*(?:${STAR_WORD}\s*)?ขึ้นไป`),
+  new RegExp(String.raw`(?:คะแนน\s*)?ตั้งแต่\s*${STARS}\s*${STAR_WORD}(?:\s*ขึ้นไป)?`),
+  new RegExp(String.raw`${STARS}\s*${STAR_WORD}\s*ขึ้นไป`),
+];
+/** ตัวเลขที่มีคำว่า "คะแนน" นำหน้าหรือ "ดาว" ตามหลัง ไม่ใช่ราคา แม้ไม่ได้ถูกอ่านเป็นคะแนนขั้นต่ำ เช่น "คะแนน 6 ขึ้นไป" */
+const NOT_PRICE = new RegExp(String.raw`คะแนน\s*(?:ตั้งแต่\s*)?\d[\d.,]*|\d[\d.,]*\s*${STAR_WORD}`, "g");
+
 const SORTS: [Sort, RegExp][] = [
   ["price-asc", new RegExp(String.raw`${SORT_LEAD}ถูก(?:ที่)?สุด${SORT_TAIL}`)],
   ["price-desc", new RegExp(String.raw`${SORT_LEAD}แพง(?:ที่)?สุด${SORT_TAIL}`)],
   ["newest", new RegExp(String.raw`${SORT_LEAD}(?:ใหม่ล่าสุด|ใหม่(?:ที่)?สุด|มาใหม่)${SORT_TAIL}`)],
+  ["rating", new RegExp(String.raw`(?:เรียง(?:จาก|ตาม)?\s*)?(?:คะแนน(?:สูงสุด|ดี(?:ที่)?สุด)|รีวิวดี(?:ที่)?สุด)${SORT_TAIL}`)],
 ];
 
 const amount = (digits: string, unit: string | undefined) =>
@@ -73,7 +88,7 @@ function readCategory(text: string, categories: Category[]): { id: number; found
 }
 
 /**
- * อ่านราคา การเรียง และหมวดหมู่ออกจากประโยค คืน null เมื่อไม่เข้าใจอะไรเลย
+ * อ่านคะแนนขั้นต่ำ ราคา การเรียง และหมวดหมู่ออกจากประโยค คืน null เมื่อไม่เข้าใจอะไรเลย
  * ซึ่งหมายถึงใช้ทั้งประโยคเป็นคำค้นตามเดิม (SNT-009)
  */
 export function readSentence(input: string, categories: Category[]): Sentence | null {
@@ -90,6 +105,16 @@ export function readSentence(input: string, categories: Category[]): Sentence | 
     }
     return match;
   };
+
+  for (const pattern of RATINGS) {
+    const match = pattern.exec(plain);
+    if (match && /^[1-5]$/.test(match[1])) {
+      found.rating = Number(match[1]);
+      take(pattern);
+      break;
+    }
+  }
+  plain = plain.replace(NOT_PRICE, (part) => part.replace(/\d/g, "x"));
 
   const range = RANGES.reduce<RegExpExecArray | null>((match, pattern) => match ?? take(pattern), null);
   if (range) {
@@ -111,11 +136,11 @@ export function readSentence(input: string, categories: Category[]): Sentence | 
     }
   }
 
-  for (const [sort, pattern] of SORTS) {
-    if (take(pattern)) {
-      found.sort = sort;
-      break;
-    }
+  // คำเรียงที่มาก่อนในประโยคถูกใช้ คำเรียงที่เหลือถูกตัดทิ้ง ไม่ไปอยู่ในคำค้น
+  const first = SORTS.map(([sort, pattern]) => ({ sort, index: pattern.exec(plain)?.index ?? Infinity })).sort((a, b) => a.index - b.index)[0];
+  if (first.index !== Infinity) {
+    found.sort = first.sort;
+    for (const [, pattern] of SORTS) while (take(pattern));
   }
 
   const category = readCategory(text, categories);
@@ -128,7 +153,7 @@ export function readSentence(input: string, categories: Category[]): Sentence | 
   return { q: text.replace(/\s+/g, " ").trim(), ...found };
 }
 
-/** สิ่งที่เข้าใจจากประโยค เป็นคำสั้นๆ ตามลำดับ คำค้น หมวดหมู่ ราคา การเรียง (SNT-011) */
+/** สิ่งที่เข้าใจจากประโยค เป็นคำสั้นๆ ตามลำดับ คำค้น หมวดหมู่ ราคา คะแนน การเรียง (SNT-011 REV-012) */
 export function understoodLabels(sentence: Sentence, categories: Category[]): string[] {
   const category = categories.find((item) => String(item.id) === sentence.category);
   const price = priceLabel(sentence.min ?? null, sentence.max ?? null);
@@ -136,6 +161,7 @@ export function understoodLabels(sentence: Sentence, categories: Category[]): st
     sentence.q && `“${sentence.q}”`,
     category?.name,
     price,
+    ratingLabel(sentence.rating ?? null),
     sentence.sort && sortLabel(sentence.sort),
   ].filter((label): label is string => Boolean(label));
 }

@@ -1,3 +1,4 @@
+import { notifyPaymentTimedOut } from "@/features/notification/server/events";
 import { abandonPendingPayments } from "@/features/payment/server/payments";
 import { releaseCancelledOrderStock } from "@/features/stock/server/reservation";
 import { transaction, type Db } from "@/shared/db";
@@ -88,6 +89,7 @@ export function cancelAwaitingPaymentGroup(db: Db, groupId: number, reason: stri
       .all(ORDER_STATUS.cancelled, now.toISOString(), reason, groupId, ORDER_STATUS.awaitingPayment);
     for (const order of cancelled) releaseCancelledOrderStock(db, Number(order.id), now);
     if (cancelled.length > 0) abandonPendingPayments(db, groupId);
+    if (cancelled.length > 0 && reason === CANCEL_REASON.paymentTimeout) notifyPaymentTimedOut(db, groupId, cancelled.length, now);
     return cancelled.length;
   });
 }

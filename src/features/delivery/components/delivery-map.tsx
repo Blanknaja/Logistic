@@ -59,13 +59,16 @@ export function DeliveryMap({ route }: { route: DeliveryRoute }) {
         map.attributionControl.setPrefix(false);
         L.control.zoom({ zoomInTitle: "ซูมเข้า", zoomOutTitle: "ซูมออก" }).addTo(map);
         if (route.passed.length > 1) {
-          L.polyline(route.passed.map(at), { className: styles.solid, interactive: false }).addTo(map);
+          const line = L.polyline(route.passed.map(at), { className: styles.solid, interactive: false }).addTo(map);
+          // ความยาวเส้นเป็น 1 เสมอ CSS จึงวาดเส้นจากต้นทางถึงจุดล่าสุดได้โดยไม่ต้องรู้ความยาวจริง
+          line.getElement()?.setAttribute("pathLength", "1");
         }
         if (route.dashed) {
           L.polyline([at(route.latest), at(route.destination)], { className: styles.dashed, interactive: false }).addTo(map);
         }
         for (const pin of route.pins) {
           const latest = pin.province === route.latest.province;
+          if (latest) L.circleMarker(at(pin), { radius: 10, className: styles.halo, interactive: false }).addTo(map);
           L.circleMarker(at(pin), { radius: latest ? 10 : 7, className: latest ? styles.latest : styles.pin, interactive: false })
             .bindTooltip(textLabel(pin.province), {
               permanent: true,

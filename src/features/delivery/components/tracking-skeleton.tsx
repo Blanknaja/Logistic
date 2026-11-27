@@ -13,10 +13,10 @@ export function TrackingSkeleton() {
         <h1 className={styles.title}>
           <span className={styles.eyebrow}>ติดตามพัสดุ</span>
         </h1>
-        <div className={styles.skeleton} />
+        <div className={`skeleton ${styles.skeleton}`} />
       </div>
       <div className={styles.mapBlock}>
-        <div className={mapStyles.map} />
+        <div className={`skeleton ${mapStyles.map}`} />
       </div>
       <section className={styles.history}>
         <h2>ประวัติการจัดส่ง</h2>

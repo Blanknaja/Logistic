@@ -6,7 +6,15 @@
 }
 
 .page > h1 {
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.page > :global(.state-art) {
+  margin: 0 0 var(--space-3);
+}
+
+.page > :global(.steps) {
+  max-width: none;
 }
 
 /* ต้องเห็นโดยไม่เลื่อนจอบนมือถือกว้าง 360 จุด (PAY-Q07) แต่เป็นบรรทัดเดียวสีรอง ไม่ดันเนื้อหาจริงลงและไม่ดูเป็นคำเตือน */
@@ -17,11 +25,15 @@
 }
 
 .deadline {
-  margin: 0 0 var(--space-2);
+  display: inline-flex;
+  margin: 0 0 var(--space-3);
+  white-space: normal;
 }
 
 .deadlineSoon {
-  color: var(--color-warning);
+  background: var(--tint-3);
+  color: var(--color-sale);
+  font-weight: 600;
 }
 
 .muted {
@@ -41,7 +53,7 @@
 }
 
 .section {
-  margin-top: var(--space-5);
+  margin-top: var(--space-4);
 }
 
 .section > h2 {
@@ -60,21 +72,51 @@
 }
 
 .total {
-  margin: 0 0 var(--space-1);
-  font-size: var(--text-heading);
-  font-weight: 600;
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-price);
+  font-weight: 700;
   line-height: 1.3;
+}
+
+/* หน้าจ่ายเงินสำเร็จ: การ์ดเดียวกลางหน้า เครื่องหมายถูก หัวเรื่องตัวโชว์ แล้วปุ่มไปคำสั่งซื้อ */
+.paid {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+}
+
+.paid h1 {
+  margin: 0;
+  font-size: var(--text-display);
+  line-height: var(--line-height-display);
+}
+
+.paid > * {
+  max-width: 100%;
+}
+
+.paid .plainList {
+  justify-self: stretch;
+  margin: 0;
+  text-align: start;
+}
+
+.paid > :global(.button) {
+  min-height: var(--control-main);
+  padding-inline: var(--space-6);
+  font-size: var(--text-body);
 }
 
 .result {
-  margin: 0 0 var(--space-5);
-  font-size: var(--text-heading);
-  line-height: 1.3;
+  margin: 0;
+  color: var(--color-muted);
 }
 
 .reason {
-  margin: 0 0 var(--space-2);
-  color: var(--color-danger);
+  margin-bottom: var(--space-3);
 }
 
 .closed {
@@ -124,13 +166,14 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
+  align-items: center;
   gap: var(--space-1) var(--space-3);
   padding-block: var(--space-2);
   border-top: 1px solid var(--color-border);
 }
 
-.notice {
-  margin: 0 0 var(--space-4);
+.unused {
+  display: block;
 }
 
 .alert {
@@ -146,10 +189,46 @@
   margin-bottom: 0;
 }
 
+/* QR อยู่ในการ์ดที่มีวงแหวนเวลารอบขอบ */
+.qrFrame {
+  position: relative;
+  width: fit-content;
+  margin: var(--space-2) 0 var(--space-4);
+  padding: var(--space-4);
+}
+
 .qr {
   width: 240px;
   max-width: 100%;
-  margin: var(--space-2) 0 var(--space-4);
+}
+
+.ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.ring rect {
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+}
+
+.ringTrack {
+  stroke: var(--color-surface-sunken);
+}
+
+.ringLeft {
+  stroke: var(--color-primary);
+  transition: stroke var(--dur-base) var(--ease-out);
+}
+
+.ringSoon .ringLeft {
+  stroke: var(--color-sale);
 }
 
 .submit {
@@ -168,8 +247,9 @@
 
 .due {
   margin: 0;
+  font-family: var(--font-display);
   font-size: var(--text-heading);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.3;
 }
 
@@ -210,10 +290,12 @@
   margin-top: var(--space-6);
 }
 
+/* ตัวจำลองไม่ใช่ของจริงของหน้า จึงอยู่ในกล่องที่จม แยกจากการ์ดของการจ่ายเงิน */
 .simulatorPanel {
   margin-top: var(--section-gap);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border);
+  padding: var(--space-4);
+  border-radius: var(--radius-l);
+  background: var(--color-surface-sunken);
   color: var(--color-muted);
 }
 
@@ -251,8 +333,12 @@
     position: sticky;
     bottom: 0;
     z-index: 1;
+    z-index: 5;
     margin-inline: calc(-1 * var(--gutter));
     padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
-    background: var(--color-bg);
+    border-top: 0;
+    border-radius: var(--radius-l) var(--radius-l) 0 0;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-2);
   }
 }

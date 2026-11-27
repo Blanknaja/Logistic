@@ -9,9 +9,26 @@ export const BUYER_CANCEL_REASON = CANCEL_REASON.buyer;
 
 const ORDER_STATUSES = Object.values(ORDER_STATUS) as string[];
 
-/** ค่าตัวกรองจากที่อยู่หน้าเว็บ ค่าที่ไม่ใช่คำสถานะของคำสั่งซื้อถือเป็นทั้งหมด */
-export function parseOrderStatus(value: unknown): OrderStatus | null {
-  return typeof value === "string" && ORDER_STATUSES.includes(value) ? (value as OrderStatus) : null;
+/** ตัวกรองตัวที่ 7 ของหน้ารายการคำสั่งซื้อ: คำสั่งซื้อที่ `สำเร็จ` และยังมีรายการที่ไม่มีรีวิว (REV-005) */
+export const AWAITING_REVIEW = "รอรีวิว";
+
+export type OrderFilter = OrderStatus | typeof AWAITING_REVIEW;
+
+/** ค่าตัวกรองจากที่อยู่หน้าเว็บ ค่าที่ไม่ใช่คำสถานะของคำสั่งซื้อหรือ "รอรีวิว" ถือเป็นทั้งหมด */
+export function parseOrderStatus(value: unknown): OrderFilter | null {
+  return typeof value === "string" && (ORDER_STATUSES.includes(value) || value === AWAITING_REVIEW) ? (value as OrderFilter) : null;
+}
+
+const UNREVIEWED_ITEMS = `(SELECT count(*) FROM order_items i WHERE i.order_id = o.id
+  AND NOT EXISTS (SELECT 1 FROM reviews r WHERE r.order_item_id = i.id))`;
+
+/** จำนวนคำสั่งซื้อของผู้ซื้อที่ยังมีรายการรอรีวิว ตัวเลขข้างตัวกรอง "รอรีวิว" (REV-005) */
+export function countOrdersAwaitingReview(db: Db, buyerAccountId: number): number {
+  return Number(
+    db
+      .prepare(`SELECT count(*) AS n FROM orders o WHERE o.buyer_account_id = ? AND o.status = ? AND ${UNREVIEWED_ITEMS} > 0`)
+      .get(buyerAccountId, ORDER_STATUS.completed)?.n,
+  );
 }
 
 /** ตำแหน่งของรายการสุดท้ายที่โหลดแล้ว ใช้โหลดหน้าถัดไปโดยไม่ซ้ำแม้มีคำสั่งซื้อใหม่เข้ามาระหว่างนั้น */
@@ -34,6 +51,8 @@ export type BuyerOrderSummary = {
   trackingNo: string | null;
   /** ยังกด "จ่ายเงิน" และ "ยกเลิกคำสั่งซื้อ" ได้ */
   payable: boolean;
+  /** จำนวนรายการในคำสั่งซื้อที่รอรีวิว เป็น 0 ถ้าคำสั่งซื้อยังไม่ `สำเร็จ` (REV-005) */
+  awaitingReview: number;
 };
 
 export type BuyerOrderPage = { orders: BuyerOrderSummary[]; next: OrderCursor | null };
@@ -54,17 +73,19 @@ type SummaryRow = {
   first_item_cover: string | null;
   item_count: number;
   tracking_no: string | null;
+  unreviewed: number;
 };
 
 export function listBuyerOrders(
   db: Db,
   buyerAccountId: number,
-  options: { status?: OrderStatus | null; after?: OrderCursor | null } = {},
+  options: { status?: OrderFilter | null; after?: OrderCursor | null } = {},
   now: Date = new Date(),
 ): BuyerOrderPage {
   // ไม่รอรอบตรวจ 15 วินาที คำสั่งซื้อที่เลยเขตจ่ายจึงขึ้น `ยกเลิก` ทันทีที่เปิดหน้า (CHK-008)
   expireOverdueOrderGroups(db, now);
-  const status = options.status ?? null;
+  const awaitingReview = options.status === AWAITING_REVIEW;
+  const status = awaitingReview ? ORDER_STATUS.completed : (options.status ?? null);
   const after = options.after ?? null;
   const rows = db
     .prepare(
@@ -72,12 +93,14 @@ export function listBuyerOrders(
               (SELECT product_name FROM order_items WHERE order_id = o.id ORDER BY id LIMIT 1) AS first_item_name,
               (SELECT cover_image_url FROM order_items WHERE order_id = o.id ORDER BY id LIMIT 1) AS first_item_cover,
               (SELECT sum(quantity) FROM order_items WHERE order_id = o.id) AS item_count,
-              (SELECT tracking_no FROM parcels WHERE order_id = o.id) AS tracking_no
+              (SELECT tracking_no FROM parcels WHERE order_id = o.id) AS tracking_no,
+              ${UNREVIEWED_ITEMS} AS unreviewed
        FROM orders o
        JOIN shops s ON s.id = o.shop_id
        JOIN order_groups g ON g.id = o.group_id
        WHERE o.buyer_account_id = ?
          AND (? IS NULL OR o.status = ?)
+         AND (? = 0 OR ${UNREVIEWED_ITEMS} > 0)
          AND (? IS NULL OR (o.ordered_at, o.id) < (?, ?))
        ORDER BY o.ordered_at DESC, o.id DESC
        LIMIT ?`,
@@ -86,6 +109,7 @@ export function listBuyerOrders(
       buyerAccountId,
       status,
       status,
+      awaitingReview ? 1 : 0,
       after?.orderedAt ?? null,
       after?.orderedAt ?? null,
       after?.id ?? null,
@@ -106,6 +130,7 @@ export function listBuyerOrders(
     itemCount: row.item_count,
     trackingNo: row.tracking_no,
     payable: isPayable(row.status, row.payment_deadline, now),
+    awaitingReview: row.status === ORDER_STATUS.completed ? row.unreviewed : 0,
   }));
   const last = orders.at(-1);
   return { orders, next: rows.length > PAGE_SIZE && last ? { orderedAt: last.orderedAt, id: last.id } : null };
@@ -141,6 +166,8 @@ export type BuyerOrderDetail = {
     unitPrice: number;
     quantity: number;
     coverImageUrl: string | null;
+    /** คะแนนที่ผู้ซื้อให้รายการนี้ null ถ้ายังไม่มีรีวิว (REV-005) */
+    reviewRating: number | null;
   }[];
   trackingNo: string | null;
   /** ทุกคำสั่งซื้อในกลุ่มคำสั่งซื้อเดียวกัน รวมรายการนี้ */
@@ -165,10 +192,18 @@ export function getBuyerOrder(db: Db, buyerAccountId: number, orderNo: string, n
   const id = row.id as number;
   const items = db
     .prepare(
-      `SELECT id, product_name, variant_label, unit_price, quantity, cover_image_url
-       FROM order_items WHERE order_id = ? ORDER BY id`,
+      `SELECT i.id, i.product_name, i.variant_label, i.unit_price, i.quantity, i.cover_image_url, r.rating AS review_rating
+       FROM order_items i LEFT JOIN reviews r ON r.order_item_id = i.id WHERE i.order_id = ? ORDER BY i.id`,
     )
-    .all(id) as { id: number; product_name: string; variant_label: string; unit_price: number; quantity: number; cover_image_url: string | null }[];
+    .all(id) as {
+    id: number;
+    product_name: string;
+    variant_label: string;
+    unit_price: number;
+    quantity: number;
+    cover_image_url: string | null;
+    review_rating: number | null;
+  }[];
   const group = db
     .prepare(
       `SELECT o.order_no, s.name AS shop_name FROM orders o JOIN shops s ON s.id = o.shop_id
@@ -208,6 +243,7 @@ export function getBuyerOrder(db: Db, buyerAccountId: number, orderNo: string, n
       unitPrice: item.unit_price,
       quantity: item.quantity,
       coverImageUrl: item.cover_image_url,
+      reviewRating: item.review_rating,
     })),
     trackingNo: row.tracking_no as string | null,
     group: group.map((order) => ({ orderNo: order.order_no, shopName: order.shop_name })),

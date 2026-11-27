@@ -37,10 +37,6 @@
   font-size: var(--text-label);
 }
 
-.notice {
-  margin: 0 0 var(--space-5);
-}
-
 /* ตัวกรองกับช่องค้นหา */
 
 .toolbar {
@@ -79,11 +75,22 @@
   display: none;
 }
 
+/* ตารางสินค้าอยู่บนการ์ดใบเดียว */
+.table {
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+}
+
 .list {
   margin: 0;
   padding: 0;
-  border-top: 1px solid var(--color-text);
   list-style: none;
+}
+
+.row:last-child {
+  border-bottom: 0;
 }
 
 .row {
@@ -108,6 +115,11 @@
   height: 48px;
 }
 
+.thumb,
+.noImage {
+  border-radius: var(--radius-s);
+}
+
 .thumb {
   object-fit: cover;
 }
@@ -116,7 +128,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-surface);
+  background: var(--color-surface-sunken);
   color: var(--color-muted);
   line-height: 1.2;
   text-align: center;
@@ -127,16 +139,21 @@
   flex-basis: 100%;
   color: var(--color-text);
   font-size: var(--text-body);
+  font-weight: 600;
   line-height: 1.4;
   text-decoration: underline;
   text-decoration-color: transparent;
-  transition: text-decoration-color var(--duration) var(--ease);
+  transition: text-decoration-color var(--dur-fast) var(--ease-out);
 }
 
 .rowName::after {
   content: "";
   position: absolute;
   inset: 0;
+}
+
+.row .cell :global(.badge) {
+  margin-block: var(--space-1);
 }
 
 .cell {
@@ -188,7 +205,8 @@
   }
 
   .head {
-    padding-bottom: var(--space-2);
+    padding-block: var(--space-3);
+    border-bottom: 1px solid var(--color-border);
     color: var(--color-muted);
     font-size: var(--text-label);
   }
@@ -227,24 +245,28 @@
 
 .form {
   display: grid;
-  gap: var(--space-7);
+  gap: var(--space-4);
 }
 
+/* แต่ละส่วนของฟอร์มเป็นการ์ดหนึ่งใบ */
 .section {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   min-width: 0;
   margin: 0;
-  padding: var(--space-5) 0 0;
+  padding: var(--space-4);
   border: 0;
-  border-top: 1px solid var(--color-border);
+  border-radius: var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
 }
 
-/* legend ที่ float ไม่ถูกวาดทับเส้นขอบบน และกลายเป็นช่องหนึ่งของ grid */
+/* legend ที่ float ไม่ถูกวาดทับขอบบนของการ์ด และกลายเป็นช่องหนึ่งของ grid */
 .section legend {
   float: left;
   padding: 0;
+  font-family: var(--font-display);
   font-size: var(--text-heading);
   font-weight: 600;
   line-height: 1.3;
@@ -316,13 +338,14 @@
 .image img {
   width: 100%;
   aspect-ratio: 1;
+  border-radius: var(--radius-m);
   object-fit: cover;
 }
 
 .image progress,
 .modelFile progress {
   width: 100%;
-  accent-color: var(--color-text);
+  accent-color: var(--color-primary);
 }
 
 .image :global(.field-error) {
@@ -333,11 +356,12 @@
   position: absolute;
   top: var(--space-2);
   left: var(--space-2);
-  padding: 0 var(--space-2);
-  border-radius: var(--radius);
-  background: var(--color-text);
-  color: var(--color-bg);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-text);
   font-size: var(--text-label);
+  line-height: 1.3;
 }
 
 .imageActions {
@@ -493,13 +517,18 @@
 .saveBar {
   position: sticky;
   bottom: 0;
-  z-index: 1;
+  z-index: 5;
   display: grid;
   gap: var(--space-2);
   margin-inline: calc(-1 * var(--gutter));
   padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--color-border);
-  background: var(--color-bg);
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
+}
+
+.saveButtons > :global(.button) {
+  min-height: var(--control-main);
 }
 
 .saveButtons {
@@ -526,6 +555,7 @@
   .section {
     grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
     column-gap: var(--space-7);
+    padding: var(--space-5);
   }
 
   .section > * {
@@ -540,12 +570,12 @@
 
   /* ข้อความและปุ่มท้ายฟอร์มเริ่มตรงคอลัมน์ช่องกรอก */
   .form > :not(.section, .saveBar, dialog) {
-    margin-inline-start: calc((100% - var(--space-7)) / 3 + var(--space-7));
+    margin-inline-start: calc((100% - 2 * var(--space-5) - var(--space-7)) / 3 + var(--space-7) + var(--space-5));
   }
 
   .saveBar {
     margin-inline: 0;
-    padding-inline: calc((100% - var(--space-7)) / 3 + var(--space-7)) 0;
+    padding-inline: calc((100% - 2 * var(--space-5) - var(--space-7)) / 3 + var(--space-7) + var(--space-5)) var(--space-5);
   }
 }
 
@@ -553,19 +583,21 @@
 
 .dialog {
   width: min(calc(100vw - 2 * var(--gutter)), 28rem);
-  padding: var(--space-6);
+  padding: var(--space-5);
   border: 0;
-  border-radius: var(--radius);
-  background: var(--color-bg);
+  border-radius: var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
   color: var(--color-text);
 }
 
 .dialog::backdrop {
-  background: color-mix(in srgb, var(--color-text) 50%, transparent);
+  background: color-mix(in srgb, var(--color-ink) 45%, transparent);
 }
 
 .dialogTitle {
   margin: 0;
+  font-family: var(--font-display);
   font-size: var(--text-heading);
   font-weight: 600;
   line-height: 1.3;

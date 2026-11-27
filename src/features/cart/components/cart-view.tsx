@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { addTransitionType, useEffect, useRef, useState, useTransition } from "react";
 import { ACTION_FAILED } from "@/shared/ui/action-form";
 import { settle } from "@/shared/ui/timeout";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/features/cart/actions";
 import type { Cart, CartItem, CartShop } from "@/features/cart/server/cart";
 import { formatBaht, formatNumber } from "@/shared/format";
+import { ShopLogo } from "@/features/shop/components/shop-logo";
 import { LoadingTimeout } from "@/shared/ui/loading-timeout";
 import styles from "./cart.module.css";
 
@@ -29,15 +30,17 @@ export function CartView({ cart, shippingFee }: { cart: Cart; shippingFee: numbe
   const [message, setMessage] = useState<Message | null>(null);
   const [retry, setRetry] = useState<(() => void) | null>(null);
   const [removing, setRemoving] = useState<number | null>(null);
+  const [leaving, setLeaving] = useState<number | null>(null);
   // เปลี่ยนทุกครั้งที่ได้ผล ช่องจำนวนที่พิมพ์ค้างไว้จะกลับไปเป็นค่าที่บันทึกจริง
   const [version, setVersion] = useState(0);
 
-  function run(operation: () => Promise<CartActionResult>, itemId: number | null = null) {
+  function run(operation: () => Promise<CartActionResult>, itemId: number | null = null, forward = false) {
     setMessage(null);
     setRetry(null);
     startTransition(async () => {
+      if (forward) addTransitionType("nav-forward");
       const result = await settle(operation());
-      if ("failed" in result) setRetry(() => () => run(operation, itemId));
+      if ("failed" in result) setRetry(() => () => run(operation, itemId, forward));
       else if (result.message) setMessage({ itemId, text: result.message });
       setVersion((v) => v + 1);
     });
@@ -47,12 +50,15 @@ export function CartView({ cart, shippingFee }: { cart: Cart; shippingFee: numbe
     run(() => selectItemsAction(buyable(items).map((item) => item.id), selected));
 
   const checkout = () =>
-    run(() =>
-      checkoutAction(
-        allItems(cart)
-          .filter((item) => item.selected)
-          .map((item) => ({ itemId: item.id, price: item.price, quantity: item.quantity })),
-      ),
+    run(
+      () =>
+        checkoutAction(
+          allItems(cart)
+            .filter((item) => item.selected)
+            .map((item) => ({ itemId: item.id, price: item.price, quantity: item.quantity })),
+        ),
+      null,
+      true,
     );
 
   // ช่องเลือกทั้งหมดและเลือกทั้งร้านแสดงเฉพาะตอนที่ไม่ซ้ำกับช่องเลือกของรายการ
@@ -82,7 +88,7 @@ export function CartView({ cart, shippingFee }: { cart: Cart; shippingFee: numbe
             </div>
           )}
           {cart.shops.map((shop) => (
-            <section key={shop.id} className={styles.shop} aria-label={shop.name}>
+            <section key={shop.id} className={`card ${styles.shop}`} aria-label={shop.name}>
               <header className={styles.shopHeader}>
                 {shopsToBuy > 1 && buyable(shop.items).length > 1 && (
                   <Check
@@ -92,6 +98,7 @@ export function CartView({ cart, shippingFee }: { cart: Cart; shippingFee: numbe
                     onChange={(selected) => select(shop.items, selected)}
                   />
                 )}
+                <ShopLogo name={shop.name} logoUrl={shop.logoUrl} />
                 <h2 className={styles.shopName}>
                   <Link href={`/shops/${shop.id}`}>{shop.name}</Link>
                 </h2>
@@ -105,6 +112,7 @@ export function CartView({ cart, shippingFee }: { cart: Cart; shippingFee: numbe
                     key={`${item.id}:${item.quantity}:${version}`}
                     item={item}
                     pending={pending}
+                    leaving={pending && leaving === item.id}
                     message={message?.itemId === item.id ? message.text : null}
                     onSelect={(selected) => select([item], selected)}
                     onQuantity={(quantity) => run(() => changeQuantityAction(item.id, quantity), item.id)}
@@ -115,7 +123,14 @@ export function CartView({ cart, shippingFee }: { cart: Cart; shippingFee: numbe
             </section>
           ))}
         </div>
-        <CartSummary cart={cart} shippingFee={shippingFee} pending={pending} onCheckout={checkout} onRetry={retry} />
+        <CartSummary
+          cart={cart}
+          shippingFee={shippingFee}
+          pending={pending}
+          changed={version > 0}
+          onCheckout={checkout}
+          onRetry={retry}
+        />
       </div>
       {removing !== null && (
         <ConfirmRemove
@@ -123,6 +138,7 @@ export function CartView({ cart, shippingFee }: { cart: Cart; shippingFee: numbe
           onConfirm={() => {
             const itemId = removing;
             setRemoving(null);
+            setLeaving(itemId);
             run(() => removeItemAction(itemId), itemId);
           }}
         />
@@ -163,6 +179,7 @@ function Check({
 export function CartLine({
   item,
   pending,
+  leaving = false,
   message,
   onSelect,
   onQuantity,
@@ -170,6 +187,8 @@ export function CartLine({
 }: {
   item: CartItem;
   pending: boolean;
+  /** กำลังลบรายการนี้ แถวจางลงทันทีที่ยืนยัน ไม่รอผลจากเซิร์ฟเวอร์ */
+  leaving?: boolean;
   message: string | null;
   onSelect: (selected: boolean) => void;
   onQuantity: (quantity: string) => void;
@@ -180,9 +199,14 @@ export function CartLine({
   const commit = () => {
     if (draft.trim() !== String(item.quantity)) onQuantity(draft);
   };
+  // ตัวเลขในช่องเปลี่ยนทันทีที่กด ไม่รอผลจากเซิร์ฟเวอร์
+  const step = (quantity: number) => {
+    setDraft(String(quantity));
+    onQuantity(String(quantity));
+  };
 
   return (
-    <li className={item.unavailable ? `${styles.item} ${styles.faded}` : styles.item}>
+    <li className={[styles.item, item.unavailable && styles.faded, leaving && styles.leaving].filter(Boolean).join(" ")}>
       <Check label={`เลือก ${item.name}`} checked={item.selected} disabled={locked} onChange={onSelect} />
       {item.imageUrl ? (
         <img src={item.imageUrl} alt="" className={styles.thumb} loading="lazy" />
@@ -210,7 +234,7 @@ export function CartLine({
             type="button"
             aria-label="ลดจำนวน"
             disabled={locked || item.quantity <= 1}
-            onClick={() => onQuantity(String(item.quantity - 1))}
+            onClick={() => step(item.quantity - 1)}
           >
             −
           </button>
@@ -229,7 +253,7 @@ export function CartLine({
             type="button"
             aria-label="เพิ่มจำนวน"
             disabled={locked || item.quantity >= item.stock}
-            onClick={() => onQuantity(String(item.quantity + 1))}
+            onClick={() => step(item.quantity + 1)}
           >
             +
           </button>
@@ -257,19 +281,22 @@ export function CartSummary({
   cart,
   shippingFee,
   pending,
+  changed = false,
   onCheckout,
   onRetry,
 }: {
   cart: Cart;
   shippingFee: number;
   pending: boolean;
+  /** ยอดเพิ่งเปลี่ยนจากการกระทำของผู้ซื้อ ยอดรวมกระพริบพื้นสีอ่อนหนึ่งครั้ง */
+  changed?: boolean;
   onCheckout: () => void;
   onRetry: (() => void) | null;
 }) {
   const shops = cart.shops.filter(hasSelection).length;
   const fee = shops * shippingFee;
   return (
-    <div className={styles.summary}>
+    <div className={`card ${styles.summary}`}>
       {onRetry && (
         <div role="alert" className={styles.retry}>
           <span className="field-error">{ACTION_FAILED}</span>
@@ -293,7 +320,9 @@ export function CartSummary({
         )}
         <div className={styles.grand}>
           <dt>ยอดรวมที่ต้องจ่าย</dt>
-          <dd>{pending ? "กำลังคิด…" : formatBaht(cart.total + fee)}</dd>
+          <dd key={pending ? "pending" : cart.total + fee} className={changed && !pending ? "flash" : undefined}>
+            {pending ? "กำลังคิด…" : formatBaht(cart.total + fee)}
+          </dd>
         </div>
       </dl>
       <button type="button" className="button" disabled={pending || cart.pieces === 0} onClick={onCheckout}>
@@ -336,9 +365,14 @@ export function CartLoading() {
 export function CartSkeleton() {
   return (
     <div role="status" aria-label="กำลังโหลด">
-      <div className={`${styles.skeleton} ${styles.skeletonShop}`} />
-      <div className={`${styles.skeleton} ${styles.skeletonShop}`} />
-      <div className={`${styles.skeleton} ${styles.skeletonBar}`} />
+      <div className={`${styles.skeleton} skeleton ${styles.skeletonTitle}`} />
+      <div className={styles.layout}>
+        <div>
+          <div className={`${styles.skeleton} skeleton ${styles.skeletonShop}`} />
+          <div className={`${styles.skeleton} skeleton ${styles.skeletonShop}`} />
+        </div>
+        <div className={`${styles.skeleton} skeleton ${styles.skeletonBar}`} />
+      </div>
     </div>
   );
 }

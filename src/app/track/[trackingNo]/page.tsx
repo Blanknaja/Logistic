@@ -7,6 +7,7 @@ import { getParcelForStatusChange } from "@/features/delivery/server/parcel-stat
 import { getTrackingView } from "@/features/delivery/server/tracking";
 import { getDb } from "@/shared/db";
 import { requireAccount } from "@/shared/session";
+import { PageReveal } from "@/shared/ui/transitions";
 
 export const metadata: Metadata = { title: "ติดตามพัสดุ" };
 
@@ -18,12 +19,14 @@ export default async function TrackingPage({ params }: PageProps<"/track/[tracki
   const statusChange = view.canChangeStatus ? getParcelForStatusChange(getDb(), view.trackingNo, viewer) : null;
 
   return (
-    <TrackingDetails
-      view={view}
-      confirmAction={confirmReceiptAction}
-      statusControls={
-        statusChange && <StatusChangeLinks trackingNo={view.trackingNo} nextStatuses={statusChange.nextStatuses} />
-      }
-    />
+    <PageReveal>
+      <TrackingDetails
+        view={view}
+        confirmAction={confirmReceiptAction}
+        statusControls={
+          statusChange && <StatusChangeLinks trackingNo={view.trackingNo} nextStatuses={statusChange.nextStatuses} />
+        }
+      />
+    </PageReveal>
   );
 }

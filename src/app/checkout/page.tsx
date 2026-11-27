@@ -5,7 +5,9 @@ import { placeOrderAction } from "@/features/checkout/place-order-actions";
 import { getCheckout } from "@/features/checkout/server/checkout";
 import { getDb } from "@/shared/db";
 import { requireAccount } from "@/shared/session";
+import { PurchaseSteps } from "@/shared/ui/journey";
 import { EmptyState } from "@/shared/ui/states";
+import { PageSlide } from "@/shared/ui/transitions";
 
 export const metadata: Metadata = { title: "สั่งซื้อ" };
 
@@ -18,8 +20,8 @@ export default async function CheckoutPage({ searchParams }: PageProps<"/checkou
 
   if (checkout.shops.length === 0) {
     return (
-      <EmptyState level={1} title="ยังไม่ได้เลือกสินค้า">
-        <Link href="/cart" className="button">
+      <EmptyState level={1} art="cart" title="ยังไม่ได้เลือกสินค้า">
+        <Link href="/cart" className="button" transitionTypes={["nav-back"]}>
           กลับไปตะกร้า
         </Link>
       </EmptyState>
@@ -27,9 +29,12 @@ export default async function CheckoutPage({ searchParams }: PageProps<"/checkou
   }
 
   return (
-    <>
-      <h1>ตรวจที่อยู่และยอดที่ต้องจ่าย</h1>
-      <CheckoutForm checkout={checkout} selectedAddressId={chosen?.id ?? checkout.addresses[0]?.id} action={placeOrderAction} />
-    </>
+    <PageSlide>
+      <div>
+        <PurchaseSteps current={1} />
+        <h1>ตรวจที่อยู่และยอดที่ต้องจ่าย</h1>
+        <CheckoutForm checkout={checkout} selectedAddressId={chosen?.id ?? checkout.addresses[0]?.id} action={placeOrderAction} />
+      </div>
+    </PageSlide>
   );
 }

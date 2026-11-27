@@ -1,4 +1,5 @@
 import { createParcelForPaidOrder } from "@/features/delivery/server/parcel-status";
+import { notifyPaymentFailed, notifyPaymentSucceeded } from "@/features/notification/server/events";
 import { transaction, type Db } from "@/shared/db";
 import {
   ORDER_STATUS,
@@ -209,19 +210,18 @@ export function markGroupPaid(db: Db, paymentId: number, now: Date = new Date())
       paymentId,
     );
     db.prepare("UPDATE payments SET status = ?, resolved_at = ? WHERE id = ?").run(PAYMENT_STATUS.succeeded, at, paymentId);
+    notifyPaymentSucceeded(db, paymentId, now);
     return { status: PAYMENT_STATUS.succeeded, paidOrderIds: orders.map((o) => o.id) };
   });
 }
 
 function markFailed(db: Db, paymentId: number, reason: string, now: Date): void {
-  db.prepare("UPDATE payments SET status = ?, failure_reason = ?, resolved_at = ? WHERE id = ? AND status IN (?, ?)").run(
-    PAYMENT_STATUS.failed,
-    reason,
-    now.toISOString(),
-    paymentId,
-    PAYMENT_STATUS.pending,
-    PAYMENT_STATUS.abandoned,
-  );
+  transaction(db, () => {
+    const failed = db
+      .prepare("UPDATE payments SET status = ?, failure_reason = ?, resolved_at = ? WHERE id = ? AND status IN (?, ?)")
+      .run(PAYMENT_STATUS.failed, reason, now.toISOString(), paymentId, PAYMENT_STATUS.pending, PAYMENT_STATUS.abandoned);
+    if (failed.changes > 0) notifyPaymentFailed(db, paymentId, now);
+  });
 }
 
 /** ใช้ผลที่ผู้ให้บริการยืนยันแล้ว ผลที่ใช้ไปแล้ว ยอดไม่ตรง หรือยังรอผล ไม่เปลี่ยนอะไร (PAY-015) */

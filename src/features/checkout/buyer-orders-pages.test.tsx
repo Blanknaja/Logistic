@@ -179,7 +179,7 @@ describe("CHK-009 หน้ารายการคำสั่งซื้อ�
     expect(count(html, payButton(first.groupId)) - 1).toBe(2);
     expect(count(html, PAY_BUTTON) - 1).toBe(2);
     expect(html).toContain("ผ้าดี");
-    expect(html).toContain("เสื้อยืด · รวม 2 ชิ้น");
+    expect(html).toMatch(/เสื้อยืด<\/span><span[^>]*>ผ้าดี · รวม 2 ชิ้น/);
     expect(html).toContain("฿440");
   });
 
@@ -221,7 +221,7 @@ describe("CHK-009 หน้ารายการคำสั่งซื้อ�
     const { html = "" } = await ordersPage();
 
     const row = html.split('<li class="_order_').find((part) => part.includes("ผ้าดี")) ?? "";
-    expect(row).toMatch(/<img src="\/sample-images\/shirt.svg"[^>]*>(<span[^>]*>){2}กำลังจัดส่ง<\/span>/);
+    expect(row).toMatch(/<img src="\/sample-images\/shirt.svg"[^>]*>(<span[^>]*>){3}กำลังจัดส่ง<\/span>/);
     expect(html).toContain(`<a class="link-action" href="/track/${shipping.trackingNo}">ติดตามพัสดุ</a>`);
     expect(html).not.toContain(`/track/${paid.trackingNo}`);
   });
@@ -232,6 +232,21 @@ describe("CHK-009 หน้ารายการคำสั่งซื้อ�
 
     expect(html.indexOf('aria-label="กรองตามสถานะ"')).toBeLessThan(html.indexOf('<li class="_order_'));
     expect(html).toMatch(/class="chip _chipLink_\w+" aria-current="page"[^>]*>รอจ่ายเงิน</);
+  });
+
+  test("CHK-009 REV-005 ตัวกรองมี 7 ตัว คือทั้งหมด สถานะทั้ง 5 และรอรีวิวพร้อมจำนวน", async () => {
+    somchaiOrdersTwoShops();
+    const { html = "" } = await ordersPage();
+    const filters = html.match(/aria-label="กรองตามสถานะ".*?<\/nav>/)?.[0] ?? "";
+    expect([...filters.matchAll(/<a[^>]*>([^<]+)<\/a>/g)].map((match) => match[1])).toEqual([
+      "ทั้งหมด",
+      "รอจ่ายเงิน",
+      "จ่ายแล้ว",
+      "กำลังจัดส่ง",
+      "สำเร็จ",
+      "ยกเลิก",
+      "รอรีวิว 0",
+    ]);
   });
 
   test("CHK-009 ยังไม่เข้าสู่ระบบ ถูกพาไปหน้าเข้าสู่ระบบ", async () => {

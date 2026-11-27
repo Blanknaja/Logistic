@@ -30,7 +30,7 @@ export type CartItem = {
   notice: string | null;
 };
 
-export type CartShop = { id: number; name: string; items: CartItem[]; total: number };
+export type CartShop = { id: number; name: string; logoUrl: string | null; items: CartItem[]; total: number };
 
 export type Cart = {
   shops: CartShop[];
@@ -57,6 +57,7 @@ type Row = {
   product_id: number;
   name: string;
   product_status: string;
+  shop_logo: string | null;
   shop_id: number;
   shop_name: string;
   shop_status: string;
@@ -150,7 +151,7 @@ export function getCart(db: Db, accountId: number, now: Date = new Date()): Cart
       .prepare(
         `SELECT ci.id, ci.variant_id, ci.quantity, ci.selected, ci.last_seen_price, ci.last_seen_image_url,
                 v.price, v.stock, v.removed_at, p.id AS product_id, p.name, p.status AS product_status,
-                s.id AS shop_id, s.name AS shop_name, s.status AS shop_status,
+                s.id AS shop_id, s.name AS shop_name, s.status AS shop_status, s.logo_url AS shop_logo,
                 (SELECT url FROM product_images WHERE product_id = p.id ORDER BY position LIMIT 1) AS cover,
                 trim(coalesce(o1.value, '') || ' ' || coalesce(o2.value, '')) AS label
          FROM cart_items ci
@@ -204,7 +205,7 @@ export function getCart(db: Db, accountId: number, now: Date = new Date()): Cart
 
       let shop = shops.get(row.shop_id);
       if (!shop) {
-        shop = { id: row.shop_id, name: row.shop_name, items: [], total: 0 };
+        shop = { id: row.shop_id, name: row.shop_name, logoUrl: row.shop_logo, items: [], total: 0 };
         shops.set(row.shop_id, shop);
         cart.shops.push(shop);
       }

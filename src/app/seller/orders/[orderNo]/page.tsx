@@ -4,6 +4,7 @@ import { orderHref, ordersHref, parseListParams } from "@/features/shop-orders/p
 import { requireShop } from "@/features/shop/require-shop";
 import { findOrderParcel, getShopOrder, shopOrdersVersion, type ParcelSummary } from "@/features/shop-orders/server/orders";
 import { getDb } from "@/shared/db";
+import { PageReveal } from "@/shared/ui/transitions";
 
 export default async function SellerOrderPage({ params, searchParams }: PageProps<"/seller/orders/[orderNo]">) {
   const { orderNo } = await params;
@@ -22,5 +23,9 @@ export default async function SellerOrderPage({ params, searchParams }: PageProp
   }
 
   const backHref = ordersHref(parseListParams(await searchParams));
-  return <OrderDetailView order={order} parcel={parcel} backHref={backHref} version={version} />;
+  return (
+    <PageReveal>
+      <OrderDetailView order={order} parcel={parcel} backHref={backHref} version={version} />
+    </PageReveal>
+  );
 }

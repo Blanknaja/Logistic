@@ -1,5 +1,5 @@
 import { transaction, type Db } from "@/shared/db";
-import { PAGE_SIZE, pageCount } from "@/shared/paging";
+import { clampPage, PAGE_SIZE, pageCount } from "@/shared/paging";
 import type { Checked } from "@/shared/result";
 import { PRODUCT_STATUS, type ProductStatus } from "@/shared/statuses";
 import { isShopUpload } from "./image-files";
@@ -325,8 +325,7 @@ export function listShopProducts(
 
   const total = Number(db.prepare(`SELECT count(*) AS n FROM products p WHERE ${conditions}`).get(...params)?.n);
   const pages = pageCount(total);
-  const requested = Number.isSafeInteger(filter.page) ? (filter.page as number) : 1;
-  const page = Math.min(Math.max(1, requested), pages);
+  const page = clampPage(filter.page ?? 1, pages);
 
   const rows = db
     .prepare(

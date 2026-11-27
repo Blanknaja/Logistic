@@ -7,6 +7,7 @@ import { ADDRESS_LIMIT, listAddresses, MAX_ADDRESSES } from "@/features/checkout
 import { getDb } from "@/shared/db";
 import { requireAccount } from "@/shared/session";
 import { EmptyState } from "@/shared/ui/states";
+import { PageReveal } from "@/shared/ui/transitions";
 
 export const metadata: Metadata = { title: "เพิ่มที่อยู่" };
 
@@ -17,17 +18,19 @@ export default async function NewAddressPage({ searchParams }: PageProps<"/addre
   const full = listAddresses(getDb(), viewer.id).length >= MAX_ADDRESSES;
 
   return (
-    <div className={styles.page}>
-      <h1>เพิ่มที่อยู่</h1>
-      {full ? (
-        <EmptyState title={ADDRESS_LIMIT}>
-          <Link href="/addresses" className="button">
-            ไปหน้าที่อยู่จัดส่ง
-          </Link>
-        </EmptyState>
-      ) : (
-        <AddressForm next={back} />
-      )}
-    </div>
+    <PageReveal>
+      <div className={styles.page}>
+        <h1>เพิ่มที่อยู่</h1>
+        {full ? (
+          <EmptyState title={ADDRESS_LIMIT}>
+            <Link href="/addresses" className="button">
+              ไปหน้าที่อยู่จัดส่ง
+            </Link>
+          </EmptyState>
+        ) : (
+          <AddressForm next={back} />
+        )}
+      </div>
+    </PageReveal>
   );
 }

@@ -18,7 +18,7 @@
 
 @media (hover: hover) {
   .chipLink:not([aria-current]):hover {
-    box-shadow: inset 0 0 0 1px var(--color-text);
+    box-shadow: inset 0 0 0 2px var(--color-text);
   }
 }
 
@@ -45,6 +45,18 @@
   align-items: center;
   gap: 0 var(--space-4);
   margin-block: var(--space-3) var(--space-5);
+}
+
+.results {
+  margin-top: var(--section-gap);
+}
+
+.categories + .results {
+  margin-top: 0;
+}
+
+.resultsTitle {
+  margin: 0;
 }
 
 .count {
@@ -122,8 +134,9 @@
   display: grid;
   gap: var(--space-4);
   padding: var(--space-4) var(--gutter) var(--space-5);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg);
+  border-radius: 0 0 var(--radius-l) var(--radius-l);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
 }
 
 .price {
@@ -181,7 +194,9 @@
     align-items: center;
     gap: var(--space-2) var(--space-5);
     padding: 0;
-    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
   }
 
   /* legend ที่ลอยอยู่กลายเป็นของในแถว จึงอยู่หน้าช่องราคาได้ */
@@ -206,32 +221,46 @@
   }
 }
 
-/* การ์ดสินค้า: รูป ชื่อ ราคา ชื่อร้าน ไม่มีกรอบ แยกกันด้วยช่องว่าง */
+/* การ์ดสินค้า: การ์ดขาวมีเงา รูปมุมโค้งข้างใน ชื่อ ราคาตัวหนา ชื่อร้าน ชี้แล้วการ์ดยกและรูปขยาย */
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-6) var(--space-4);
+  gap: var(--space-4) var(--space-3);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+.grid > li {
+  display: grid;
+}
+
 .card {
   display: grid;
   align-content: start;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-2);
   color: inherit;
   text-decoration: none;
-  transition: transform var(--duration) var(--ease);
 }
 
-.card:active {
-  transform: scale(0.98);
+.cardMedia {
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 1;
+  border-radius: var(--radius-m);
+  background: var(--color-surface-sunken);
+}
+
+.cardMedia > * {
+  transition: transform var(--dur-move) var(--ease-out);
 }
 
 .cardBody {
   display: grid;
   gap: var(--space-1);
+  padding: 0 var(--space-1) var(--space-1);
 }
 
 .cardName {
@@ -239,16 +268,31 @@
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  text-decoration: underline;
-  text-decoration-color: transparent;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-  transition: text-decoration-color var(--duration) var(--ease);
+  min-height: 3em;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.cardPrice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.cardPrice > :global(.badge) {
+  font-family: var(--font);
+  font-weight: 400;
 }
 
 @media (hover: hover) {
+  .card:hover .cardMedia > * {
+    transform: scale(1.04);
+  }
+
   .card:hover .cardName {
-    text-decoration-color: currentColor;
+    color: var(--color-primary-press);
   }
 }
 
@@ -267,15 +311,43 @@
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  background: var(--color-surface);
+  background: var(--color-surface-sunken);
 }
 
+/* รูปสำรอง: ไอคอนของหมวดบนพื้นสีอ่อน */
 .noImage {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--color-muted);
+  gap: var(--space-1);
+  color: var(--color-ink);
   font-size: var(--text-label);
+}
+
+.noImage svg {
+  width: 38%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tint1 {
+  background: var(--tint-1);
+}
+
+.tint2 {
+  background: var(--tint-2);
+}
+
+.tint3 {
+  background: var(--tint-3);
+}
+
+.tint4 {
+  background: var(--tint-4);
 }
 
 .pagination {
@@ -285,8 +357,6 @@
   justify-content: center;
   gap: var(--space-2) var(--space-3);
   margin-top: var(--space-7);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--color-border);
 }
 
 .pagination > span {
@@ -302,7 +372,7 @@
 @media (min-width: 900px) {
   .grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--space-7) var(--space-5);
+    gap: var(--space-5);
   }
 }
 
@@ -336,7 +406,11 @@
   aspect-ratio: 1;
   margin-inline: calc(-1 * var(--gutter));
   overflow: hidden;
-  background: var(--color-surface);
+  background: var(--color-surface-sunken);
+}
+
+.plate > * {
+  transition: transform var(--dur-move) var(--ease-out);
 }
 
 .plate > .image {
@@ -365,9 +439,15 @@
 }
 
 .thumb > * {
+  overflow: hidden;
+  border-radius: var(--radius-s);
   outline: 1px solid var(--color-border);
   outline-offset: -1px;
-  transition: outline-color var(--duration) var(--ease);
+  transition: outline-color var(--dur-fast) var(--ease-out);
+}
+
+.thumb span {
+  display: none;
 }
 
 /* วงของรูปย่อที่เลือกอยู่วาดบนชั้นเหนือรูป เพราะ box-shadow แบบ inset ของ img ถูกรูปบัง */
@@ -375,9 +455,11 @@
   content: "";
   position: absolute;
   inset: 0;
+  border-radius: var(--radius-s);
   box-shadow: var(--selected-ring);
 }
 
+/* ทางเข้าภาพ 3 มิติเป็นเม็ดยาสีดอกดาวเรือง ของดีที่สุดในหน้าจึงไม่จมอยู่ท้ายแถวรูปย่อ */
 .view3d {
   display: inline-flex;
   align-items: center;
@@ -385,16 +467,16 @@
   height: 56px;
   padding: 0 var(--space-4);
   border: 0;
-  border-radius: var(--radius);
-  background: transparent;
-  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
   color: var(--color-text);
   font: inherit;
   font-size: var(--text-label);
+  font-weight: 600;
   cursor: pointer;
   transition:
-    box-shadow var(--duration) var(--ease),
-    transform var(--duration) var(--ease);
+    box-shadow var(--dur-fast) var(--ease-out),
+    transform var(--dur-base) var(--ease-spring);
 }
 
 .view3d svg {
@@ -402,11 +484,14 @@
 }
 
 .view3d[aria-pressed="true"] {
+  background: var(--color-primary-soft);
   box-shadow: var(--selected-ring);
+  color: var(--color-primary-press);
 }
 
 .view3d:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
+  transition-duration: var(--dur-press);
 }
 
 @media (hover: hover) {
@@ -415,7 +500,7 @@
   }
 
   .view3d:hover:not([aria-pressed="true"]) {
-    box-shadow: inset 0 0 0 1px var(--color-text);
+    box-shadow: var(--shadow-1);
   }
 }
 
@@ -437,7 +522,9 @@
 }
 
 .bigPrice {
-  font-size: var(--text-heading);
+  font-family: var(--font-display);
+  font-size: var(--text-price);
+  font-weight: 700;
   line-height: 1.3;
 }
 
@@ -498,8 +585,8 @@
 }
 
 @media (hover: hover) {
-  .choice:hover {
-    box-shadow: inset 0 0 0 1px var(--color-text);
+  .choice:not(:has(input:checked)):hover {
+    box-shadow: inset 0 0 0 2px var(--color-text);
   }
 }
 
@@ -540,6 +627,23 @@
   font-size: var(--text-body);
 }
 
+/* ปุ่มหลังใส่ตะกร้าสำเร็จ: เครื่องหมายถูกวาดตัวเอง */
+.added svg {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .variants summary {
   padding-block: var(--space-3);
   font-size: var(--text-label);
@@ -568,36 +672,37 @@
   opacity: 0.5;
 }
 
-/* ร้านกับหมวดหมู่ แล้วรายละเอียด */
+/* การ์ดร้าน รายละเอียด แล้วสินค้าอื่นของร้าน */
 
-.facts {
-  display: grid;
-  margin: 0;
-  max-width: var(--measure);
-}
-
-.facts > div {
+.shopCard {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
-  border-bottom: 1px solid var(--color-border);
+  gap: var(--space-3) var(--space-4);
+  max-width: var(--measure);
+  padding: var(--space-4);
 }
 
-.facts dt {
-  flex: none;
-  width: 6em;
-  color: var(--color-muted);
-  font-size: var(--text-label);
+.shopCard > div {
+  flex: 1 1 12em;
+  min-width: 0;
 }
 
-.facts dd {
+.shopCard p {
   margin: 0;
 }
 
-.facts a {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--tap);
+.shopName {
+  font-weight: 600;
+}
+
+.more {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.more h2 {
+  margin: 0;
 }
 
 .story {
@@ -619,6 +724,7 @@
   .plate {
     width: min(100%, 640px);
     margin-inline: 0;
+    border-radius: var(--radius-l);
   }
 
   .thumb {
@@ -643,8 +749,9 @@
     bottom: 0;
     z-index: 10;
     padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
-    border-top: 1px solid var(--color-border);
-    background: var(--color-bg);
+    border-radius: var(--radius-l) var(--radius-l) 0 0;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-2);
   }
 
   .quantity {
@@ -674,27 +781,31 @@
     grid-area: gallery;
   }
 
+  /* กล่องซื้อเป็นการ์ดที่ค้างข้างจอขณะเลื่อนดูรูปและรายละเอียด */
   .purchase {
     grid-area: buy;
+    position: sticky;
+    top: calc(var(--header-height) + var(--space-4));
+    align-self: start;
+    padding: var(--space-5);
+    border-radius: var(--radius-l);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-1);
+  }
+
+  @media (hover: hover) {
+    .plate:hover > img {
+      transform: scale(1.04);
+    }
   }
 }
 
-/* โครงสีเทาระหว่างรอข้อมูล (BRW-012) */
-
-.skeleton {
-  background: var(--color-surface);
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.55;
-  }
-}
+/* โครงสีระหว่างรอข้อมูล (BRW-012) สีและแสงวิ่งมาจาก .skeleton ใน globals.css */
 
 .skeletonChip {
   width: 96px;
   height: var(--tap);
+  border-radius: var(--radius-pill);
 }
 
 .skeletonLine {
@@ -709,16 +820,12 @@
 .skeletonCard {
   aspect-ratio: 1;
   margin-bottom: var(--space-3);
+  border-radius: var(--radius-l);
 }
 
 .skeletonButton {
   width: 160px;
   height: var(--tap);
   margin-top: var(--space-4);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .skeleton {
-    animation: none;
-  }
+  border-radius: var(--radius-m);
 }

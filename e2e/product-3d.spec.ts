@@ -77,6 +77,8 @@ test("P3D-003 P3D-004 P3D-005 P3D-Q01 ผู้ซื้อกด ดูแบ�
   await settle();
 
   // P3D-004 ลากเมาส์ไปทางซ้ายแล้วสินค้าหมุน
+  // การกดปุ่มที่อยู่ครึ่งใต้ขอบจออาจเลื่อนหน้าลง จึงเลื่อนตัวแสดงกลับเข้าจอก่อนวัดตำแหน่ง
+  await page.evaluate(() => scrollTo(0, 0));
   const box = (await viewer(page).boundingBox())!;
   const start = await theta(page);
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
